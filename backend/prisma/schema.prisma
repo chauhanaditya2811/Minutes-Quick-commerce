@@ -1,0 +1,195 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model User {
+  id           String   @id @default(cuid())
+  firebaseUid  String   @unique
+  email        String   @unique
+  name         String?
+  profileImage String?
+  phone        String?
+  hostel       String?
+  floor        Int?
+  room         String?
+
+  orders       Order[]
+  reservations InventoryReservation[]
+
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@map("users")
+}
+
+model Product {
+  id          String   @id @default(cuid())
+  name        String
+  imageUrl    String
+  description String?
+  price       Int
+  unit        String
+  stock       Int      @default(0)
+  isDeleted   Boolean  @default(false)
+
+  orderItems   OrderItem[]
+  reservations InventoryReservation[]
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([isDeleted])
+  @@map("products")
+}
+
+model Order {
+  id          String @id @default(cuid())
+  orderNumber String @unique
+
+  userId String
+  user   User   @relation(fields: [userId], references: [id])
+
+  subtotal    Int
+  deliveryFee Int
+  total       Int
+
+  paymentStatus PaymentStatus
+  orderStatus   OrderStatus
+  isFiveMinute  Boolean       @default(false)
+
+  // Delivery/customer snapshot
+  customerName   String
+  customerEmail  String
+  customerImage  String?
+  customerPhone  String
+  customerHostel String
+  customerFloor  Int
+  customerRoom  String
+
+  items           OrderItem[]
+  payment         Payment?
+  paymentAttempts PaymentAttempt[]
+  reservations    InventoryReservation[]
+
+  createdAt  DateTime  @default(now())
+  deliveredAt DateTime?
+
+  @@index([userId])
+  @@index([orderStatus])
+  @@index([createdAt])
+  @@map("orders")
+}
+
+model OrderItem {
+  id String @id @default(cuid())
+
+  orderId String
+  order   Order @relation(fields: [orderId], references: [id], onDelete: Cascade)
+
+  productId String
+  product   Product @relation(fields: [productId], references: [id])
+
+  // Historical product snapshot
+  productName String
+  price       Int
+  unit        String
+  quantity    Int
+  subtotal    Int
+
+  @@index([orderId])
+  @@index([productId])
+  @@map("order_items")
+}
+
+model Payment {
+  id String @id @default(cuid())
+
+  orderId String @unique
+  order   Order  @relation(fields: [orderId], references: [id])
+
+  razorpayOrderId   String  @unique
+  razorpayPaymentId String? @unique
+
+  status PaymentStatus
+  amount Int
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("payments")
+}
+
+model PaymentAttempt {
+  id String @id @default(cuid())
+
+  orderId String?
+  order   Order? @relation(fields: [orderId], references: [id])
+
+  razorpayOrderId   String?
+  razorpayPaymentId String? @unique
+
+  amount Int
+  status PaymentStatus
+
+  createdAt DateTime @default(now())
+
+  @@index([orderId])
+  @@index([razorpayOrderId])
+  @@map("payment_attempts")
+}
+
+model InventoryReservation {
+  id String @id @default(cuid())
+
+  productId String
+  product   Product @relation(fields: [productId], references: [id])
+
+  userId String
+  user   User @relation(fields: [userId], references: [id])
+
+  orderId String?
+  order   Order? @relation(fields: [orderId], references: [id])
+
+  quantity  Int
+  expiresAt DateTime
+  consumed  Boolean  @default(false)
+
+  createdAt DateTime @default(now())
+
+  @@index([productId])
+  @@index([userId])
+  @@index([expiresAt])
+  @@map("inventory_reservations")
+}
+
+model Setting {
+  id String @id @default(cuid())
+
+  storeOpen    Boolean @default(true)
+  deliveryFee  Int     @default(0)
+  minimumOrder Int     @default(0)
+  supportEmail String?
+
+  updatedAt DateTime @updatedAt
+
+  @@map("settings")
+}
+
+enum PaymentStatus {
+  CREATED
+  PENDING
+  SUCCESS
+  FAILED
+  CANCELLED
+  REFUNDED
+}
+
+enum OrderStatus {
+  CONFIRMED
+  DELIVERED
+}
