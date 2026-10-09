@@ -143,6 +143,7 @@ model PaymentAttempt {
   @@map("payment_attempts")
 }
 
+
 model InventoryReservation {
   id String @id @default(cuid())
 
@@ -155,17 +156,20 @@ model InventoryReservation {
   orderId String?
   order   Order? @relation(fields: [orderId], references: [id])
 
-  quantity  Int
+  quantity Int
+  status   ReservationStatus @default(ACTIVE)
   expiresAt DateTime
-  consumed  Boolean  @default(false)
 
   createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
-  @@index([productId])
+  @@index([productId, status])
   @@index([userId])
-  @@index([expiresAt])
+  @@index([status, expiresAt])
+  @@index([orderId])
   @@map("inventory_reservations")
 }
+
 
 model Setting {
   id String @id @default(cuid())
@@ -188,6 +192,14 @@ enum PaymentStatus {
   CANCELLED
   REFUNDED
 }
+
+enum ReservationStatus {
+  ACTIVE
+  CONSUMED
+  RELEASED
+  EXPIRED
+}
+
 
 enum OrderStatus {
   CONFIRMED
