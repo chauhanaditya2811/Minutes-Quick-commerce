@@ -181,9 +181,10 @@ export const InventoryReservationScalarFieldEnum = {
   userId: 'userId',
   orderId: 'orderId',
   quantity: 'quantity',
+  status: 'status',
   expiresAt: 'expiresAt',
-  consumed: 'consumed',
-  createdAt: 'createdAt'
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
 } as const
 
 export type InventoryReservationScalarFieldEnum = (typeof InventoryReservationScalarFieldEnum)[keyof typeof InventoryReservationScalarFieldEnum]

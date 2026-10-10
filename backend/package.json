@@ -4,7 +4,7 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
+    "test": "vitest run",
     "postinstall": "prisma skills sync || exit 0",
     "dev": "tsx watch src/server.ts",
     "build": "tsc",
@@ -33,6 +33,7 @@
     "@types/node": "^26.6.4",
     "prisma": "^7.10.0",
     "tsx": "^4.23.15",
-    "typescript": "^7.0.2"
+    "typescript": "^7.0.2",
+    "vitest": "^5.0.3"
   }
 }

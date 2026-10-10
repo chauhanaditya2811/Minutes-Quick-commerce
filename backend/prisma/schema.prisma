@@ -156,14 +156,16 @@ model InventoryReservation {
   order   Order? @relation(fields: [orderId], references: [id])
 
   quantity  Int
+  status    ReservationStatus @default(ACTIVE)
   expiresAt DateTime
-  consumed  Boolean  @default(false)
 
   createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
-  @@index([productId])
+  @@index([productId, status])
   @@index([userId])
-  @@index([expiresAt])
+  @@index([status, expiresAt])
+  @@index([orderId])
   @@map("inventory_reservations")
 }
 
@@ -189,7 +191,16 @@ enum PaymentStatus {
   REFUNDED
 }
 
+enum ReservationStatus {
+  ACTIVE
+  CONSUMED
+  RELEASED
+  EXPIRED
+}
+
 enum OrderStatus {
+  PENDING_PAYMENT
   CONFIRMED
   DELIVERED
+  CANCELLED
 }

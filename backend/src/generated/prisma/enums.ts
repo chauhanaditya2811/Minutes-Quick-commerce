@@ -21,9 +21,21 @@ export const PaymentStatus = {
 export type PaymentStatus = (typeof PaymentStatus)[keyof typeof PaymentStatus]
 
 
+export const ReservationStatus = {
+  ACTIVE: 'ACTIVE',
+  CONSUMED: 'CONSUMED',
+  RELEASED: 'RELEASED',
+  EXPIRED: 'EXPIRED'
+} as const
+
+export type ReservationStatus = (typeof ReservationStatus)[keyof typeof ReservationStatus]
+
+
 export const OrderStatus = {
+  PENDING_PAYMENT: 'PENDING_PAYMENT',
   CONFIRMED: 'CONFIRMED',
-  DELIVERED: 'DELIVERED'
+  DELIVERED: 'DELIVERED',
+  CANCELLED: 'CANCELLED'
 } as const
 
 export type OrderStatus = (typeof OrderStatus)[keyof typeof OrderStatus]
