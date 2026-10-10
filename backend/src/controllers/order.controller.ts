@@ -2,9 +2,28 @@
 import type { Response } from "express";
 import type { AuthenticatedRequest } from "../middleware/auth.middleware.js";
 import {
+  CheckoutError,
+  createOrder,
   validateCheckout,
-  type CheckoutItemInput,
 } from "../services/order.service.js";
+
+const getItems = (body: unknown): unknown =>
+  typeof body === "object" &&
+  body !== null &&
+  !Array.isArray(body) &&
+  "items" in body
+    ? body.items
+    : undefined;
+
+const sendCheckoutError = (error: unknown, res: Response): void => {
+  if (error instanceof CheckoutError) {
+    res.status(error.statusCode).json({ message: error.message });
+    return;
+  }
+
+  console.error("Order checkout request failed.", error);
+  res.status(500).json({ message: "Unable to process checkout." });
+};
 
 // Validates the cart and returns a server-calculated checkout summary.
 export const validateCheckoutController = async (
@@ -17,7 +36,7 @@ export const validateCheckoutController = async (
       return;
     }
 
-    const { items } = req.body ?? {};
+    const items = getItems(req.body);
 
     if (!Array.isArray(items)) {
       res.status(400).json({
@@ -28,7 +47,7 @@ export const validateCheckoutController = async (
 
     const checkout = await validateCheckout(
       req.firebaseUser.uid,
-      items as CheckoutItemInput[]
+      items
     );
 
     res.status(200).json({
@@ -36,37 +55,32 @@ export const validateCheckoutController = async (
       checkout,
     });
   } catch (error) {
-    const message =
-      error instanceof Error ? error.message : "Checkout validation failed.";
+    sendCheckoutError(error, res);
+  }
+};
 
-    // Validation failures are client errors; unexpected database errors are not.
-    const clientErrors = [
-      "Your cart is empty.",
-      "Your cart contains too many items.",
-      "One or more cart items are invalid.",
-      "Your cart contains a duplicate product.",
-      "Please complete your customer profile before checkout.",
-      "The store is currently closed.",
-      "One or more products are no longer available.",
-      "Your cart total is too large.",
-      "The order total is too large.",
-    ];
+export const createOrderController = async (
+  req: AuthenticatedRequest,
+  res: Response
+): Promise<void> => {
+  if (!req.firebaseUser) {
+    res.status(401).json({ message: "Unauthorized." });
+    return;
+  }
 
-    const isClientError =
-      clientErrors.includes(message) ||
-      message.endsWith("is out of stock.") ||
-      message.includes("unit(s) of") ||
-      message.startsWith("Your order must be at least ₹");
-
-    if (isClientError) {
-      res.status(400).json({ message });
+  try {
+    const items = getItems(req.body);
+    if (!Array.isArray(items)) {
+      res.status(400).json({ message: "Provide an items array." });
       return;
     }
 
-    console.error("Checkout validation error:", error);
-
-    res.status(500).json({
-      message: "Unable to validate checkout.",
+    const order = await createOrder(req.firebaseUser.uid, req.body);
+    res.status(201).json({
+      message: "Order created. Payment is pending.",
+      order,
     });
+  } catch (error) {
+    sendCheckoutError(error, res);
   }
 };
