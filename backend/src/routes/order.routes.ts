@@ -1,20 +1,41 @@
-
 import { Router } from "express";
+
 import {
   createOrderController,
   validateCheckoutController,
 } from "../controllers/order.controller.js";
+
+import {
+  createRazorpayOrderController,
+  verifyRazorpayPaymentController,
+} from "../controllers/payment.controller.js";
+
 import { authenticateFirebaseToken } from "../middleware/auth.middleware.js";
 
 const router = Router();
 
+// Create a Minutes order.
 router.post("/", authenticateFirebaseToken, createOrderController);
 
-// Only authenticated customers can validate a checkout.
+// Validate the customer's cart.
 router.post(
   "/validate",
   authenticateFirebaseToken,
   validateCheckoutController
+);
+
+// Initialize Razorpay payment for an existing order.
+router.post(
+  "/:orderId/payment",
+  authenticateFirebaseToken,
+  createRazorpayOrderController
+);
+
+// Verify the Razorpay payment response.
+router.post(
+  "/:orderId/payment/verify",
+  authenticateFirebaseToken,
+  verifyRazorpayPaymentController
 );
 
 export default router;
