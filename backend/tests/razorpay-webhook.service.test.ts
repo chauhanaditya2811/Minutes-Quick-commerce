@@ -391,7 +391,7 @@ describe("Razorpay webhook service", () => {
   });
 
   it("acknowledges a unique-event conflict safely", async () => {
-    mocks.webhookEventCreate.mockRejectedValueOnce({
+    mocks.transaction.mockRejectedValueOnce({
       code: "P2002",
       meta: {
         target: ["eventId"],

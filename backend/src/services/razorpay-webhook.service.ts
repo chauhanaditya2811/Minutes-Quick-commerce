@@ -234,8 +234,8 @@ export const processRazorpayWebhook = async (
     eventName !== "payment.captured" &&
     eventName !== "payment.failed"
   ) {
-    return prisma.$transaction(async (tx) => {
-      try {
+    try {
+      return await prisma.$transaction(async (tx) => {
         const existingEvent = await tx.razorpayWebhookEvent.findUnique({
           where: {
             eventId: normalizedEventId,
@@ -262,14 +262,14 @@ export const processRazorpayWebhook = async (
           event: eventName,
           reason: "unsupported_event",
         };
-      } catch (error) {
-        if (isWebhookEventUniqueConflict(error)) {
-          return duplicateEventResult(eventName);
-        }
-
-        throw error;
+      });
+    } catch (error) {
+      if (isWebhookEventUniqueConflict(error)) {
+        return duplicateEventResult(eventName);
       }
-    });
+
+      throw error;
+    }
   }
 
   const payment = parseWebhookPayment(
@@ -319,8 +319,8 @@ export const processRazorpayWebhook = async (
     );
   }
 
-  return prisma.$transaction(async (tx) => {
-    try {
+  try {
+    return await prisma.$transaction(async (tx) => {
       const currentOrder = await tx.order.findUnique({
         where: { id: order.id },
         include: { payment: true },
@@ -625,12 +625,12 @@ export const processRazorpayWebhook = async (
         paymentStatus: "FAILED",
         orderStatus: "PENDING_PAYMENT",
       };
-    } catch (error) {
-      if (isWebhookEventUniqueConflict(error)) {
-        return duplicateEventResult(eventName);
-      }
-
-      throw error;
+    });
+  } catch (error) {
+    if (isWebhookEventUniqueConflict(error)) {
+      return duplicateEventResult(eventName);
     }
-  });
+
+    throw error;
+  }
 };
