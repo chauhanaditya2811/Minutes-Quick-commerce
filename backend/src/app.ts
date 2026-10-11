@@ -8,11 +8,20 @@ import adminProductRoutes from "./routes/admin-product.routes.js";
 import settingsRoutes from "./routes/settings.routes.js";
 import adminSettingsRoutes from "./routes/admin-settings.routes.js";
 import orderRoutes from "./routes/order.routes.js";
-
+import razorpayWebhookRoutes from "./routes/razorpay-webhook.routes.js";
 
 const app = express();
 
 app.use(cors());
+
+// IMPORTANT: register the webhook before the general JSON parser.
+app.use(
+  "/api/webhooks/razorpay",
+  express.raw({ type: "application/json" }),
+  razorpayWebhookRoutes
+);
+
+// Parse JSON for the rest of the API.
 app.use(express.json());
 
 app.use("/api/health", healthRoutes);

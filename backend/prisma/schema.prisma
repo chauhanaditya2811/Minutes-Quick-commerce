@@ -182,6 +182,16 @@ model Setting {
   @@map("settings")
 }
 
+model RazorpayWebhookEvent {
+  id        String   @id @default(cuid())
+  eventId   String   @unique
+  eventType String
+  createdAt DateTime @default(now())
+
+  @@map("razorpay_webhook_events")
+}
+
+
 enum PaymentStatus {
   CREATED
   PENDING
