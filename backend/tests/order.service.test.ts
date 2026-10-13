@@ -1,0 +1,492 @@
+
+import { beforeEach, describe, expect, it, vi } from "vitest";
+
+const mocks = vi.hoisted(() => ({
+  userFindUnique: vi.fn(),
+  settingFindUnique: vi.fn(),
+  productFindMany: vi.fn(),
+  orderCreate: vi.fn(),
+  orderFindMany: vi.fn(),
+  orderUpdateMany: vi.fn(),
+  orderFindUnique: vi.fn(),
+  paymentAttemptUpdateMany: vi.fn(),
+  transaction: vi.fn(),
+}));
+
+// Mock Prisma so these tests never write to the real database.
+vi.mock("../src/config/database.js", () => ({
+  prisma: {
+    user: { findUnique: mocks.userFindUnique },
+    setting: { findUnique: mocks.settingFindUnique },
+    product: { findMany: mocks.productFindMany },
+    order: {
+      create: mocks.orderCreate,
+      findMany: mocks.orderFindMany,
+      updateMany: mocks.orderUpdateMany,
+      findUnique: mocks.orderFindUnique,
+    },
+    paymentAttempt: { updateMany: mocks.paymentAttemptUpdateMany },
+    $transaction: mocks.transaction,
+  },
+}));
+
+import {
+  confirmOrderPaymentAfterVerification,
+  createOrder,
+  getAdminOrders,
+  getCustomerOrders,
+  markOrderDelivered,
+  markOrderPaymentFailed,
+  OrderManagementError,
+  validateCheckout,
+} from "../src/services/order.service.js";
+
+const customer = {
+  id: "user-1",
+  firebaseUid: "firebase-user-1",
+  email: "student@example.com",
+  name: "Test Student",
+  profileImage: null,
+  phone: "9876543210",
+  hostel: "Hostel A",
+  floor: 2,
+  room: "204",
+};
+
+const settings = {
+  id: "store-settings",
+  storeOpen: true,
+  deliveryFee: 20,
+  minimumOrder: 100,
+  supportEmail: null,
+  updatedAt: new Date(),
+};
+
+const water = {
+  id: "product-1",
+  name: "Water",
+  price: 30,
+  unit: "bottle",
+  stock: 10,
+};
+
+describe("checkout validation service", () => {
+  beforeEach(() => {
+    vi.resetAllMocks();
+
+    mocks.transaction.mockImplementation(
+      async (callback: (tx: unknown) => Promise<unknown>) =>
+        callback({
+          user: { findUnique: mocks.userFindUnique },
+          setting: { findUnique: mocks.settingFindUnique },
+          product: { findMany: mocks.productFindMany },
+          order: {
+            create: mocks.orderCreate,
+            findMany: mocks.orderFindMany,
+            updateMany: mocks.orderUpdateMany,
+            findUnique: mocks.orderFindUnique,
+          },
+          paymentAttempt: { updateMany: mocks.paymentAttemptUpdateMany },
+        })
+    );
+    mocks.userFindUnique.mockResolvedValue(customer);
+    mocks.settingFindUnique.mockResolvedValue(settings);
+    mocks.productFindMany.mockResolvedValue([water]);
+    mocks.orderCreate.mockResolvedValue({ id: "order-1" });
+    mocks.orderUpdateMany.mockResolvedValue({ count: 1 });
+    mocks.orderFindUnique.mockResolvedValue({
+      id: "order-1",
+      paymentStatus: "SUCCESS",
+      orderStatus: "CONFIRMED",
+      items: [],
+      paymentAttempts: [],
+    });
+    mocks.paymentAttemptUpdateMany.mockResolvedValue({ count: 1 });
+  });
+
+  it("calculates subtotal and delivery fee using database prices", async () => {
+    const result = await validateCheckout("firebase-user-1", [
+      { productId: "product-1", quantity: 4 },
+    ]);
+
+    expect(result.subtotal).toBe(120);
+    expect(result.deliveryFee).toBe(20);
+    expect(result.total).toBe(140);
+
+    expect(result.items).toEqual([
+      {
+        productId: "product-1",
+        productName: "Water",
+        price: 30,
+        unit: "bottle",
+        quantity: 4,
+        subtotal: 120,
+      },
+    ]);
+
+    expect(mocks.productFindMany).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: {
+          id: { in: ["product-1"] },
+          isDeleted: false,
+        },
+      })
+    );
+  });
+
+  it("rejects an empty cart", async () => {
+    await expect(
+      validateCheckout("firebase-user-1", [])
+    ).rejects.toThrow("Your cart is empty.");
+  });
+
+  it("rejects duplicate product IDs", async () => {
+    await expect(
+      validateCheckout("firebase-user-1", [
+        { productId: "product-1", quantity: 1 },
+        { productId: "product-1", quantity: 2 },
+      ])
+    ).rejects.toThrow("Your cart contains a duplicate product.");
+  });
+
+  it("rejects invalid quantities", async () => {
+    await expect(
+      validateCheckout("firebase-user-1", [
+        { productId: "product-1", quantity: 0 },
+      ])
+    ).rejects.toThrow("One or more cart items are invalid.");
+  });
+
+  it("rejects checkout when the customer profile is missing", async () => {
+    mocks.userFindUnique.mockResolvedValue(null);
+
+    await expect(
+      validateCheckout("firebase-user-1", [
+        { productId: "product-1", quantity: 4 },
+      ])
+    ).rejects.toThrow(
+      "Please complete your customer profile before checkout."
+    );
+  });
+
+  it("rejects checkout when the store is closed", async () => {
+    mocks.settingFindUnique.mockResolvedValue({
+      ...settings,
+      storeOpen: false,
+    });
+
+    await expect(
+      validateCheckout("firebase-user-1", [
+        { productId: "product-1", quantity: 4 },
+      ])
+    ).rejects.toThrow("The store is currently closed.");
+  });
+
+  it("rejects products that are out of stock", async () => {
+    mocks.productFindMany.mockResolvedValue([
+      { ...water, stock: 0 },
+    ]);
+
+    await expect(
+      validateCheckout("firebase-user-1", [
+        { productId: "product-1", quantity: 1 },
+      ])
+    ).rejects.toThrow("Water is out of stock.");
+  });
+
+  it("rejects quantities above the manually configured stock", async () => {
+    mocks.productFindMany.mockResolvedValue([
+      { ...water, stock: 2 },
+    ]);
+
+    await expect(
+      validateCheckout("firebase-user-1", [
+        { productId: "product-1", quantity: 3 },
+      ])
+    ).rejects.toThrow(
+      "Only 2 unit(s) of Water are available."
+    );
+  });
+
+  it("enforces the minimum product subtotal before delivery fees", async () => {
+    await expect(
+      validateCheckout("firebase-user-1", [
+        { productId: "product-1", quantity: 3 },
+      ])
+    ).rejects.toThrow(
+      "Your order must be at least ₹100 before delivery fees."
+    );
+  });
+
+  it("rejects products that have been deleted", async () => {
+    mocks.productFindMany.mockResolvedValue([]);
+
+    await expect(
+      validateCheckout("firebase-user-1", [
+        { productId: "product-1", quantity: 1 },
+      ])
+    ).rejects.toThrow(
+      "One or more products are no longer available."
+    );
+  });
+
+  it("creates a pending order with database-derived item and customer snapshots", async () => {
+    await createOrder("firebase-user-1", {
+      items: [{ productId: "product-1", quantity: 4 }],
+      subtotal: 1,
+      total: 1,
+      paymentStatus: "SUCCESS",
+    });
+
+    expect(mocks.transaction).toHaveBeenCalledOnce();
+    expect(mocks.orderCreate).toHaveBeenCalledWith({
+      data: expect.objectContaining({
+        userId: "user-1",
+        subtotal: 120,
+        deliveryFee: 20,
+        total: 140,
+        paymentStatus: "PENDING",
+        orderStatus: "PENDING_PAYMENT",
+        customerName: "Test Student",
+        customerPhone: "9876543210",
+        customerHostel: "Hostel A",
+        customerFloor: 2,
+        customerRoom: "204",
+        items: {
+          create: [
+            {
+              productId: "product-1",
+              productName: "Water",
+              price: 30,
+              unit: "bottle",
+              quantity: 4,
+              subtotal: 120,
+            },
+          ],
+        },
+        paymentAttempts: {
+          create: { amount: 140, status: "PENDING" },
+        },
+      }),
+      include: { items: true, paymentAttempts: true },
+    });
+  });
+
+  it("returns only the authenticated customer's orders newest first", async () => {
+    const orders = [{ id: "order-1" }];
+    mocks.orderFindMany.mockResolvedValue(orders);
+
+    await expect(getCustomerOrders("firebase-customer-a")).resolves.toBe(orders);
+
+    expect(mocks.orderFindMany).toHaveBeenCalledWith({
+      where: { user: { firebaseUid: "firebase-customer-a" } },
+      select: {
+        orderNumber: true,
+        createdAt: true,
+        orderStatus: true,
+        paymentStatus: true,
+        subtotal: true,
+        deliveryFee: true,
+        total: true,
+        items: {
+          select: {
+            productName: true,
+            price: true,
+            unit: true,
+            quantity: true,
+            subtotal: true,
+          },
+        },
+      },
+      orderBy: { createdAt: "desc" },
+    });
+  });
+
+  it("lists bounded admin order details newest first from historical snapshots", async () => {
+    mocks.orderFindMany.mockResolvedValue([]);
+
+    await expect(getAdminOrders()).resolves.toEqual([]);
+
+    const query = mocks.orderFindMany.mock.calls[0][0];
+    expect(query).toMatchObject({
+      orderBy: { createdAt: "desc" },
+      take: 100,
+      select: {
+        orderNumber: true,
+        customerName: true,
+        customerEmail: true,
+        customerPhone: true,
+        customerHostel: true,
+        customerFloor: true,
+        customerRoom: true,
+        subtotal: true,
+        deliveryFee: true,
+        total: true,
+        paymentStatus: true,
+        orderStatus: true,
+        createdAt: true,
+        deliveredAt: true,
+        items: {
+          select: {
+            productName: true,
+            price: true,
+            unit: true,
+            quantity: true,
+            subtotal: true,
+          },
+        },
+      },
+    });
+    expect(query.select).not.toHaveProperty("payment");
+    expect(query.select).not.toHaveProperty("paymentAttempts");
+    expect(query.select).not.toHaveProperty("user");
+  });
+
+  it("marks only successfully paid confirmed orders delivered and sets deliveredAt", async () => {
+    const before = Date.now();
+    mocks.orderFindUnique.mockResolvedValue({
+      id: "order-1",
+      orderStatus: "DELIVERED",
+      paymentStatus: "SUCCESS",
+      deliveredAt: new Date(),
+    });
+
+    const order = await markOrderDelivered("order-1");
+
+    expect(mocks.orderUpdateMany).toHaveBeenCalledWith({
+      where: {
+        id: "order-1",
+        orderStatus: "CONFIRMED",
+        paymentStatus: "SUCCESS",
+      },
+      data: {
+        orderStatus: "DELIVERED",
+        deliveredAt: expect.any(Date),
+      },
+    });
+    const deliveredAt = mocks.orderUpdateMany.mock.calls[0][0].data
+      .deliveredAt as Date;
+    expect(deliveredAt.getTime()).toBeGreaterThanOrEqual(before);
+    expect(order.orderStatus).toBe("DELIVERED");
+  });
+
+  it.each([
+    ["unpaid pending order", "PENDING_PAYMENT", "PENDING"],
+    ["failed payment", "PENDING_PAYMENT", "FAILED"],
+    ["cancelled order", "CANCELLED", "SUCCESS"],
+    ["failed payment on confirmed order", "CONFIRMED", "FAILED"],
+  ])("does not deliver a %s", async (_description, orderStatus, paymentStatus) => {
+    mocks.orderUpdateMany.mockResolvedValue({ count: 0 });
+    mocks.orderFindUnique.mockResolvedValue({ orderStatus, paymentStatus });
+
+    await expect(markOrderDelivered("order-1")).rejects.toMatchObject({
+      statusCode: 409,
+    });
+    expect(mocks.orderUpdateMany).toHaveBeenCalledOnce();
+  });
+
+  it("returns an already delivered order idempotently", async () => {
+    const deliveredOrder = {
+      id: "order-1",
+      orderStatus: "DELIVERED",
+      paymentStatus: "SUCCESS",
+      deliveredAt: new Date(),
+    };
+    mocks.orderUpdateMany.mockResolvedValue({ count: 0 });
+    mocks.orderFindUnique.mockResolvedValue(deliveredOrder);
+
+    await expect(markOrderDelivered("order-1")).resolves.toBe(deliveredOrder);
+  });
+
+  it("returns not found for a nonexistent delivery target", async () => {
+    mocks.orderUpdateMany.mockResolvedValue({ count: 0 });
+    mocks.orderFindUnique.mockResolvedValue(null);
+
+    const result = markOrderDelivered("missing");
+    await expect(result).rejects.toBeInstanceOf(OrderManagementError);
+    await expect(result).rejects.toMatchObject({
+      statusCode: 404,
+    });
+  });
+
+  it("runs order creation inside a transaction and propagates write failures", async () => {
+    mocks.orderCreate.mockRejectedValue(new Error("write failed"));
+
+    await expect(
+      createOrder("firebase-user-1", [
+        { productId: "product-1", quantity: 4 },
+      ])
+    ).rejects.toThrow("write failed");
+
+    expect(mocks.transaction).toHaveBeenCalledOnce();
+  });
+
+  it("marks failed payments without confirming the order", async () => {
+    mocks.orderUpdateMany.mockResolvedValue({ count: 1 });
+    mocks.orderFindUnique.mockResolvedValue({
+      id: "order-1",
+      paymentStatus: "FAILED",
+      orderStatus: "PENDING_PAYMENT",
+      items: [],
+      paymentAttempts: [],
+    });
+
+    const order = await markOrderPaymentFailed("order-1");
+
+    expect(order.paymentStatus).toBe("FAILED");
+    expect(order.orderStatus).toBe("PENDING_PAYMENT");
+    expect(mocks.orderUpdateMany).toHaveBeenCalledWith({
+      where: {
+        id: "order-1",
+        orderStatus: "PENDING_PAYMENT",
+        paymentStatus: { in: ["CREATED", "PENDING"] },
+      },
+      data: { paymentStatus: "FAILED" },
+    });
+  });
+
+  it("confirms a verified successful payment and safely accepts repeated success", async () => {
+    const confirmedOrder = {
+      id: "order-1",
+      paymentStatus: "SUCCESS",
+      orderStatus: "CONFIRMED",
+      items: [],
+      paymentAttempts: [],
+    };
+    mocks.orderFindUnique.mockResolvedValue(confirmedOrder);
+
+    const first = await confirmOrderPaymentAfterVerification("order-1");
+    mocks.orderUpdateMany.mockResolvedValue({ count: 0 });
+    const repeated = await confirmOrderPaymentAfterVerification("order-1");
+
+    expect(first).toEqual(confirmedOrder);
+    expect(repeated).toEqual(confirmedOrder);
+    expect(mocks.orderUpdateMany).toHaveBeenCalledTimes(2);
+    expect(mocks.orderUpdateMany).toHaveBeenCalledWith({
+      where: {
+        id: "order-1",
+        orderStatus: "PENDING_PAYMENT",
+        paymentStatus: { in: ["CREATED", "PENDING", "FAILED"] },
+      },
+      data: {
+        paymentStatus: "SUCCESS",
+        orderStatus: "CONFIRMED",
+      },
+    });
+  });
+
+  it("does not confirm an order when no successful payment transition occurred", async () => {
+    mocks.orderUpdateMany.mockResolvedValue({ count: 0 });
+    mocks.orderFindUnique.mockResolvedValue({
+      id: "order-1",
+      paymentStatus: "FAILED",
+      orderStatus: "PENDING_PAYMENT",
+      items: [],
+      paymentAttempts: [],
+    });
+
+    await expect(
+      confirmOrderPaymentAfterVerification("order-1")
+    ).rejects.toThrow("Order is not eligible for payment confirmation.");
+  });
+});

@@ -58,7 +58,8 @@ export const ModelName = {
   Payment: 'Payment',
   PaymentAttempt: 'PaymentAttempt',
   InventoryReservation: 'InventoryReservation',
-  Setting: 'Setting'
+  Setting: 'Setting',
+  RazorpayWebhookEvent: 'RazorpayWebhookEvent'
 } as const
 
 export type ModelName = (typeof ModelName)[keyof typeof ModelName]
@@ -200,6 +201,16 @@ export const SettingScalarFieldEnum = {
 } as const
 
 export type SettingScalarFieldEnum = (typeof SettingScalarFieldEnum)[keyof typeof SettingScalarFieldEnum]
+
+
+export const RazorpayWebhookEventScalarFieldEnum = {
+  id: 'id',
+  eventId: 'eventId',
+  eventType: 'eventType',
+  createdAt: 'createdAt'
+} as const
+
+export type RazorpayWebhookEventScalarFieldEnum = (typeof RazorpayWebhookEventScalarFieldEnum)[keyof typeof RazorpayWebhookEventScalarFieldEnum]
 
 
 export const SortOrder = {

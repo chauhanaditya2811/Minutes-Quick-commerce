@@ -32,8 +32,10 @@ export type ReservationStatus = (typeof ReservationStatus)[keyof typeof Reservat
 
 
 export const OrderStatus = {
+  PENDING_PAYMENT: 'PENDING_PAYMENT',
   CONFIRMED: 'CONFIRMED',
-  DELIVERED: 'DELIVERED'
+  DELIVERED: 'DELIVERED',
+  CANCELLED: 'CANCELLED'
 } as const
 
 export type OrderStatus = (typeof OrderStatus)[keyof typeof OrderStatus]
