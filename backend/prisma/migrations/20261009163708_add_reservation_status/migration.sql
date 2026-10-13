@@ -1,10 +1,3 @@
-/*
-  Warnings:
-
-  - You are about to drop the column `consumed` on the `inventory_reservations` table. All the data in the column will be lost.
-  - Added the required column `updatedAt` to the `inventory_reservations` table without a default value. This is not possible if the table is not empty.
-
-*/
 -- CreateEnum
 CREATE TYPE "ReservationStatus" AS ENUM ('ACTIVE', 'CONSUMED', 'RELEASED', 'EXPIRED');
 
@@ -15,9 +8,21 @@ DROP INDEX "inventory_reservations_expiresAt_idx";
 DROP INDEX "inventory_reservations_productId_idx";
 
 -- AlterTable
-ALTER TABLE "inventory_reservations" DROP COLUMN "consumed",
+ALTER TABLE "inventory_reservations"
 ADD COLUMN     "status" "ReservationStatus" NOT NULL DEFAULT 'ACTIVE',
-ADD COLUMN     "updatedAt" TIMESTAMP(3) NOT NULL;
+ADD COLUMN     "updatedAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP;
+
+-- Preserve consumed reservations when converting from the legacy boolean.
+UPDATE "inventory_reservations"
+SET "status" = CASE
+    WHEN "consumed" THEN 'CONSUMED'::"ReservationStatus"
+    ELSE 'ACTIVE'::"ReservationStatus"
+END;
+
+-- Remove the legacy column and temporary timestamp default.
+ALTER TABLE "inventory_reservations"
+DROP COLUMN "consumed",
+ALTER COLUMN "updatedAt" DROP DEFAULT;
 
 -- CreateIndex
 CREATE INDEX "inventory_reservations_productId_status_idx" ON "inventory_reservations"("productId", "status");
