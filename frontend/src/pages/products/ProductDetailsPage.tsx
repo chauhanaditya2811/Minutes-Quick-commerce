@@ -12,7 +12,7 @@ import { CartIcon } from '../../components/ui/Icons';
 export default function ProductDetailsPage() {
   const { id } = useParams();
   const { data: product, loading, error } = useProduct(id);
-  const { data: settings } = useStoreSettings();
+  const { data: settings, error: settingsError, reload: reloadSettings } = useStoreSettings();
   const { quantityOf, addItem, setQuantity } = useCart();
 
   if (loading) return <Loading />;
@@ -43,6 +43,7 @@ export default function ProductDetailsPage() {
             {soldOut ? 'Out of stock' : product.stock <= 5 ? `Only ${product.stock} left` : 'In stock'}
           </p>
           {product.description && <p className="detail__desc">{product.description}</p>}
+          {settingsError && <Notice tone="error">Could not load store information: {settingsError} <button type="button" className="link-btn" onClick={reloadSettings}>Try again</button></Notice>}
           {closed && <Notice tone="warning">The store is closed right now.</Notice>}
           <div className="detail__cta">
             {qty > 0 ? (
@@ -51,7 +52,7 @@ export default function ProductDetailsPage() {
                 <Link to="/cart" className="btn btn--indigo">View cart</Link>
               </>
             ) : (
-              <button type="button" className="btn btn--yellow" disabled={soldOut || closed} onClick={() => addItem(product)}>
+              <button type="button" className="btn btn--yellow" disabled={soldOut || closed || !settings} onClick={() => addItem(product)}>
                 <CartIcon width={16} height={16} /> Add to Cart
               </button>
             )}

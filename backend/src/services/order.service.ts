@@ -266,6 +266,110 @@ export const createOrder = async (firebaseUid: string, input: unknown) =>
     });
   });
 
+export const getCustomerOrders = (firebaseUid: string) =>
+  prisma.order.findMany({
+    where: {
+      user: { firebaseUid },
+    },
+    select: {
+      orderNumber: true,
+      createdAt: true,
+      orderStatus: true,
+      paymentStatus: true,
+      subtotal: true,
+      deliveryFee: true,
+      total: true,
+      items: {
+        select: {
+          productName: true,
+          price: true,
+          unit: true,
+          quantity: true,
+          subtotal: true,
+        },
+      },
+    },
+    orderBy: { createdAt: "desc" },
+  });
+
+const adminOrderSelection = {
+  id: true,
+  orderNumber: true,
+  customerName: true,
+  customerEmail: true,
+  customerPhone: true,
+  customerHostel: true,
+  customerFloor: true,
+  customerRoom: true,
+  subtotal: true,
+  deliveryFee: true,
+  total: true,
+  paymentStatus: true,
+  orderStatus: true,
+  createdAt: true,
+  deliveredAt: true,
+  items: {
+    select: {
+      productName: true,
+      price: true,
+      unit: true,
+      quantity: true,
+      subtotal: true,
+    },
+  },
+} as const;
+
+export class OrderManagementError extends Error {
+  constructor(
+    message: string,
+    readonly statusCode: number
+  ) {
+    super(message);
+    this.name = "OrderManagementError";
+  }
+}
+
+export const getAdminOrders = () =>
+  prisma.order.findMany({
+    select: adminOrderSelection,
+    orderBy: { createdAt: "desc" },
+    take: 100,
+  });
+
+export const markOrderDelivered = async (orderId: string) => {
+  const updated = await prisma.order.updateMany({
+    where: {
+      id: orderId,
+      orderStatus: "CONFIRMED",
+      paymentStatus: "SUCCESS",
+    },
+    data: {
+      orderStatus: "DELIVERED",
+      deliveredAt: new Date(),
+    },
+  });
+
+  const order = await prisma.order.findUnique({
+    where: { id: orderId },
+    select: adminOrderSelection,
+  });
+
+  if (!order) {
+    throw new OrderManagementError("Order not found.", 404);
+  }
+
+  const wasAlreadyDelivered =
+    order.orderStatus === "DELIVERED" && order.paymentStatus === "SUCCESS";
+  if (updated.count === 0 && !wasAlreadyDelivered) {
+    throw new OrderManagementError(
+      "Only confirmed, successfully paid orders can be marked as delivered.",
+      409
+    );
+  }
+
+  return order;
+};
+
 const getOrderForPaymentTransition = (
   tx: Prisma.TransactionClient,
   orderId: string

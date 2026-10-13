@@ -6,6 +6,7 @@ const mocks = vi.hoisted(() => ({
   settingFindUnique: vi.fn(),
   productFindMany: vi.fn(),
   orderCreate: vi.fn(),
+  orderFindMany: vi.fn(),
   orderUpdateMany: vi.fn(),
   orderFindUnique: vi.fn(),
   paymentAttemptUpdateMany: vi.fn(),
@@ -20,6 +21,7 @@ vi.mock("../src/config/database.js", () => ({
     product: { findMany: mocks.productFindMany },
     order: {
       create: mocks.orderCreate,
+      findMany: mocks.orderFindMany,
       updateMany: mocks.orderUpdateMany,
       findUnique: mocks.orderFindUnique,
     },
@@ -31,7 +33,11 @@ vi.mock("../src/config/database.js", () => ({
 import {
   confirmOrderPaymentAfterVerification,
   createOrder,
+  getAdminOrders,
+  getCustomerOrders,
+  markOrderDelivered,
   markOrderPaymentFailed,
+  OrderManagementError,
   validateCheckout,
 } from "../src/services/order.service.js";
 
@@ -76,6 +82,7 @@ describe("checkout validation service", () => {
           product: { findMany: mocks.productFindMany },
           order: {
             create: mocks.orderCreate,
+            findMany: mocks.orderFindMany,
             updateMany: mocks.orderUpdateMany,
             findUnique: mocks.orderFindUnique,
           },
@@ -262,6 +269,143 @@ describe("checkout validation service", () => {
         },
       }),
       include: { items: true, paymentAttempts: true },
+    });
+  });
+
+  it("returns only the authenticated customer's orders newest first", async () => {
+    const orders = [{ id: "order-1" }];
+    mocks.orderFindMany.mockResolvedValue(orders);
+
+    await expect(getCustomerOrders("firebase-customer-a")).resolves.toBe(orders);
+
+    expect(mocks.orderFindMany).toHaveBeenCalledWith({
+      where: { user: { firebaseUid: "firebase-customer-a" } },
+      select: {
+        orderNumber: true,
+        createdAt: true,
+        orderStatus: true,
+        paymentStatus: true,
+        subtotal: true,
+        deliveryFee: true,
+        total: true,
+        items: {
+          select: {
+            productName: true,
+            price: true,
+            unit: true,
+            quantity: true,
+            subtotal: true,
+          },
+        },
+      },
+      orderBy: { createdAt: "desc" },
+    });
+  });
+
+  it("lists bounded admin order details newest first from historical snapshots", async () => {
+    mocks.orderFindMany.mockResolvedValue([]);
+
+    await expect(getAdminOrders()).resolves.toEqual([]);
+
+    const query = mocks.orderFindMany.mock.calls[0][0];
+    expect(query).toMatchObject({
+      orderBy: { createdAt: "desc" },
+      take: 100,
+      select: {
+        orderNumber: true,
+        customerName: true,
+        customerEmail: true,
+        customerPhone: true,
+        customerHostel: true,
+        customerFloor: true,
+        customerRoom: true,
+        subtotal: true,
+        deliveryFee: true,
+        total: true,
+        paymentStatus: true,
+        orderStatus: true,
+        createdAt: true,
+        deliveredAt: true,
+        items: {
+          select: {
+            productName: true,
+            price: true,
+            unit: true,
+            quantity: true,
+            subtotal: true,
+          },
+        },
+      },
+    });
+    expect(query.select).not.toHaveProperty("payment");
+    expect(query.select).not.toHaveProperty("paymentAttempts");
+    expect(query.select).not.toHaveProperty("user");
+  });
+
+  it("marks only successfully paid confirmed orders delivered and sets deliveredAt", async () => {
+    const before = Date.now();
+    mocks.orderFindUnique.mockResolvedValue({
+      id: "order-1",
+      orderStatus: "DELIVERED",
+      paymentStatus: "SUCCESS",
+      deliveredAt: new Date(),
+    });
+
+    const order = await markOrderDelivered("order-1");
+
+    expect(mocks.orderUpdateMany).toHaveBeenCalledWith({
+      where: {
+        id: "order-1",
+        orderStatus: "CONFIRMED",
+        paymentStatus: "SUCCESS",
+      },
+      data: {
+        orderStatus: "DELIVERED",
+        deliveredAt: expect.any(Date),
+      },
+    });
+    const deliveredAt = mocks.orderUpdateMany.mock.calls[0][0].data
+      .deliveredAt as Date;
+    expect(deliveredAt.getTime()).toBeGreaterThanOrEqual(before);
+    expect(order.orderStatus).toBe("DELIVERED");
+  });
+
+  it.each([
+    ["unpaid pending order", "PENDING_PAYMENT", "PENDING"],
+    ["failed payment", "PENDING_PAYMENT", "FAILED"],
+    ["cancelled order", "CANCELLED", "SUCCESS"],
+    ["failed payment on confirmed order", "CONFIRMED", "FAILED"],
+  ])("does not deliver a %s", async (_description, orderStatus, paymentStatus) => {
+    mocks.orderUpdateMany.mockResolvedValue({ count: 0 });
+    mocks.orderFindUnique.mockResolvedValue({ orderStatus, paymentStatus });
+
+    await expect(markOrderDelivered("order-1")).rejects.toMatchObject({
+      statusCode: 409,
+    });
+    expect(mocks.orderUpdateMany).toHaveBeenCalledOnce();
+  });
+
+  it("returns an already delivered order idempotently", async () => {
+    const deliveredOrder = {
+      id: "order-1",
+      orderStatus: "DELIVERED",
+      paymentStatus: "SUCCESS",
+      deliveredAt: new Date(),
+    };
+    mocks.orderUpdateMany.mockResolvedValue({ count: 0 });
+    mocks.orderFindUnique.mockResolvedValue(deliveredOrder);
+
+    await expect(markOrderDelivered("order-1")).resolves.toBe(deliveredOrder);
+  });
+
+  it("returns not found for a nonexistent delivery target", async () => {
+    mocks.orderUpdateMany.mockResolvedValue({ count: 0 });
+    mocks.orderFindUnique.mockResolvedValue(null);
+
+    const result = markOrderDelivered("missing");
+    await expect(result).rejects.toBeInstanceOf(OrderManagementError);
+    await expect(result).rejects.toMatchObject({
+      statusCode: 404,
     });
   });
 

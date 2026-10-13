@@ -42,13 +42,23 @@ export default function ProductForm({ product, onSaved, onCancel }: Props) {
 
   const submit = async (e: FormEvent) => {
     e.preventDefault();
+    const price = Number(form.price);
+    const stock = Number(form.stock);
+    if (!Number.isSafeInteger(price) || price < 0 || price > 2_147_483_647) {
+      setError('Price must be a whole number between 0 and 2,147,483,647.');
+      return;
+    }
+    if (!Number.isSafeInteger(stock) || stock < 0 || stock > 2_147_483_647) {
+      setError('Stock must be a whole number between 0 and 2,147,483,647.');
+      return;
+    }
     const body: ProductInput = {
       name: form.name.trim(),
-      price: Number(form.price),
+      price,
       unit: form.unit.trim(),
-      stock: Math.floor(Number(form.stock)),
+      stock,
       description: form.description.trim() || null,
-      imageUrl: form.imageUrl,
+      imageUrl: form.imageUrl.trim(),
     };
     if (!body.imageUrl) return setError('Upload a product image first.');
     setBusy(true);

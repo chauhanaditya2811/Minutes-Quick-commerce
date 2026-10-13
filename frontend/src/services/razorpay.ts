@@ -13,7 +13,7 @@ interface RazorpayOptions {
   order_id: string;
   name: string;
   description?: string;
-  prefill?: { name?: string; email?: string; contact?: string; method?: string };
+  prefill?: { name?: string; email?: string; contact?: string };
   theme?: { color: string };
   handler: (r: RazorpaySuccess) => void;
   modal?: { ondismiss?: () => void };
@@ -68,15 +68,15 @@ export async function openRazorpay(
       order_id: init.razorpayOrderId,
       name: 'Minutes',
       description: 'Hostel delivery order',
-      prefill: { ...prefill, method: 'upi' },
+      prefill,
       theme: { color: '#5145E5' },
       handler: (r) =>
         resolve({
           status: 'success',
           payload: {
-            razorpayOrderId: r.razorpay_order_id,
-            razorpayPaymentId: r.razorpay_payment_id,
-            razorpaySignature: r.razorpay_signature,
+            razorpay_order_id: r.razorpay_order_id,
+            razorpay_payment_id: r.razorpay_payment_id,
+            razorpay_signature: r.razorpay_signature,
           },
         }),
       modal: { ondismiss: () => resolve({ status: 'dismissed' }) },

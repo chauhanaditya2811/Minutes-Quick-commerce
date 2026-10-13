@@ -12,6 +12,7 @@ import AccountPage from '../pages/account/AccountPage';
 import AuthPage from '../pages/auth/AuthPage';
 import DashboardPage from '../pages/dashboard/DashboardPage';
 import NotFoundPage from '../pages/NotFoundPage';
+import { CancellationRefundPage, ContactPage, DeliveryPolicyPage, PrivacyPage, TermsPage } from '../pages/support/PolicyPages';
 
 export const router = createBrowserRouter([
   {
@@ -22,6 +23,12 @@ export const router = createBrowserRouter([
       { path: '/cart', element: <CartPage /> },
       { path: '/login', element: <AuthPage mode="login" /> },
       { path: '/register', element: <AuthPage mode="register" /> },
+      { path: '/forgot-password', element: <AuthPage mode="reset-password" /> },
+      { path: '/contact', element: <ContactPage /> },
+      { path: '/delivery-policy', element: <DeliveryPolicyPage /> },
+      { path: '/cancellation-refund', element: <CancellationRefundPage /> },
+      { path: '/terms', element: <TermsPage /> },
+      { path: '/privacy', element: <PrivacyPage /> },
       { path: '/account', element: <PrivateRoute><AccountPage /></PrivateRoute> },
       { path: '/checkout', element: <PrivateRoute><CheckoutPage /></PrivateRoute> },
       { path: '/orders', element: <PrivateRoute><OrdersPage /></PrivateRoute> },

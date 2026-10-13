@@ -1,13 +1,12 @@
 /**
  * Customer profile from GET /api/users/me.
- * UNCONFIRMED: exact field names (e.g. profile image) — verify against the backend.
  */
 export interface UserProfile {
   name: string | null;
   email: string | null;
   phone: string | null;
   hostel: string | null;
-  floor: string | null;
+  floor: number | null;
   room: string | null;
   profileImage: string | null;
 }
@@ -17,10 +16,19 @@ export interface UpdateProfileInput {
   name: string;
   phone: string;
   hostel: string;
-  floor: string;
+  floor: number;
   room: string;
 }
 
 export function isProfileComplete(p: UserProfile | null): boolean {
-  return Boolean(p && p.name && p.phone && p.hostel && p.floor && p.room);
+  return Boolean(
+    p &&
+      p.name?.trim() &&
+      /^[6-9]\d{9}$/.test(p.phone ?? '') &&
+      p.hostel?.trim() &&
+      Number.isInteger(p.floor) &&
+      p.floor !== null &&
+      p.floor >= 0 &&
+      p.room?.trim(),
+  );
 }

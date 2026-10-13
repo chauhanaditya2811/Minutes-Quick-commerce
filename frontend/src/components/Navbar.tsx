@@ -5,10 +5,10 @@ import { useCart } from '../context/CartContext';
 import { CartIcon, MenuIcon, SearchIcon, UserIcon } from './ui/Icons';
 
 export default function Navbar() {
-  const { firebaseUser, profile, signInWithGoogle, signOut, loading: authLoading } = useAuth();
+  const { firebaseUser, profile, signOut, loading: authLoading } = useAuth();
   const { itemCount } = useCart();
   const navigate = useNavigate();
-  const { pathname } = useLocation();
+  const { pathname, search } = useLocation();
   const [params] = useSearchParams();
   const [menuOpen, setMenuOpen] = useState(false);
   const [profileOpen, setProfileOpen] = useState(false);
@@ -17,6 +17,7 @@ export default function Navbar() {
   const profileRef = useRef<HTMLDivElement>(null);
 
   const query = pathname === '/' ? (params.get('q') ?? '') : '';
+  const returnTo = ['/login', '/register', '/forgot-password'].includes(pathname) ? '/' : `${pathname}${search}`;
   const avatar = profile?.profileImage ?? firebaseUser?.photoURL ?? null;
 
   // Close the menu on navigation, outside click, and Escape.
@@ -103,9 +104,11 @@ export default function Navbar() {
             }}
           >
             {avatar ? (
-              <img className="avatar" src={avatar} alt="" referrerPolicy="no-referrer" />
+              <span className="navbar__avatar">
+                <img className="navbar__avatar-image" src={avatar} alt="" referrerPolicy="no-referrer" />
+              </span>
             ) : firebaseUser ? (
-              <span className="avatar avatar--default" aria-hidden="true" />
+              <span className="navbar__avatar navbar__avatar--default" aria-hidden="true" />
             ) : (
               <UserIcon width={26} height={26} />
             )}
@@ -132,18 +135,14 @@ export default function Navbar() {
                   </button>
                 </>
               ) : (
-                <button
+                <Link
                   role="menuitem"
-                  type="button"
-                  onClick={() => {
-                    setProfileError(null);
-                    void signInWithGoogle().then(() => setProfileOpen(false)).catch((error: unknown) => {
-                      setProfileError(error instanceof Error ? error.message : 'Google sign-in failed. Please try again.');
-                    });
-                  }}
+                  to="/login"
+                  state={{ from: returnTo }}
+                  onClick={() => setProfileOpen(false)}
                 >
-                  Login with Google
-                </button>
+                  Login
+                </Link>
               )}
               {profileError && <p className="dropdown__error" role="alert">{profileError}</p>}
             </div>

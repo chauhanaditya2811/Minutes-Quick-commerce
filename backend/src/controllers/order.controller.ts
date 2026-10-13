@@ -4,6 +4,7 @@ import type { AuthenticatedRequest } from "../middleware/auth.middleware.js";
 import {
   CheckoutError,
   createOrder,
+  getCustomerOrders,
   validateCheckout,
 } from "../services/order.service.js";
 
@@ -23,6 +24,24 @@ const sendCheckoutError = (error: unknown, res: Response): void => {
 
   console.error("Order checkout request failed.", error);
   res.status(500).json({ message: "Unable to process checkout." });
+};
+
+export const getMyOrdersController = async (
+  req: AuthenticatedRequest,
+  res: Response
+): Promise<void> => {
+  if (!req.firebaseUser) {
+    res.status(401).json({ message: "Unauthorized." });
+    return;
+  }
+
+  try {
+    const orders = await getCustomerOrders(req.firebaseUser.uid);
+    res.status(200).json({ orders });
+  } catch (error) {
+    console.error("Order history request failed.", error);
+    res.status(500).json({ message: "Unable to retrieve your orders." });
+  }
 };
 
 // Validates the cart and returns a server-calculated checkout summary.

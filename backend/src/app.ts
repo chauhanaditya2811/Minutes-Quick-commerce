@@ -8,6 +8,7 @@ import adminProductRoutes from "./routes/admin-product.routes.js";
 import settingsRoutes from "./routes/settings.routes.js";
 import adminSettingsRoutes from "./routes/admin-settings.routes.js";
 import orderRoutes from "./routes/order.routes.js";
+import adminOrderRoutes from "./routes/admin-order.routes.js";
 import razorpayWebhookRoutes from "./routes/razorpay-webhook.routes.js";
 
 const app = express();
@@ -29,6 +30,7 @@ app.use("/api/auth", authRoutes);
 app.use("/api/users", userRoutes);
 app.use("/api/products", productRoutes);
 app.use("/api/admin", adminProductRoutes);
+app.use("/api/admin", adminOrderRoutes);
 // Public store settings.
 app.use("/api/settings", settingsRoutes);
 

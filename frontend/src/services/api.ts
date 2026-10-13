@@ -4,9 +4,12 @@ import type { UpdateProfileInput, UserProfile } from '../types/user';
 import type {
   OrderRequest,
   OrderSummary,
+  AdminOrder,
+  CustomerOrder,
   PaymentInitResponse,
   ValidateOrderResponse,
   VerifyPaymentRequest,
+  VerifyPaymentResponse,
 } from '../types/order';
 
 export class ApiError extends Error {
@@ -26,7 +29,7 @@ export function setTokenProvider(fn: TokenProvider) {
 }
 
 interface RequestOptions {
-  method?: 'GET' | 'POST' | 'PUT' | 'DELETE';
+  method?: 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE';
   body?: unknown;
   formData?: FormData;
   auth?: boolean;
@@ -78,80 +81,120 @@ async function request<T>(path: string, opts: RequestOptions = {}): Promise<T> {
   return data as T;
 }
 
-/*
- * Response wrappers are UNCONFIRMED. If the backend returns { products: [...] }
- * or { data: ... } adjust the `unwrap` helpers below — nothing else needs to change.
- */
-function unwrap<T>(data: unknown, key: string): T {
+function envelopeValue<T>(data: unknown, key: string): T {
   if (data && typeof data === 'object' && !Array.isArray(data) && key in data) {
     return (data as Record<string, T>)[key];
   }
-  return data as T;
+  throw new ApiError(`The server response did not include "${key}".`, 502);
+}
+
+interface BackendOrder {
+  id: string;
+  orderNumber: string;
+  orderStatus: OrderSummary['status'];
+  paymentStatus: NonNullable<OrderSummary['paymentStatus']>;
+  subtotal: number;
+  deliveryFee: number;
+  total: number;
+  createdAt: string;
+  items: {
+    productId: string;
+    productName: string;
+    quantity: number;
+    price: number;
+  }[];
+}
+
+function mapOrder(order: BackendOrder): OrderSummary {
+  return {
+    id: order.id,
+    orderNumber: order.orderNumber,
+    status: order.orderStatus,
+    paymentStatus: order.paymentStatus,
+    subtotal: order.subtotal,
+    deliveryFee: order.deliveryFee,
+    total: order.total,
+    createdAt: order.createdAt,
+    items: order.items.map((item) => ({
+      productId: item.productId,
+      name: item.productName,
+      quantity: item.quantity,
+      price: item.price,
+    })),
+  };
 }
 
 export const api = {
   // Public
-  getProducts: async () => unwrap<Product[]>(await request<unknown>('/api/products'), 'products'),
-  getProduct: async (id: string) =>
-    unwrap<Product>(await request<unknown>(`/api/products/${encodeURIComponent(id)}`), 'product'),
-  getSettings: async () => unwrap<StoreSettings>(await request<unknown>('/api/settings'), 'settings'),
+  getProducts: () => request<Product[]>('/api/products'),
+  getProduct: (id: string) => request<Product>(`/api/products/${encodeURIComponent(id)}`),
+  getSettings: () => request<StoreSettings>('/api/settings'),
 
   // Customer
-  getMe: async () => unwrap<UserProfile>(await request<unknown>('/api/users/me', { auth: true }), 'user'),
-  updateMe: async (input: UpdateProfileInput) =>
-    unwrap<UserProfile>(
-      await request<unknown>('/api/users/me', { method: 'PUT', body: input, auth: true }),
-      'user',
-    ),
+  getMe: () => request<UserProfile>('/api/users/me', { auth: true }),
+  updateMe: (input: UpdateProfileInput) =>
+    request<UserProfile>('/api/users/me', { method: 'PUT', body: input, auth: true }),
 
   // Orders & payment
+  getMyOrders: async () =>
+    envelopeValue<CustomerOrder[]>(await request<unknown>('/api/orders/my', { auth: true }), 'orders'),
   validateOrder: (body: OrderRequest) =>
     request<ValidateOrderResponse>('/api/orders/validate', { method: 'POST', body, auth: true }),
   createOrder: async (body: OrderRequest) =>
-    unwrap<OrderSummary>(
-      await request<unknown>('/api/orders', { method: 'POST', body, auth: true }),
-      'order',
+    mapOrder(
+      envelopeValue<BackendOrder>(
+        await request<unknown>('/api/orders', { method: 'POST', body, auth: true }),
+        'order',
+      ),
     ),
-  initPayment: (orderId: string) =>
-    request<PaymentInitResponse>(`/api/orders/${encodeURIComponent(orderId)}/payment`, {
-      method: 'POST',
-      auth: true,
-    }),
+  initPayment: async (orderId: string) =>
+    envelopeValue<PaymentInitResponse>(
+      await request<unknown>(`/api/orders/${encodeURIComponent(orderId)}/payment`, {
+        method: 'POST',
+        auth: true,
+      }),
+      'payment',
+    ),
   verifyPayment: async (orderId: string, body: VerifyPaymentRequest) =>
-    unwrap<OrderSummary>(
+    envelopeValue<VerifyPaymentResponse>(
       await request<unknown>(`/api/orders/${encodeURIComponent(orderId)}/payment/verify`, {
         method: 'POST',
         body,
         auth: true,
       }),
-      'order',
+      'payment',
     ),
 
   // Admin (backend enforces authorization)
-  getAdminSettings: async () =>
-    unwrap<StoreSettings>(await request<unknown>('/api/admin/settings', { auth: true }), 'settings'),
-  updateAdminSettings: async (body: StoreSettings) =>
-    unwrap<StoreSettings>(
-      await request<unknown>('/api/admin/settings', { method: 'PUT', body, auth: true }),
-      'settings',
+  getAdminOrders: async () =>
+    envelopeValue<AdminOrder[]>(await request<unknown>('/api/admin/orders', { auth: true }), 'orders'),
+  markAdminOrderDelivered: async (orderId: string) =>
+    envelopeValue<AdminOrder>(
+      await request<unknown>(`/api/admin/orders/${encodeURIComponent(orderId)}/status`, {
+        method: 'PATCH',
+        body: { status: 'DELIVERED' },
+        auth: true,
+      }),
+      'order',
     ),
+  getAdminSettings: () => request<StoreSettings>('/api/admin/settings', { auth: true }),
+  updateAdminSettings: (body: StoreSettings) =>
+    request<StoreSettings>('/api/admin/settings', { method: 'PUT', body, auth: true }),
   createProduct: (body: ProductInput) =>
     request<Product>('/api/admin/products', { method: 'POST', body, auth: true }),
   updateProduct: (id: string, body: ProductInput) =>
     request<Product>(`/api/admin/products/${encodeURIComponent(id)}`, { method: 'PUT', body, auth: true }),
   deleteProduct: (id: string) =>
     request<unknown>(`/api/admin/products/${encodeURIComponent(id)}`, { method: 'DELETE', auth: true }),
-  /** UNCONFIRMED: multipart field name ("image") and response ({ imageUrl } or { url }). */
   uploadProductImage: async (file: File): Promise<string> => {
     const fd = new FormData();
     fd.append('image', file);
-    const data = await request<{ imageUrl?: string; url?: string }>('/api/admin/products/images', {
+    const data = await request<{ imageUrl: string; publicId: string }>('/api/admin/products/images', {
       method: 'POST',
       formData: fd,
       auth: true,
     });
-    const url = data.imageUrl ?? data.url;
-    if (!url) throw new ApiError('Upload succeeded but no image URL was returned.', 500);
-    return url;
+    if (!data.imageUrl) throw new ApiError('Upload succeeded but no image URL was returned.', 502);
+    return data.imageUrl;
   },
 };

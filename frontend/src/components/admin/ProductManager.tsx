@@ -48,18 +48,20 @@ export default function ProductManager() {
       {message && <Notice tone="success">{message}</Notice>}
       {loading && <Loading />}
       {error && <Notice tone="error">{error}</Notice>}
-      <div className="table-wrap">
-        <table className="table">
-          <thead><tr><th>Product</th><th>Price</th><th>Stock</th><th><span className="sr-only">Actions</span></th></tr></thead>
+      <div className="table-wrap product-table-wrap">
+        <table className="table product-table">
+          <thead><tr><th>Product</th><th>Price</th><th>Stock</th><th>Actions</th></tr></thead>
           <tbody>
             {(data ?? []).map((p) => (
               <tr key={p.id}>
-                <td><span className="table__name"><img src={p.imageUrl} alt="" />{p.name}<small>{p.unit}</small></span></td>
-                <td>{formatINR(p.price)}</td>
-                <td>{p.stock > 0 ? p.stock : <span className="stock stock--out">Out of stock</span>}</td>
-                <td className="table__actions">
-                  <button type="button" className="link-btn" disabled={previewMode} onClick={() => setEditing(p)}>Edit</button>
-                  <button type="button" className="link-btn link-btn--danger" disabled={previewMode} onClick={() => void remove(p)}>Delete</button>
+                <td data-label="Product"><span className="table__name"><img src={p.imageUrl} alt="" /><span className="table__name-copy"><span>{p.name}</span><small>{p.unit}</small></span></span></td>
+                <td data-label="Price">{formatINR(p.price)}</td>
+                <td data-label="Stock">{p.stock > 0 ? p.stock : <span className="stock stock--out">Out of stock</span>}</td>
+                <td className="table__actions" data-label="Actions">
+                  <span className="product-table__action-links">
+                    <button type="button" className="link-btn" disabled={previewMode} onClick={() => setEditing(p)}>Edit</button>
+                    <button type="button" className="link-btn link-btn--danger" disabled={previewMode} onClick={() => void remove(p)}>Delete</button>
+                  </span>
                 </td>
               </tr>
             ))}

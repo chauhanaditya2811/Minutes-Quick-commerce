@@ -12,7 +12,7 @@ export default function HomePage() {
   const [params] = useSearchParams();
   const q = (params.get('q') ?? '').trim().toLowerCase();
   const { data: products, loading, error, reload } = useProducts();
-  const { data: settings } = useStoreSettings();
+  const { data: settings, loading: settingsLoading, error: settingsError, reload: reloadSettings } = useStoreSettings();
 
   const visible = useMemo(
     () =>
@@ -31,8 +31,14 @@ export default function HomePage() {
             {settings.storeOpen ? 'Open now' : 'Closed'} · Delivery {formatINR(settings.deliveryFee)} · Minimum order {formatINR(settings.minimumOrder)}
           </p>
         )}
+        {settingsLoading && <p className="muted">Loading store information…</p>}
       </div>
 
+      {settingsError && (
+        <Notice tone="error">
+          Could not load store information: {settingsError} <button type="button" className="link-btn" onClick={reloadSettings}>Try again</button>
+        </Notice>
+      )}
       {settings && !settings.storeOpen && (
         <Notice tone="warning">The store is closed right now. You can browse, but ordering is paused.</Notice>
       )}
@@ -48,7 +54,7 @@ export default function HomePage() {
           <p>{q ? 'Try a different word.' : 'Check back soon.'}</p>
         </EmptyState>
       )}
-      {!loading && visible.length > 0 && <ProductGrid products={visible} storeOpen={settings?.storeOpen ?? true} />}
+      {!loading && visible.length > 0 && <ProductGrid products={visible} storeOpen={settings?.storeOpen ?? false} />}
     </div>
   );
 }

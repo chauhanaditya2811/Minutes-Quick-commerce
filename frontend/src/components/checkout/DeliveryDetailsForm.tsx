@@ -23,7 +23,7 @@ export default function DeliveryDetailsForm({ submitLabel, onSaved }: Props) {
         name: profile.name ?? '',
         phone: profile.phone ?? '',
         hostel: profile.hostel ?? '',
-        floor: profile.floor ?? '',
+        floor: profile.floor === null ? '' : String(profile.floor),
         room: profile.room ?? '',
       });
     }
@@ -39,11 +39,21 @@ export default function DeliveryDetailsForm({ submitLabel, onSaved }: Props) {
     setSaving(true);
     setError(null);
     try {
+      const floor = Number(form.floor);
+      if (!Number.isSafeInteger(floor) || floor < 0) {
+        setError('Floor must be a whole number greater than or equal to 0.');
+        return;
+      }
+      const phone = form.phone.trim();
+      if (!/^[6-9]\d{9}$/.test(phone)) {
+        setError('Phone must be exactly 10 digits and start with 6-9.');
+        return;
+      }
       await saveProfile({
         name: form.name.trim(),
-        phone: form.phone.trim(),
+        phone,
         hostel: form.hostel.trim(),
-        floor: form.floor.trim(),
+        floor,
         room: form.room.trim(),
       });
       setSaved(true);
@@ -65,7 +75,7 @@ export default function DeliveryDetailsForm({ submitLabel, onSaved }: Props) {
       <Field label="Phone number" value={form.phone} onChange={set('phone')} required type="tel" inputMode="tel" autoComplete="tel" placeholder="10-digit mobile number" />
       <Field label="Hostel" value={form.hostel} onChange={set('hostel')} required placeholder="e.g. Block C" />
       <div className="form__row">
-        <Field label="Floor" value={form.floor} onChange={set('floor')} required placeholder="e.g. 2" />
+        <Field label="Floor" type="number" min={0} step={1} inputMode="numeric" value={form.floor} onChange={set('floor')} required placeholder="e.g. 2" />
         <Field label="Room" value={form.room} onChange={set('room')} required placeholder="e.g. 214" />
       </div>
       {error && <Notice tone="error">{error}</Notice>}

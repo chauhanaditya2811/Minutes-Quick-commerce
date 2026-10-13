@@ -442,6 +442,65 @@ describe("Razorpay payment verification", () => {
     });
   });
 
+  it.each(["card", "netbanking", "wallet"])(
+    "confirms an order after verifying a captured %s payment",
+    async (method) => {
+      mocks.razorpayPaymentsFetch.mockResolvedValue({
+        id: "pay_123",
+        order_id: "order_rzp_123",
+        amount: 14000,
+        currency: "INR",
+        method,
+        status: "captured",
+        captured: true,
+      });
+
+      await expect(
+        verifyRazorpayPaymentForCustomer(
+          "firebase-user-1",
+          "order-1",
+          {
+            razorpay_order_id: "order_rzp_123",
+            razorpay_payment_id: "pay_123",
+            razorpay_signature: createPaymentSignature(),
+          }
+        )
+      ).resolves.toMatchObject({
+        paymentStatus: "SUCCESS",
+        orderStatus: "CONFIRMED",
+      });
+    }
+  );
+
+  it("rejects a captured payment with an unsupported method", async () => {
+    mocks.razorpayPaymentsFetch.mockResolvedValue({
+      id: "pay_123",
+      order_id: "order_rzp_123",
+      amount: 14000,
+      currency: "INR",
+      method: "emi",
+      status: "captured",
+      captured: true,
+    });
+
+    await expect(
+      verifyRazorpayPaymentForCustomer(
+        "firebase-user-1",
+        "order-1",
+        {
+          razorpay_order_id: "order_rzp_123",
+          razorpay_payment_id: "pay_123",
+          razorpay_signature: createPaymentSignature(),
+        }
+      )
+    ).rejects.toMatchObject({
+      message: "The gateway payment does not match this order.",
+      statusCode: 409,
+    });
+
+    expect(mocks.transaction).not.toHaveBeenCalled();
+  });
+
   it("rejects an invalid signature before fetching payment details", async () => {
     await expect(
       verifyRazorpayPaymentForCustomer(
@@ -488,6 +547,54 @@ describe("Razorpay payment verification", () => {
     });
 
     expect(mocks.razorpayPaymentsFetch).not.toHaveBeenCalled();
+  });
+
+  it("rejects a Razorpay order ID that is not linked to the customer's attempt", async () => {
+    mocks.paymentAttemptFindFirst.mockResolvedValue(null);
+
+    await expect(
+      verifyRazorpayPaymentForCustomer(
+        "firebase-user-1",
+        "order-1",
+        {
+          razorpay_order_id: "order_rzp_other",
+          razorpay_payment_id: "pay_123",
+          razorpay_signature: createPaymentSignature("order_rzp_other"),
+        }
+      )
+    ).rejects.toMatchObject({
+      message: "Payment attempt not found.",
+      statusCode: 404,
+    });
+
+    expect(mocks.razorpayPaymentsFetch).not.toHaveBeenCalled();
+  });
+
+  it("rejects a gateway payment ID that differs from the signed payment ID", async () => {
+    mocks.razorpayPaymentsFetch.mockResolvedValue({
+      id: "pay_other",
+      order_id: "order_rzp_123",
+      amount: 14000,
+      currency: "INR",
+      method: "card",
+      status: "captured",
+      captured: true,
+    });
+
+    await expect(
+      verifyRazorpayPaymentForCustomer(
+        "firebase-user-1",
+        "order-1",
+        {
+          razorpay_order_id: "order_rzp_123",
+          razorpay_payment_id: "pay_123",
+          razorpay_signature: createPaymentSignature(),
+        }
+      )
+    ).rejects.toMatchObject({
+      message: "The gateway payment does not match this order.",
+      statusCode: 409,
+    });
   });
 
   it("does not confirm an authorized but uncaptured payment", async () => {
@@ -542,6 +649,67 @@ describe("Razorpay payment verification", () => {
       )
     ).rejects.toMatchObject({
       message: "The gateway payment does not match this order.",
+      statusCode: 409,
+    });
+
+    expect(mocks.transaction).not.toHaveBeenCalled();
+  });
+
+  it("rejects a payment with an incorrect currency", async () => {
+    mocks.razorpayPaymentsFetch.mockResolvedValue({
+      id: "pay_123",
+      order_id: "order_rzp_123",
+      amount: 14000,
+      currency: "USD",
+      method: "card",
+      status: "captured",
+      captured: true,
+    });
+
+    await expect(
+      verifyRazorpayPaymentForCustomer(
+        "firebase-user-1",
+        "order-1",
+        {
+          razorpay_order_id: "order_rzp_123",
+          razorpay_payment_id: "pay_123",
+          razorpay_signature: createPaymentSignature(),
+        }
+      )
+    ).rejects.toMatchObject({
+      message: "The gateway payment does not match this order.",
+      statusCode: 409,
+    });
+  });
+
+  it.each([
+    ["failed", false],
+    ["pending", false],
+    ["authorized", false],
+    ["captured", false],
+  ])("does not confirm a %s or uncaptured payment", async (status, captured) => {
+    mocks.razorpayPaymentsFetch.mockResolvedValue({
+      id: "pay_123",
+      order_id: "order_rzp_123",
+      amount: 14000,
+      currency: "INR",
+      method: "wallet",
+      status,
+      captured,
+    });
+
+    await expect(
+      verifyRazorpayPaymentForCustomer(
+        "firebase-user-1",
+        "order-1",
+        {
+          razorpay_order_id: "order_rzp_123",
+          razorpay_payment_id: "pay_123",
+          razorpay_signature: createPaymentSignature(),
+        }
+      )
+    ).rejects.toMatchObject({
+      message: expect.stringContaining("has not been captured"),
       statusCode: 409,
     });
 

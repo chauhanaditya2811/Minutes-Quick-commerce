@@ -1,10 +1,11 @@
 import { useCart } from '../../context/CartContext';
 import { formatINR } from '../../utils/format';
+import type { ValidateOrderResponse } from '../../types/order';
 
 interface Props {
   deliveryFee: number | null;
   /** Validated figures from POST /api/orders/validate, when available. */
-  validated?: { subtotal?: number; deliveryFee?: number; total: number } | null;
+  validated?: ValidateOrderResponse['checkout'] | null;
 }
 
 export default function OrderSummary({ deliveryFee, validated }: Props) {

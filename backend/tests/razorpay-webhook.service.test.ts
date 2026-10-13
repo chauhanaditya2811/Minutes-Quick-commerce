@@ -236,6 +236,38 @@ describe("Razorpay webhook service", () => {
     });
   });
 
+  it.each(["card", "netbanking", "wallet"])(
+    "confirms the order for a valid captured %s payment",
+    async (method) => {
+      const { rawBody, signature } = makeSignedBody("payment.captured", {
+        method,
+      });
+
+      await expect(
+        processRazorpayWebhook(rawBody, signature, `evt_${method}_123`)
+      ).resolves.toMatchObject({
+        received: true,
+        processed: true,
+        paymentStatus: "SUCCESS",
+      });
+    }
+  );
+
+  it("rejects a captured webhook payment with an unsupported method", async () => {
+    const { rawBody, signature } = makeSignedBody("payment.captured", {
+      method: "emi",
+    });
+
+    await expect(
+      processRazorpayWebhook(rawBody, signature, "evt_unsupported_method_123")
+    ).rejects.toMatchObject({
+      message: "The captured payment is not a supported payment method.",
+      statusCode: 409,
+    });
+
+    expect(mocks.paymentAttemptFindFirst).not.toHaveBeenCalled();
+  });
+
   it("rejects a captured payment with an incorrect amount", async () => {
     const { rawBody, signature } = makeSignedBody(
       "payment.captured",

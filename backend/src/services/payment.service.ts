@@ -6,6 +6,7 @@ import {
   getRazorpayKeyId,
   getRazorpayKeySecret,
 } from "../config/razorpay.js";
+import { isSupportedRazorpayPaymentMethod } from "../config/razorpay-payment-methods.js";
 import { CheckoutError } from "./order.service.js";
 
 // Create or reuse a Razorpay order for an existing Minutes order.
@@ -338,15 +339,23 @@ export const verifyRazorpayPaymentForCustomer = async (
 
   const expectedAmountInPaise = attempt.amount * 100;
 
-  if (
-    !Number.isSafeInteger(expectedAmountInPaise) ||
-    attempt.amount !== attempt.order.total ||
-    gatewayPayment.id !== razorpayPaymentId ||
-    gatewayPayment.order_id !== attempt.razorpayOrderId ||
-    gatewayPayment.amount !== expectedAmountInPaise ||
-    gatewayPayment.currency !== "INR" ||
-    gatewayPayment.method !== "upi"
-  ) {
+  const paymentMatchesOrder = {
+    validExpectedAmount: Number.isSafeInteger(expectedAmountInPaise),
+    attemptAmountMatchesOrder: attempt.amount === attempt.order.total,
+    paymentIdMatches: gatewayPayment.id === razorpayPaymentId,
+    razorpayOrderIdMatches:
+      gatewayPayment.order_id === attempt.razorpayOrderId,
+    amountMatches: gatewayPayment.amount === expectedAmountInPaise,
+    currencyMatches: gatewayPayment.currency === "INR",
+    supportedMethod: isSupportedRazorpayPaymentMethod(
+      gatewayPayment.method
+    ),
+  };
+
+  if (Object.values(paymentMatchesOrder).some((matches) => !matches)) {
+    // Deliberately log only validation outcomes: never payment IDs, signatures,
+    // credentials, or customer details.
+    console.warn("Razorpay payment verification mismatch", paymentMatchesOrder);
     throw new CheckoutError(
       "The gateway payment does not match this order.",
       409
@@ -358,6 +367,10 @@ export const verifyRazorpayPaymentForCustomer = async (
     gatewayPayment.status !== "captured" ||
     gatewayPayment.captured !== true
   ) {
+    console.warn("Razorpay payment is not captured", {
+      capturedStatus: gatewayPayment.status === "captured",
+      capturedFlag: gatewayPayment.captured === true,
+    });
     throw new CheckoutError(
       "The payment has not been captured. The order remains unconfirmed.",
       409

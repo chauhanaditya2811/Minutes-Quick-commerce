@@ -2,6 +2,7 @@
 import { createHmac, timingSafeEqual } from "node:crypto";
 import { prisma } from "../config/database.js";
 import { getRazorpayWebhookSecret } from "../config/razorpay.js";
+import { isSupportedRazorpayPaymentMethod } from "../config/razorpay-payment-methods.js";
 
 // Webhook errors carry an HTTP status for the controller.
 export class RazorpayWebhookError extends Error {
@@ -148,11 +149,16 @@ const parseWebhookPayment = (
     (
       entity.status !== "captured" ||
       entity.captured !== true ||
-      entity.method !== "upi"
+      !isSupportedRazorpayPaymentMethod(entity.method)
     )
   ) {
+    console.warn("Razorpay captured webhook payment rejected", {
+      capturedStatus: entity.status === "captured",
+      capturedFlag: entity.captured === true,
+      supportedMethod: isSupportedRazorpayPaymentMethod(entity.method),
+    });
     throw new RazorpayWebhookError(
-      "The captured payment is not a valid UPI payment.",
+      "The captured payment is not a supported payment method.",
       409
     );
   }
@@ -312,9 +318,12 @@ export const processRazorpayWebhook = async (
     );
   }
 
-  if (eventName === "payment.captured" && payment.method !== "upi") {
+  if (
+    eventName === "payment.captured" &&
+    !isSupportedRazorpayPaymentMethod(payment.method)
+  ) {
     throw new RazorpayWebhookError(
-      "Only captured UPI payments can confirm an order.",
+      "Only supported captured payments can confirm an order.",
       409
     );
   }

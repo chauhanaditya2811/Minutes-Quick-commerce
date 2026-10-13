@@ -3,9 +3,11 @@ import {
   GoogleAuthProvider,
   createUserWithEmailAndPassword,
   onAuthStateChanged,
+  sendPasswordResetEmail,
   signInWithEmailAndPassword,
   signInWithPopup,
   signOut as fbSignOut,
+  updateProfile,
   type User,
 } from 'firebase/auth';
 import { firebaseAuth, firebaseConfigured } from '../firebase/firebase';
@@ -22,7 +24,8 @@ interface AuthContextValue {
   loading: boolean;
   signInWithGoogle: () => Promise<void>;
   signInWithEmail: (email: string, password: string) => Promise<void>;
-  registerWithEmail: (email: string, password: string) => Promise<void>;
+  registerWithEmail: (name: string, email: string, password: string) => Promise<void>;
+  sendPasswordReset: (email: string) => Promise<void>;
   signOut: () => Promise<void>;
   refreshProfile: () => Promise<void>;
   saveProfile: (input: UpdateProfileInput) => Promise<void>;
@@ -42,11 +45,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const refreshProfile = useCallback(async () => {
-    if (!apiConfigured || !firebaseAuth?.currentUser) return;
+    const currentUser = firebaseAuth?.currentUser;
+    if (!apiConfigured || !currentUser) return;
     try {
-      setProfile(await api.getMe());
+      const nextProfile = await api.getMe();
+      if (firebaseAuth?.currentUser?.uid !== currentUser.uid) return;
+      setProfile(nextProfile);
       setProfileError(null);
     } catch (e) {
+      if (firebaseAuth?.currentUser?.uid !== currentUser.uid) return;
+      setProfile(null);
       setProfileError(e instanceof Error ? e.message : 'Could not load your profile.');
     }
   }, []);
@@ -56,8 +64,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return onAuthStateChanged(firebaseAuth, (u) => {
       setFirebaseUser(u);
       setLoading(false);
+      setProfile(null);
+      setProfileError(null);
       if (u) void refreshProfile();
-      else setProfile(null);
     });
   }, [refreshProfile]);
 
@@ -79,15 +88,22 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       signInWithEmail: async (email, password) => {
         await signInWithEmailAndPassword(requireAuth(), email, password);
       },
-      registerWithEmail: async (email, password) => {
-        await createUserWithEmailAndPassword(requireAuth(), email, password);
+      registerWithEmail: async (name, email, password) => {
+        const userCredential = await createUserWithEmailAndPassword(requireAuth(), email, password);
+        await updateProfile(userCredential.user, { displayName: name });
+        await userCredential.user.getIdToken(true);
+      },
+      sendPasswordReset: async (email) => {
+        await sendPasswordResetEmail(requireAuth(), email);
       },
       signOut: async () => {
         if (firebaseAuth) await fbSignOut(firebaseAuth);
       },
       refreshProfile,
       saveProfile: async (input) => {
-        setProfile(await api.updateMe(input));
+        const nextProfile = await api.updateMe(input);
+        setProfile(nextProfile);
+        setProfileError(null);
       },
     }),
     [firebaseUser, profile, profileError, loading, refreshProfile],

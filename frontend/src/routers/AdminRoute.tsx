@@ -4,6 +4,7 @@ import { ApiError, api } from '../services/api';
 import Loading from '../components/Loading';
 import Notice from '../components/ui/Notice';
 import { GoogleIcon } from '../components/ui/Icons';
+import { getAuthErrorMessage } from '../utils/authError';
 
 type AccessState =
   | { uid: string; status: 'checking' | 'allowed' | 'denied' }
@@ -54,7 +55,7 @@ export default function AdminRoute({ children }: { children: ReactNode }) {
     try {
       await signInWithGoogle();
     } catch (error) {
-      setAuthError(error instanceof Error ? error.message : 'Google sign-in failed. Please try again.');
+      setAuthError(getAuthErrorMessage(error, 'Google sign-in failed. Please try again.'));
     } finally {
       setAuthBusy(false);
     }
