@@ -4,9 +4,10 @@ import { useProducts } from '../../hooks/useProducts';
 import { useStoreSettings } from '../../hooks/useStoreSettings';
 import { formatINR } from '../../utils/format';
 import ProductGrid from '../../components/products/ProductGrid';
-import Loading from '../../components/Loading';
+//import Loading from '../../components/Loading';
 import Notice from '../../components/ui/Notice';
 import EmptyState from '../../components/ui/EmptyState';
+import ProductGridSkeleton from '../../components/skeletons/ProductGridSkeleton';
 
 export default function HomePage() {
   const [params] = useSearchParams();
@@ -43,7 +44,7 @@ export default function HomePage() {
         <Notice tone="warning">The store is closed right now. You can browse, but ordering is paused.</Notice>
       )}
 
-      {loading && <Loading label="Loading products…" />}
+   {loading && <ProductGridSkeleton />}
       {error && (
         <Notice tone="error">
           {error} <button type="button" className="link-btn" onClick={reload}>Try again</button>

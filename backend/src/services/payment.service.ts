@@ -1,5 +1,6 @@
 
 import { prisma } from "../config/database.js";
+import { notifyOwner } from "./telegram.service.js";
 import { createHmac, timingSafeEqual } from "node:crypto";
 import {
   getRazorpayClient,
@@ -379,7 +380,7 @@ export const verifyRazorpayPaymentForCustomer = async (
 
   // Atomically update the order, the exact payment attempt, and Payment.
   // Repeated verification of the same successful payment is idempotent.
-  return prisma.$transaction(async (tx) => {
+  const result = await prisma.$transaction(async (tx) => {
     const currentOrder = await tx.order.findUnique({
       where: { id: orderId },
       select: {
@@ -419,6 +420,7 @@ export const verifyRazorpayPaymentForCustomer = async (
         razorpayPaymentId,
         paymentStatus: "SUCCESS" as const,
         orderStatus: currentOrder.orderStatus,
+        newlyConfirmed: false as const,
       };
     }
 
@@ -512,7 +514,16 @@ export const verifyRazorpayPaymentForCustomer = async (
       razorpayOrderId: attempt.razorpayOrderId,
       razorpayPaymentId,
       paymentStatus: "SUCCESS" as const,
+      newlyConfirmed: true as const,
       orderStatus: "CONFIRMED" as const,
     };
   });
+
+  // Separate internal flag from public response and send Telegram notification if newly confirmed.
+  const { newlyConfirmed, ...paymentResult } = result;
+  if (newlyConfirmed) {
+    // Fire‑and‑forget notification; errors are logged inside notifyOwner.
+    void notifyOwner(orderId, String(gatewayPayment.method ?? "Unknown"));
+  }
+  return paymentResult;
 };

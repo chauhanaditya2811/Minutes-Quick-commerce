@@ -3,9 +3,11 @@ import { api } from '../../services/api';
 import { useAsync } from '../../hooks/useAsync';
 import type { CustomerOrder } from '../../types/order';
 import { formatDate, formatINR } from '../../utils/format';
-import Loading from '../../components/Loading';
+//import Loading from '../../components/Loading';
 import EmptyState from '../../components/ui/EmptyState';
 import Notice from '../../components/ui/Notice';
+import OrdersPageSkeleton from '../../components/skeletons/OrdersPageSkeleton';
+
 
 export default function OrdersPage() {
   const { data: orders, loading, error, reload } = useAsync<CustomerOrder[]>(
@@ -13,7 +15,8 @@ export default function OrdersPage() {
     [],
   );
 
-  if (loading) return <Loading label="Loading your orders…" />;
+  //if (loading) return <Loading label="Loading your orders…" />;
+if (loading) return <OrdersPageSkeleton />;
 
   if (error) {
     return (

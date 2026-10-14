@@ -60,7 +60,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   useEffect(() => {
-    if (!firebaseAuth) return;
+    if (!firebaseAuth) {
+      // No Firebase configured – nothing to wait for.
+      setLoading(false);
+      return;
+    }
     return onAuthStateChanged(firebaseAuth, (u) => {
       setFirebaseUser(u);
       setLoading(false);

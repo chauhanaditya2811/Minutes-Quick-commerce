@@ -3,11 +3,12 @@ import { useProduct } from '../../hooks/useProducts';
 import { useStoreSettings } from '../../hooks/useStoreSettings';
 import { useCart } from '../../context/CartContext';
 import { formatINR } from '../../utils/format';
-import Loading from '../../components/Loading';
+//import Loading from '../../components/Loading';
 import Notice from '../../components/ui/Notice';
 import EmptyState from '../../components/ui/EmptyState';
 import QuantityStepper from '../../components/ui/QuantityStepper';
 import { CartIcon } from '../../components/ui/Icons';
+import ProductDetailsSkeleton from '../../components/skeletons/ProductDetailsSkeleton';
 
 export default function ProductDetailsPage() {
   const { id } = useParams();
@@ -15,7 +16,9 @@ export default function ProductDetailsPage() {
   const { data: settings, error: settingsError, reload: reloadSettings } = useStoreSettings();
   const { quantityOf, addItem, setQuantity } = useCart();
 
-  if (loading) return <Loading />;
+  //if (loading) return <Loading />;
+  if (loading) return <ProductDetailsSkeleton />;
+
   if (error) return <Notice tone="error">{error}</Notice>;
   if (!product) {
     return (

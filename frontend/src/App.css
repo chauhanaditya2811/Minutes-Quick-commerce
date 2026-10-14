@@ -360,3 +360,83 @@
   .admin-state__actions { flex-direction: column; }
   .admin-state__actions .btn { width: 100%; }
 }
+/* ---------- Product skeleton loading ---------- */
+.product-skeleton-grid {
+  align-items: stretch;
+}
+
+.product-skeleton-card {
+  pointer-events: none;
+}
+
+.product-skeleton-card__media {
+  overflow: hidden;
+  line-height: 0;
+}
+
+.product-skeleton-card__media .react-loading-skeleton {
+  display: block;
+}
+
+.product-skeleton-card__body {
+  gap: 8px;
+}
+
+.product-skeleton-card__price {
+  margin-top: auto;
+  padding-top: 4px;
+}
+
+.product-skeleton-card__button {
+  display: block;
+  width: 100%;
+  overflow: hidden;
+  margin-top: 4px;
+  line-height: 0;
+}
+
+/* ---------- Orders page skeleton ---------- */
+.orders-skeleton-list {
+  pointer-events: none;
+}
+
+.orders-skeleton-list .orders__top,
+.orders-skeleton-list .orders__statuses,
+.orders-skeleton-list .orders__line-item {
+  align-items: center;
+}
+
+.orders-skeleton-list .summary-list__name {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.orders-skeleton-list .totals dt,
+.orders-skeleton-list .totals dd {
+  display: flex;
+  align-items: center;
+}
+
+/* ---------- Product details skeleton ---------- */
+.product-detail-skeleton {
+  pointer-events: none;
+}
+
+.product-detail-skeleton__media {
+  overflow: hidden;
+}
+
+.product-detail-skeleton__media .react-loading-skeleton {
+  display: block;
+}
+
+.product-detail-skeleton__description {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.product-detail-skeleton__description .react-loading-skeleton {
+  display: block;
+}
