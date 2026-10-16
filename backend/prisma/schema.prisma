@@ -14,7 +14,8 @@ model User {
   name         String?
   profileImage String?
   phone        String?
-  hostel       String?
+  hostelId     String?
+  hostel       Hostel?  @relation(fields: [hostelId], references: [id])
   floor        Int?
   room         String?
 
@@ -25,6 +26,17 @@ model User {
   updatedAt    DateTime @updatedAt
 
   @@map("users")
+}
+
+model Hostel {
+  id        String   @id @default(cuid())
+  name      String   @unique
+  isActive  Boolean  @default(true)
+  users     User[]
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("hostels")
 }
 
 model Product {

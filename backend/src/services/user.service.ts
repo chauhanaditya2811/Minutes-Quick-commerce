@@ -13,6 +13,7 @@ export const getOrCreateUser = async (firebaseUser: FirebaseUser) => {
     where: {
       firebaseUid: firebaseUser.uid,
     },
+    include: { hostel: true },
   });
 
   if (existingUser) {
@@ -30,6 +31,7 @@ export const getOrCreateUser = async (firebaseUser: FirebaseUser) => {
       name: firebaseUser.name ?? null,
       profileImage: firebaseUser.picture ?? null,
     },
+    include: { hostel: true },
   });
 
   return newUser;
@@ -38,7 +40,7 @@ export const getOrCreateUser = async (firebaseUser: FirebaseUser) => {
 export interface UpdateUserProfile {
   name: string;
   phone: string;
-  hostel: string;
+  hostelId: string;
   floor: number;
   room: string;
 }
@@ -55,10 +57,11 @@ export const updateUserProfile = async (
     data: {
       name: data.name,
       phone: data.phone,
-      hostel: data.hostel,
+      hostelId: data.hostelId,
       floor: data.floor,
       room: data.room,
     },
+    include: { hostel: true },
   });
 
   return updatedUser;

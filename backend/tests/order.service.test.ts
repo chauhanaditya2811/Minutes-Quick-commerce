@@ -3,6 +3,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const mocks = vi.hoisted(() => ({
   userFindUnique: vi.fn(),
+  hostelFindUnique: vi.fn(),
   settingFindUnique: vi.fn(),
   productFindMany: vi.fn(),
   orderCreate: vi.fn(),
@@ -17,6 +18,7 @@ const mocks = vi.hoisted(() => ({
 vi.mock("../src/config/database.js", () => ({
   prisma: {
     user: { findUnique: mocks.userFindUnique },
+    hostel: { findUnique: mocks.hostelFindUnique },
     setting: { findUnique: mocks.settingFindUnique },
     product: { findMany: mocks.productFindMany },
     order: {
@@ -48,10 +50,12 @@ const customer = {
   name: "Test Student",
   profileImage: null,
   phone: "9876543210",
-  hostel: "Hostel A",
+  hostelId: "hostel-1",
   floor: 2,
   room: "204",
 };
+
+const hostel = { id: "hostel-1", name: "Hostel A", isActive: true };
 
 const settings = {
   id: "store-settings",
@@ -78,6 +82,7 @@ describe("checkout validation service", () => {
       async (callback: (tx: unknown) => Promise<unknown>) =>
         callback({
           user: { findUnique: mocks.userFindUnique },
+          hostel: { findUnique: mocks.hostelFindUnique },
           setting: { findUnique: mocks.settingFindUnique },
           product: { findMany: mocks.productFindMany },
           order: {
@@ -90,6 +95,7 @@ describe("checkout validation service", () => {
         })
     );
     mocks.userFindUnique.mockResolvedValue(customer);
+    mocks.hostelFindUnique.mockResolvedValue(hostel);
     mocks.settingFindUnique.mockResolvedValue(settings);
     mocks.productFindMany.mockResolvedValue([water]);
     mocks.orderCreate.mockResolvedValue({ id: "order-1" });
@@ -167,6 +173,16 @@ describe("checkout validation service", () => {
     ).rejects.toThrow(
       "Please complete your customer profile before checkout."
     );
+  });
+
+  it("rejects checkout when no hostel is assigned", async () => {
+    mocks.userFindUnique.mockResolvedValue({ ...customer, hostelId: null });
+    await expect(validateCheckout("firebase-user-1", [{ productId: "product-1", quantity: 1 }])).rejects.toThrow("Please complete your customer profile before checkout.");
+  });
+
+  it("rejects checkout when the selected hostel is inactive", async () => {
+    mocks.hostelFindUnique.mockResolvedValue({ ...hostel, isActive: false });
+    await expect(validateCheckout("firebase-user-1", [{ productId: "product-1", quantity: 1 }])).rejects.toThrow("Your hostel is inactive or no longer available.");
   });
 
   it("rejects checkout when the store is closed", async () => {

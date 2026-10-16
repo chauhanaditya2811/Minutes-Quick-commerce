@@ -2,11 +2,13 @@ import { useState } from 'react';
 import ProductManager from '../../components/admin/ProductManager';
 import SettingsPanel from '../../components/admin/SettingsPanel';
 import OrdersShell from '../../components/admin/OrdersShell';
+import HostelManager from '../../components/admin/HostelManager';
 
 const TABS = [
   { id: 'products', label: 'Products' },
   { id: 'settings', label: 'Store settings' },
   { id: 'orders', label: 'Orders' },
+  { id: 'hostels', label: 'Hostels' },
 ] as const;
 
 export default function DashboardPage() {
@@ -24,6 +26,7 @@ export default function DashboardPage() {
       {tab === 'products' && <ProductManager />}
       {tab === 'settings' && <SettingsPanel />}
       {tab === 'orders' && <OrdersShell />}
+      {tab === 'hostels' && <HostelManager />}
     </div>
   );
 }

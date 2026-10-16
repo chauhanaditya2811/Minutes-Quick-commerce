@@ -20,6 +20,9 @@ export class ApiError extends Error {
   }
 }
 
+export interface Hostel { id: string; name: string; }
+export interface AdminHostel extends Hostel { isActive: boolean; createdAt: string; updatedAt: string; }
+
 type TokenProvider = () => Promise<string | null>;
 let tokenProvider: TokenProvider = async () => null;
 
@@ -129,6 +132,7 @@ export const api = {
   getProducts: () => request<Product[]>('/api/products'),
   getProduct: (id: string) => request<Product>(`/api/products/${encodeURIComponent(id)}`),
   getSettings: () => request<StoreSettings>('/api/settings'),
+  getHostels: () => request<Hostel[]>('/api/hostels'),
 
   // Customer
   getMe: () => request<UserProfile>('/api/users/me', { auth: true }),
@@ -178,6 +182,9 @@ export const api = {
       'order',
     ),
   getAdminSettings: () => request<StoreSettings>('/api/admin/settings', { auth: true }),
+  getAdminHostels: () => request<AdminHostel[]>('/api/admin/hostels', { auth: true }),
+  createHostel: (name: string) => request<AdminHostel>('/api/admin/hostels', { method: 'POST', body: { name }, auth: true }),
+  deactivateHostel: (id: string) => request<AdminHostel>(`/api/admin/hostels/${encodeURIComponent(id)}`, { method: 'DELETE', auth: true }),
   updateAdminSettings: (body: StoreSettings) =>
     request<StoreSettings>('/api/admin/settings', { method: 'PUT', body, auth: true }),
   createProduct: (body: ProductInput) =>

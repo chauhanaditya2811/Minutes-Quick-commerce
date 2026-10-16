@@ -149,7 +149,7 @@
 .form__actions .btn--outline { margin-top: 0; }
 .field { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
 .field label { font-weight: 600; font-size: 0.88rem; }
-.field input, .field textarea { width: 100%; min-height: 44px; padding: 10px 12px; background: var(--field); border: 1px solid var(--line); border-radius: var(--radius); }
+.field input, .field textarea, .field select { width: 100%; min-height: 44px; padding: 10px 12px; background: var(--field); border: 1px solid var(--line); border-radius: var(--radius); }
 .field textarea { resize: vertical; }
 .field input:disabled { color: var(--muted); }
 .field input[type='file'] { padding: 8px; background: #fff; }
@@ -157,6 +157,15 @@
 .switch { display: flex; align-items: center; gap: 10px; font-weight: 600; }
 .switch input { width: 20px; height: 20px; accent-color: var(--indigo); }
 .thumb { width: 96px; height: 96px; object-fit: cover; border-radius: var(--radius); margin-top: 8px; }
+
+/* ---------- Hostel management ---------- */
+.hostel-manager__form { margin: 16px 0; }
+.hostel-list { display: grid; gap: 10px; }
+.hostel-card { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 14px; border: 1px solid var(--line); border-radius: var(--radius); }
+.hostel-card p { margin: 3px 0 0; color: #15803d; font-size: .82rem; }
+.hostel-card--inactive { opacity: .65; background: var(--tint); }
+.hostel-card--inactive p { color: var(--muted); }
+.badge--inactive { padding: 3px 8px; border-radius: 999px; background: #e5e7eb; color: #4b5563; font-size: .75rem; font-weight: 600; }
 
 /* ---------- Auth ---------- */
 .auth { display: flex; justify-content: center; padding: 20px 0; }

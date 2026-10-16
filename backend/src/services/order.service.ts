@@ -12,7 +12,7 @@ export interface CheckoutItemInput {
 
 type CheckoutClient = Pick<
   Prisma.TransactionClient,
-  "user" | "setting" | "product"
+  "user" | "hostel" | "setting" | "product"
 >;
 
 export class CheckoutError extends Error {
@@ -85,7 +85,7 @@ const validateCheckoutWithClient = async (
     !user ||
     !user.name?.trim() ||
     !user.phone?.trim() ||
-    !user.hostel?.trim() ||
+    !user.hostelId ||
     user.floor === null ||
     !Number.isInteger(user.floor) ||
     user.floor < 0 ||
@@ -95,6 +95,11 @@ const validateCheckoutWithClient = async (
       "Please complete your customer profile before checkout.",
       400
     );
+  }
+
+  const hostel = await client.hostel.findUnique({ where: { id: user.hostelId } });
+  if (!hostel || !hostel.isActive) {
+    throw new CheckoutError("Your hostel is inactive or no longer available. Please update your profile.", 400);
   }
 
   const settings = await client.setting.findUnique({
@@ -209,7 +214,7 @@ const validateCheckoutWithClient = async (
       email: user.email,
       image: user.profileImage,
       phone: user.phone.trim(),
-      hostel: user.hostel.trim(),
+      hostel: hostel.name,
       floor: user.floor,
       room: user.room.trim(),
     },

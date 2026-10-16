@@ -10,6 +10,8 @@ import adminSettingsRoutes from "./routes/admin-settings.routes.js";
 import orderRoutes from "./routes/order.routes.js";
 import adminOrderRoutes from "./routes/admin-order.routes.js";
 import razorpayWebhookRoutes from "./routes/razorpay-webhook.routes.js";
+import hostelRoutes from "./routes/hostel.routes.js";
+import adminHostelRoutes from "./routes/admin-hostel.routes.js";
 
 const app = express();
 
@@ -29,6 +31,8 @@ app.use("/api/health", healthRoutes);
 app.use("/api/auth", authRoutes);
 app.use("/api/users", userRoutes);
 app.use("/api/products", productRoutes);
+app.use("/api/hostels", hostelRoutes);
+app.use("/api/admin/hostels", adminHostelRoutes);
 app.use("/api/admin", adminProductRoutes);
 app.use("/api/admin", adminOrderRoutes);
 // Public store settings.
