@@ -184,7 +184,10 @@ export const api = {
   getAdminSettings: () => request<StoreSettings>('/api/admin/settings', { auth: true }),
   getAdminHostels: () => request<AdminHostel[]>('/api/admin/hostels', { auth: true }),
   createHostel: (name: string) => request<AdminHostel>('/api/admin/hostels', { method: 'POST', body: { name }, auth: true }),
-  deactivateHostel: (id: string) => request<AdminHostel>(`/api/admin/hostels/${encodeURIComponent(id)}`, { method: 'DELETE', auth: true }),
+  activateHostel: (id: string) => request<AdminHostel>(`/api/admin/hostels/${encodeURIComponent(id)}/activate`, { method: 'PATCH', auth: true }),
+  deactivateHostel: (id: string) => request<AdminHostel>(`/api/admin/hostels/${encodeURIComponent(id)}/deactivate`, { method: 'PATCH', auth: true }),
+  permanentlyDeleteHostel: (id: string) =>
+    request<void>(`/api/admin/hostels/${encodeURIComponent(id)}/permanent`, { method: 'DELETE', auth: true }),
   updateAdminSettings: (body: StoreSettings) =>
     request<StoreSettings>('/api/admin/settings', { method: 'PUT', body, auth: true }),
   createProduct: (body: ProductInput) =>

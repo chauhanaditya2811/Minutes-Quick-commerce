@@ -15,7 +15,7 @@ model User {
   profileImage String?
   phone        String?
   hostelId     String?
-  hostel       Hostel?  @relation(fields: [hostelId], references: [id])
+  hostel       Hostel?  @relation(fields: [hostelId], references: [id], onDelete: Restrict)
   floor        Int?
   room         String?
 

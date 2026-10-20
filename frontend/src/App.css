@@ -162,10 +162,18 @@
 .hostel-manager__form { margin: 16px 0; }
 .hostel-list { display: grid; gap: 10px; }
 .hostel-card { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 14px; border: 1px solid var(--line); border-radius: var(--radius); }
+.hostel-card__details { min-width: 0; overflow-wrap: anywhere; }
+.hostel-card__actions { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 8px; }
+.hostel-card__delete { margin-top: 0; border-color: #fecaca; color: var(--red); }
 .hostel-card p { margin: 3px 0 0; color: #15803d; font-size: .82rem; }
 .hostel-card--inactive { opacity: .65; background: var(--tint); }
 .hostel-card--inactive p { color: var(--muted); }
 .badge--inactive { padding: 3px 8px; border-radius: 999px; background: #e5e7eb; color: #4b5563; font-size: .75rem; font-weight: 600; }
+@media (max-width: 520px) {
+  .hostel-card { align-items: flex-start; flex-direction: column; }
+  .hostel-card__actions { width: 100%; justify-content: stretch; }
+  .hostel-card__actions .btn { flex: 1; }
+}
 
 /* ---------- Auth ---------- */
 .auth { display: flex; justify-content: center; padding: 20px 0; }

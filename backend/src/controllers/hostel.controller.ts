@@ -1,5 +1,13 @@
 import type { Request, Response } from "express";
-import { HostelServiceError, createHostel, deactivateHostel, getActiveHostels, getAllHostels } from "../services/hostel.service.js";
+import {
+  HostelServiceError,
+  activateHostel,
+  createHostel,
+  deactivateHostel,
+  getActiveHostels,
+  getAllHostels,
+  permanentlyDeleteHostel,
+} from "../services/hostel.service.js";
 
 const handleError = (error: unknown, res: Response, fallback: string) => {
   if (error instanceof HostelServiceError) {
@@ -37,4 +45,28 @@ export const deactivateHostelController = async (req: Request, res: Response): P
   }
   try { res.status(200).json(await deactivateHostel(id)); }
   catch (error) { handleError(error, res, "Unable to deactivate hostel."); }
+};
+
+export const activateHostelController = async (req: Request, res: Response): Promise<void> => {
+  const id = req.params.id;
+  if (typeof id !== "string" || !id.trim()) {
+    res.status(400).json({ message: "A hostel ID is required." });
+    return;
+  }
+  try { res.status(200).json(await activateHostel(id)); }
+  catch (error) { handleError(error, res, "Unable to activate hostel."); }
+};
+
+export const permanentlyDeleteHostelController = async (req: Request, res: Response): Promise<void> => {
+  const id = req.params.id;
+  if (typeof id !== "string" || !id.trim()) {
+    res.status(400).json({ message: "A hostel ID is required." });
+    return;
+  }
+  try {
+    await permanentlyDeleteHostel(id);
+    res.status(204).send();
+  } catch (error) {
+    handleError(error, res, "Unable to permanently delete hostel.");
+  }
 };

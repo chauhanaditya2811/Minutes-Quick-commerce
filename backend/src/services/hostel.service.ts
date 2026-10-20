@@ -48,3 +48,42 @@ export const deactivateHostel = async (id: string) => {
   if (updated.count === 0) throw new HostelServiceError("Hostel not found.", 404);
   return getHostelById(id);
 };
+
+export const activateHostel = async (id: string) => {
+  const updated = await prisma.hostel.updateMany({ where: { id }, data: { isActive: true } });
+  if (updated.count === 0) throw new HostelServiceError("Hostel not found.", 404);
+  return getHostelById(id);
+};
+
+export const permanentlyDeleteHostel = async (id: string) => {
+  const hostel = await prisma.hostel.findUnique({ where: { id } });
+  if (!hostel) throw new HostelServiceError("Hostel not found.", 404);
+
+  const user = await prisma.user.findFirst({
+    where: { hostelId: id },
+    select: { id: true },
+  });
+  if (user) {
+    throw new HostelServiceError(
+      "This hostel cannot be deleted because user profiles still reference it. Reassign those users before deleting the hostel.",
+      409,
+    );
+  }
+
+  try {
+    await prisma.hostel.delete({ where: { id } });
+  } catch (error) {
+    if (
+      typeof error === "object" &&
+      error !== null &&
+      "code" in error &&
+      error.code === "P2003"
+    ) {
+      throw new HostelServiceError(
+        "This hostel cannot be deleted because user profiles still reference it. Reassign those users before deleting the hostel.",
+        409,
+      );
+    }
+    throw error;
+  }
+};
