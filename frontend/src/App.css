@@ -117,6 +117,21 @@
 .low { font-size: 0.72rem; color: #b45309; }
 .card .stepper { width: 100%; justify-content: space-between; }
 
+/* Keep the Add to Cart control consistent on narrow mobile screens. */
+@media (max-width: 639px) {
+  .card .btn--block {
+    flex-wrap: nowrap;
+    white-space: nowrap;
+    gap: 4px;
+    padding-inline: 8px;
+  }
+
+  .card .btn--block svg {
+    flex: 0 0 auto;
+  }
+}
+
+
 /* ---------- Product detail ---------- */
 .crumbs { color: var(--muted); font-size: 0.85rem; }
 .detail { display: grid; gap: 20px; }
