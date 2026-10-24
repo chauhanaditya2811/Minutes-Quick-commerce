@@ -8,22 +8,22 @@ datasource db {
 }
 
 model User {
-  id           String   @id @default(cuid())
-  firebaseUid  String   @unique
-  email        String   @unique
+  id           String  @id @default(cuid())
+  firebaseUid  String  @unique
+  email        String  @unique
   name         String?
   profileImage String?
   phone        String?
   hostelId     String?
-  hostel       Hostel?  @relation(fields: [hostelId], references: [id], onDelete: Restrict)
+  hostel       Hostel? @relation(fields: [hostelId], references: [id], onDelete: Restrict)
   floor        Int?
   room         String?
 
   orders       Order[]
   reservations InventoryReservation[]
 
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@map("users")
 }
@@ -40,20 +40,20 @@ model Hostel {
 }
 
 model Product {
-  id          String   @id @default(cuid())
+  id          String  @id @default(cuid())
   name        String
   imageUrl    String
   description String?
   price       Int
   unit        String
-  stock       Int      @default(0)
-  isDeleted   Boolean  @default(false)
+  stock       Int     @default(0)
+  isDeleted   Boolean @default(false)
 
   orderItems   OrderItem[]
   reservations InventoryReservation[]
 
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@index([isDeleted])
   @@map("products")
@@ -81,14 +81,14 @@ model Order {
   customerPhone  String
   customerHostel String
   customerFloor  Int
-  customerRoom  String
+  customerRoom   String
 
   items           OrderItem[]
   payment         Payment?
   paymentAttempts PaymentAttempt[]
   reservations    InventoryReservation[]
 
-  createdAt  DateTime  @default(now())
+  createdAt   DateTime  @default(now())
   deliveredAt DateTime?
 
   @@index([userId])
@@ -101,7 +101,7 @@ model OrderItem {
   id String @id @default(cuid())
 
   orderId String
-  order   Order @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  order   Order  @relation(fields: [orderId], references: [id], onDelete: Cascade)
 
   productId String
   product   Product @relation(fields: [productId], references: [id])
@@ -124,8 +124,11 @@ model Payment {
   orderId String @unique
   order   Order  @relation(fields: [orderId], references: [id])
 
-  razorpayOrderId   String  @unique
-  razorpayPaymentId String? @unique
+  provider          PaymentProvider @default(RAZORPAY)
+  razorpayOrderId   String?         @unique
+  razorpayPaymentId String?         @unique
+  cashfreeOrderId   String?         @unique
+  cashfreePaymentId String?         @unique
 
   status PaymentStatus
   amount Int
@@ -140,10 +143,13 @@ model PaymentAttempt {
   id String @id @default(cuid())
 
   orderId String?
-  order   Order? @relation(fields: [orderId], references: [id])
+  order   Order?  @relation(fields: [orderId], references: [id])
 
+  provider          PaymentProvider @default(RAZORPAY)
   razorpayOrderId   String?
-  razorpayPaymentId String? @unique
+  razorpayPaymentId String?         @unique
+  cashfreeOrderId   String?
+  cashfreePaymentId String?         @unique
 
   amount Int
   status PaymentStatus
@@ -151,7 +157,7 @@ model PaymentAttempt {
   createdAt DateTime @default(now())
 
   @@index([orderId])
-  @@index([razorpayOrderId])
+  @@index([cashfreeOrderId])
   @@map("payment_attempts")
 }
 
@@ -162,10 +168,10 @@ model InventoryReservation {
   product   Product @relation(fields: [productId], references: [id])
 
   userId String
-  user   User @relation(fields: [userId], references: [id])
+  user   User   @relation(fields: [userId], references: [id])
 
   orderId String?
-  order   Order? @relation(fields: [orderId], references: [id])
+  order   Order?  @relation(fields: [orderId], references: [id])
 
   quantity  Int
   status    ReservationStatus @default(ACTIVE)
@@ -194,15 +200,14 @@ model Setting {
   @@map("settings")
 }
 
-model RazorpayWebhookEvent {
+model CashfreeWebhookEvent {
   id        String   @id @default(cuid())
   eventId   String   @unique
   eventType String
   createdAt DateTime @default(now())
 
-  @@map("razorpay_webhook_events")
+  @@map("cashfree_webhook_events")
 }
-
 
 enum PaymentStatus {
   CREATED
@@ -211,6 +216,11 @@ enum PaymentStatus {
   FAILED
   CANCELLED
   REFUNDED
+}
+
+enum PaymentProvider {
+  RAZORPAY
+  CASHFREE
 }
 
 enum ReservationStatus {

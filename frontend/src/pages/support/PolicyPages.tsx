@@ -59,7 +59,7 @@ export function TermsPage() {
     <PolicyPage title="Terms & Conditions">
       <p>Minutes is currently a beta application intended for a limited university-hostel audience.</p>
       <p>Customers must provide accurate contact and delivery details. Product availability, prices, delivery fees, and minimum-order requirements are based on the information shown in the app and validated by the backend.</p>
-      <p>Orders are subject to store availability and successful payment verification. Returning from Razorpay Checkout alone does not mean that an order has been confirmed.</p>
+      <p>Orders are subject to store availability and successful payment verification. Returning from Cashfree Checkout alone does not mean that an order has been confirmed.</p>
       <p>Please contact <SupportEmail /> if an order or payment problem occurs. Do not misuse the application or attempt to access another customer&apos;s account or orders.</p>
     </PolicyPage>
   );
@@ -70,7 +70,7 @@ export function PrivacyPage() {
     <PolicyPage title="Privacy Policy">
       <p>Minutes processes the information needed to run the app and fulfil orders. This can include sign-in details associated with Google or email/password authentication; your name, email, profile image where available, phone number, hostel, floor, and room; and cart and order information.</p>
       <p>We also process order totals, payment status, and transaction references needed to verify payments. Minutes does not store card numbers, UPI PINs, or payment passwords.</p>
-      <p>Firebase Authentication provides sign-in. The Minutes backend and PostgreSQL database store application, profile, and order data. Razorpay processes payments. Product images are hosted through Cloudinary.</p>
+      <p>Firebase Authentication provides sign-in. The Minutes backend and PostgreSQL database store application, profile, and order data. Cashfree processes payments. Product images are hosted through Cloudinary.</p>
       <p>For questions or requests about your information, contact <SupportEmail />.</p>
     </PolicyPage>
   );

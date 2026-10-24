@@ -7,8 +7,8 @@ import {
 } from "../controllers/order.controller.js";
 
 import {
-  createRazorpayOrderController,
-  verifyRazorpayPaymentController,
+  createCashfreeOrderController,
+  verifyCashfreePaymentController,
 } from "../controllers/payment.controller.js";
 
 import { authenticateFirebaseToken } from "../middleware/auth.middleware.js";
@@ -28,18 +28,18 @@ router.post(
   validateCheckoutController
 );
 
-// Initialize Razorpay payment for an existing order.
+// Initialize Cashfree payment for an existing order.
 router.post(
   "/:orderId/payment",
   authenticateFirebaseToken,
-  createRazorpayOrderController
+  createCashfreeOrderController
 );
 
-// Verify the Razorpay payment response.
+// Verify the Cashfree payment response.
 router.post(
   "/:orderId/payment/verify",
   authenticateFirebaseToken,
-  verifyRazorpayPaymentController
+  verifyCashfreePaymentController
 );
 
 export default router;

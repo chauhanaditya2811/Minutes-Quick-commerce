@@ -1,529 +1,253 @@
-
+import { createHash } from "node:crypto";
 import { prisma } from "../config/database.js";
-import { notifyOwner } from "./telegram.service.js";
-import { createHmac, timingSafeEqual } from "node:crypto";
 import {
-  getRazorpayClient,
-  getRazorpayKeyId,
-  getRazorpayKeySecret,
-} from "../config/razorpay.js";
-import { isSupportedRazorpayPaymentMethod } from "../config/razorpay-payment-methods.js";
+  CASHFREE_API_VERSION,
+  getCashfreeApiBaseUrl,
+  getCashfreeClientId,
+  getCashfreeClientSecret,
+} from "../config/cashfree.js";
+import { notifyOwner } from "./telegram.service.js";
 import { CheckoutError } from "./order.service.js";
 
-// Create or reuse a Razorpay order for an existing Minutes order.
-export const createRazorpayOrderForCustomer = async (
-  firebaseUid: string,
-  orderId: string
-) => {
-  if (typeof orderId !== "string" || !orderId.trim()) {
-    throw new CheckoutError("A valid order ID is required.", 400);
+const cashfreeHeaders = () => ({
+  "Content-Type": "application/json",
+  "x-api-version": CASHFREE_API_VERSION,
+  "x-client-id": getCashfreeClientId(),
+  "x-client-secret": getCashfreeClientSecret(),
+});
+
+const cashfreeRequest = async <T>(path: string, init: RequestInit): Promise<T> => {
+  let response: Response;
+  try {
+    response = await fetch(`${getCashfreeApiBaseUrl()}${path}`, {
+      ...init,
+      signal: AbortSignal.timeout(15_000),
+      headers: { ...cashfreeHeaders(), ...init.headers },
+    });
+  } catch {
+    throw new CheckoutError("Cashfree is temporarily unavailable. Please try again.", 502);
   }
+  const body: unknown = await response.json().catch(() => null);
+  if (!response.ok) {
+    throw new CheckoutError("Cashfree could not process this payment request.", 502);
+  }
+  return body as T;
+};
 
-  // Validate configuration before making database changes.
-  const keyId = getRazorpayKeyId();
-  const razorpay = getRazorpayClient();
+interface CashfreeOrderResponse {
+  order_id: string;
+  payment_session_id: string;
+  order_amount: number;
+  order_currency: string;
+}
 
-  // Verify ownership and find the most recent payment attempt.
+interface CashfreePayment {
+  cf_payment_id: string;
+  payment_status: string;
+  payment_amount: number;
+  payment_currency: string;
+  order_id: string;
+}
+
+export const createCashfreeOrderForCustomer = async (
+  firebaseUid: string,
+  orderId: string,
+) => {
+  const clientId = getCashfreeClientId();
+  getCashfreeClientSecret();
   const { order, attempt } = await prisma.$transaction(async (tx) => {
     const order = await tx.order.findFirst({
-      where: {
-        id: orderId,
-        user: { firebaseUid },
-      },
-      include: {
-        paymentAttempts: {
-          orderBy: { createdAt: "desc" },
-        },
-      },
+      where: { id: orderId, user: { firebaseUid } },
+      include: { paymentAttempts: { orderBy: { createdAt: "desc" } } },
     });
-
-    if (!order) {
-      throw new CheckoutError("Order not found.", 404);
-    }
-
+    if (!order) throw new CheckoutError("Order not found.", 404);
     if (
       order.orderStatus !== "PENDING_PAYMENT" ||
-      order.paymentStatus === "SUCCESS" ||
-      order.paymentStatus === "REFUNDED"
+      ["SUCCESS", "REFUNDED"].includes(order.paymentStatus)
     ) {
-      throw new CheckoutError(
-        "This order is not eligible for payment.",
-        409
-      );
+      throw new CheckoutError("This order is not eligible for payment.", 409);
     }
-
-    // Minutes stores prices in rupees; Razorpay requires paise.
-    const amountInPaise = order.total * 100;
-
-    if (
-      !Number.isSafeInteger(order.total) ||
-      order.total < 1 ||
-      !Number.isSafeInteger(amountInPaise)
-    ) {
+    if (!Number.isSafeInteger(order.total) || order.total < 1) {
       throw new CheckoutError("The order amount is invalid.", 400);
     }
-
-    const latestAttempt = order.paymentAttempts[0];
-
-    // Reuse an active attempt when initializing payment again.
+    const latest = order.paymentAttempts[0];
     if (
-      ["PENDING", "CREATED"].includes(order.paymentStatus) &&
-      latestAttempt &&
-      latestAttempt.amount === order.total &&
-      ["PENDING", "CREATED"].includes(latestAttempt.status)
+      latest?.provider === "CASHFREE" &&
+      ["PENDING", "CREATED"].includes(latest.status) &&
+      latest.amount === order.total
     ) {
-      return { order, attempt: latestAttempt };
+      return { order, attempt: latest };
     }
-
-    // Create a new attempt after a failed or cancelled attempt.
     const attempt = await tx.paymentAttempt.create({
-      data: {
-        orderId: order.id,
-        amount: order.total,
-        status: "PENDING",
-      },
+      data: { orderId: order.id, amount: order.total, status: "PENDING", provider: "CASHFREE" },
     });
-
-    // Allow a new payment attempt without confirming the order.
     if (["FAILED", "CANCELLED"].includes(order.paymentStatus)) {
-      await tx.order.updateMany({
-        where: {
-          id: order.id,
-          orderStatus: "PENDING_PAYMENT",
-          paymentStatus: { in: ["FAILED", "CANCELLED"] },
-        },
+      await tx.order.update({
+        where: { id: order.id },
         data: { paymentStatus: "PENDING" },
       });
     }
-
     return { order, attempt };
   });
 
-  // If our database already knows the gateway order ID, reuse it.
-  if (attempt.razorpayOrderId) {
+  if (attempt.cashfreeOrderId) {
+    const existing = await cashfreeRequest<CashfreeOrderResponse>(
+      `/orders/${encodeURIComponent(attempt.cashfreeOrderId)}`,
+      { method: "GET" },
+    );
     return {
       orderId: order.id,
       paymentAttemptId: attempt.id,
-      razorpayOrderId: attempt.razorpayOrderId,
-      amount: order.total * 100,
-      currency: "INR",
-      keyId,
+      cashfreeOrderId: existing.order_id,
+      paymentSessionId: existing.payment_session_id,
+      amount: existing.order_amount,
+      currency: existing.order_currency,
+      clientId,
     };
   }
 
-  const amountInPaise = order.total * 100;
-  const receipt = `MIN-${attempt.id}`;
-
-  // Find an existing Razorpay order using this attempt's stable receipt.
-  // This helps recover when Razorpay created an order but our database
-  // save failed or the original request lost its response.
-  const findGatewayOrder = async () => {
-    const collection = await razorpay.orders.all({
-      receipt,
-      count: 1,
-    });
-
-    const existing = collection.items?.find(
-      (item) => item.receipt === receipt
-    );
-
-    if (!existing) {
-      return null;
-    }
-
-    // Never reuse an order with a different amount or currency.
-    if (
-      existing.amount !== amountInPaise ||
-      existing.currency !== "INR"
-    ) {
-      throw new CheckoutError(
-        "The existing Razorpay order does not match this payment.",
-        409
-      );
-    }
-
-    return existing;
-  };
-
-  let gatewayOrder = await findGatewayOrder();
-
-  if (!gatewayOrder) {
-    try {
-      // Only server-side order totals are used here.
-      gatewayOrder = await razorpay.orders.create({
-        amount: amountInPaise,
-        currency: "INR",
-        receipt,
-        partial_payment: false,
-        notes: {
-          minutesOrderId: order.id,
-          paymentAttemptId: attempt.id,
-          orderNumber: order.orderNumber,
-        },
-      });
-    } catch (createError) {
-      // The gateway may have accepted the request even if its response
-      // was lost. Search again before treating the operation as failed.
-      let recoveredOrder;
-
-      try {
-        recoveredOrder = await findGatewayOrder();
-      } catch (recoveryError) {
-        if (recoveryError instanceof CheckoutError) {
-          throw recoveryError;
-        }
-
-        // Preserve the original creation error if recovery also fails.
-        throw createError;
-      }
-
-      if (!recoveredOrder) {
-        throw createError;
-      }
-
-      gatewayOrder = recoveredOrder;
-    }
-  }
-
-  // Store the gateway order and update payment state atomically.
-  await prisma.$transaction(async (tx) => {
-    const updatedOrder = await tx.order.updateMany({
-      where: {
-        id: order.id,
-        orderStatus: "PENDING_PAYMENT",
-        paymentStatus: { in: ["PENDING", "CREATED"] },
+  const cashfreeOrderId = `MIN-${attempt.id}`;
+  const gatewayOrder = await cashfreeRequest<CashfreeOrderResponse>("/orders", {
+    method: "POST",
+    headers: { "x-idempotency-key": createHash("sha256").update(cashfreeOrderId).digest("hex") },
+    body: JSON.stringify({
+      order_id: cashfreeOrderId,
+      order_amount: order.total,
+      order_currency: "INR",
+      customer_details: {
+        customer_id: order.userId,
+        customer_name: order.customerName,
+        customer_email: order.customerEmail,
+        customer_phone: order.customerPhone,
       },
+      order_note: `Minutes order ${order.orderNumber}`,
+    }),
+  });
+
+  await prisma.$transaction(async (tx) => {
+    await tx.order.update({
+      where: { id: order.id },
       data: { paymentStatus: "CREATED" },
     });
-
-    if (updatedOrder.count !== 1) {
-      throw new CheckoutError(
-        "The order changed while payment was being initialized.",
-        409
-      );
-    }
-
     await tx.paymentAttempt.update({
       where: { id: attempt.id },
       data: {
-        razorpayOrderId: gatewayOrder.id,
+        cashfreeOrderId: gatewayOrder.order_id,
         status: "CREATED",
+        provider: "CASHFREE",
       },
     });
-
-    // Maintain the one-payment-record-per-order relationship.
     await tx.payment.upsert({
       where: { orderId: order.id },
       create: {
         orderId: order.id,
-        razorpayOrderId: gatewayOrder.id,
+        cashfreeOrderId: gatewayOrder.order_id,
         amount: order.total,
         status: "CREATED",
+        provider: "CASHFREE",
       },
       update: {
-        razorpayOrderId: gatewayOrder.id,
-        razorpayPaymentId: null,
+        cashfreeOrderId: gatewayOrder.order_id,
         amount: order.total,
         status: "CREATED",
+        provider: "CASHFREE",
       },
     });
   });
 
-  // Never send the secret key to the client.
   return {
     orderId: order.id,
     paymentAttemptId: attempt.id,
-    razorpayOrderId: gatewayOrder.id,
-    amount: gatewayOrder.amount,
-    currency: gatewayOrder.currency,
-    keyId,
+    cashfreeOrderId: gatewayOrder.order_id,
+    paymentSessionId: gatewayOrder.payment_session_id,
+    amount: gatewayOrder.order_amount,
+    currency: gatewayOrder.order_currency,
+    clientId,
   };
 };
 
-interface RazorpayVerificationInput {
-  razorpay_order_id: unknown;
-  razorpay_payment_id: unknown;
-  razorpay_signature: unknown;
+interface VerificationInput {
+  cashfree_order_id: unknown;
 }
 
-const isVerificationRecord = (
-  value: unknown
-): value is Record<string, unknown> =>
-  typeof value === "object" &&
-  value !== null &&
-  !Array.isArray(value);
-
-// Verify a captured Razorpay payment and confirm its Minutes order.
-// The client-provided signature is never treated as payment status by itself.
-export const verifyRazorpayPaymentForCustomer = async (
+export const verifyCashfreePaymentForCustomer = async (
   firebaseUid: string,
   orderId: string,
-  input: RazorpayVerificationInput
+  input: VerificationInput,
 ) => {
   if (
-    !isVerificationRecord(input) ||
-    typeof input.razorpay_order_id !== "string" ||
-    !input.razorpay_order_id.trim() ||
-    typeof input.razorpay_payment_id !== "string" ||
-    !input.razorpay_payment_id.trim() ||
-    typeof input.razorpay_signature !== "string" ||
-    !/^[a-f0-9]{64}$/i.test(input.razorpay_signature)
+    !input ||
+    typeof input.cashfree_order_id !== "string" ||
+    !input.cashfree_order_id.trim()
   ) {
-    throw new CheckoutError(
-      "Payment verification details are invalid.",
-      400
-    );
+    throw new CheckoutError("Payment verification details are invalid.", 400);
   }
-
-  const razorpayOrderId = input.razorpay_order_id;
-  const razorpayPaymentId = input.razorpay_payment_id;
-  const suppliedSignature = input.razorpay_signature;
-
-  // Find the payment attempt by the internal order ID and gateway order ID.
-  // Include the customer relationship so another customer's order cannot
-  // be verified with this student's token.
+  const cashfreeOrderId = input.cashfree_order_id;
   const attempt = await prisma.paymentAttempt.findFirst({
-    where: {
-      orderId,
-      razorpayOrderId,
-    },
-    include: {
-      order: {
-        include: {
-          user: {
-            select: { firebaseUid: true },
-          },
-        },
-      },
-    },
+    where: { orderId, cashfreeOrderId, provider: "CASHFREE" },
+    include: { order: { include: { user: { select: { firebaseUid: true } } } } },
   });
-
-  if (
-    !attempt ||
-    !attempt.order ||
-    attempt.order.user.firebaseUid !== firebaseUid
-  ) {
+  if (!attempt?.order || attempt.order.user.firebaseUid !== firebaseUid) {
     throw new CheckoutError("Payment attempt not found.", 404);
   }
 
-  if (!attempt.razorpayOrderId) {
-    throw new CheckoutError(
-      "The payment attempt has no Razorpay order ID.",
-      409
-    );
-  }
-
-  // Always use the order ID stored on our server for HMAC generation.
-  const keySecret = getRazorpayKeySecret();
-
-  const expectedSignature = createHmac("sha256", keySecret)
-    .update(`${attempt.razorpayOrderId}|${razorpayPaymentId}`)
-    .digest();
-
-  const receivedSignature = Buffer.from(suppliedSignature, "hex");
-
-  // Check length before timingSafeEqual to avoid length errors.
-  const signatureIsValid =
-    receivedSignature.length === expectedSignature.length &&
-    timingSafeEqual(expectedSignature, receivedSignature);
-
-  if (!signatureIsValid) {
-    throw new CheckoutError("Payment signature is invalid.", 400);
-  }
-
-  // Signature authenticity alone is not sufficient here. Fetch payment
-  // details through our server-side SDK client before confirming the order.
-  const razorpay = getRazorpayClient();
-  const gatewayPayment = await razorpay.payments.fetch(
-    razorpayPaymentId
+  const payments = await cashfreeRequest<CashfreePayment[]>(
+    `/orders/${encodeURIComponent(cashfreeOrderId)}/payments`,
+    { method: "GET" },
   );
-
-  const expectedAmountInPaise = attempt.amount * 100;
-
-  const paymentMatchesOrder = {
-    validExpectedAmount: Number.isSafeInteger(expectedAmountInPaise),
-    attemptAmountMatchesOrder: attempt.amount === attempt.order.total,
-    paymentIdMatches: gatewayPayment.id === razorpayPaymentId,
-    razorpayOrderIdMatches:
-      gatewayPayment.order_id === attempt.razorpayOrderId,
-    amountMatches: gatewayPayment.amount === expectedAmountInPaise,
-    currencyMatches: gatewayPayment.currency === "INR",
-    supportedMethod: isSupportedRazorpayPaymentMethod(
-      gatewayPayment.method
-    ),
-  };
-
-  if (Object.values(paymentMatchesOrder).some((matches) => !matches)) {
-    // Deliberately log only validation outcomes: never payment IDs, signatures,
-    // credentials, or customer details.
-    console.warn("Razorpay payment verification mismatch", paymentMatchesOrder);
-    throw new CheckoutError(
-      "The gateway payment does not match this order.",
-      409
-    );
+  const successful = payments.find(
+    (payment) =>
+      payment.payment_status === "SUCCESS" &&
+      payment.order_id === cashfreeOrderId &&
+      payment.payment_currency === "INR" &&
+      payment.payment_amount === attempt.amount,
+  );
+  if (!successful) {
+    throw new CheckoutError("The payment has not been completed.", 409);
   }
 
-  // Do not confirm payments that are only authorized or have failed.
-  if (
-    gatewayPayment.status !== "captured" ||
-    gatewayPayment.captured !== true
-  ) {
-    console.warn("Razorpay payment is not captured", {
-      capturedStatus: gatewayPayment.status === "captured",
-      capturedFlag: gatewayPayment.captured === true,
-    });
-    throw new CheckoutError(
-      "The payment has not been captured. The order remains unconfirmed.",
-      409
-    );
-  }
-
-  // Atomically update the order, the exact payment attempt, and Payment.
-  // Repeated verification of the same successful payment is idempotent.
   const result = await prisma.$transaction(async (tx) => {
-    const currentOrder = await tx.order.findUnique({
-      where: { id: orderId },
-      select: {
-        id: true,
-        orderNumber: true,
-        orderStatus: true,
-        paymentStatus: true,
-      },
-    });
-
-    const currentAttempt = await tx.paymentAttempt.findUnique({
+    const current = await tx.order.findUnique({ where: { id: orderId } });
+    if (!current) throw new CheckoutError("Order not found.", 404);
+    if (
+      current.paymentStatus === "SUCCESS" &&
+      ["CONFIRMED", "DELIVERED"].includes(current.orderStatus)
+    ) {
+      return { orderId, orderNumber: current.orderNumber, paymentStatus: "SUCCESS" as const, orderStatus: current.orderStatus, newlyConfirmed: false };
+    }
+    if (current.orderStatus !== "PENDING_PAYMENT") {
+      throw new CheckoutError("The order is not eligible for payment confirmation.", 409);
+    }
+    await tx.order.update({ where: { id: orderId }, data: { paymentStatus: "SUCCESS", orderStatus: "CONFIRMED" } });
+    await tx.paymentAttempt.update({
       where: { id: attempt.id },
-      select: {
-        id: true,
-        status: true,
-        razorpayOrderId: true,
-        razorpayPaymentId: true,
-      },
-    });
-
-    if (!currentOrder || !currentAttempt) {
-      throw new CheckoutError("Payment attempt not found.", 404);
-    }
-
-    // A retry of the same verified payment must not repeat the transition.
-    if (
-      currentOrder.paymentStatus === "SUCCESS" &&
-      ["CONFIRMED", "DELIVERED"].includes(currentOrder.orderStatus) &&
-      currentAttempt.status === "SUCCESS" &&
-      currentAttempt.razorpayPaymentId === razorpayPaymentId
-    ) {
-      return {
-        orderId: currentOrder.id,
-        orderNumber: currentOrder.orderNumber,
-        paymentAttemptId: attempt.id,
-        razorpayOrderId: attempt.razorpayOrderId,
-        razorpayPaymentId,
-        paymentStatus: "SUCCESS" as const,
-        orderStatus: currentOrder.orderStatus,
-        newlyConfirmed: false as const,
-      };
-    }
-
-    if (
-      currentOrder.orderStatus !== "PENDING_PAYMENT" ||
-      !["PENDING", "CREATED", "FAILED"].includes(
-        currentOrder.paymentStatus
-      ) ||
-      !["PENDING", "CREATED", "FAILED"].includes(
-        currentAttempt.status
-      ) ||
-      currentAttempt.razorpayOrderId !== attempt.razorpayOrderId ||
-      (
-        currentAttempt.razorpayPaymentId !== null &&
-        currentAttempt.razorpayPaymentId !== razorpayPaymentId
-      )
-    ) {
-      throw new CheckoutError(
-        "The order is not eligible for payment confirmation.",
-        409
-      );
-    }
-
-    const orderUpdate = await tx.order.updateMany({
-      where: {
-        id: orderId,
-        orderStatus: "PENDING_PAYMENT",
-        paymentStatus: {
-          in: ["PENDING", "CREATED", "FAILED"],
-        },
-      },
-      data: {
-        paymentStatus: "SUCCESS",
-        orderStatus: "CONFIRMED",
-      },
-    });
-
-    if (orderUpdate.count !== 1) {
-      throw new CheckoutError(
-        "The order changed during payment verification.",
-        409
-      );
-    }
-
-    const attemptUpdate = await tx.paymentAttempt.updateMany({
-      where: {
-        id: attempt.id,
-        status: {
-          in: ["PENDING", "CREATED", "FAILED"],
-        },
-        razorpayOrderId: attempt.razorpayOrderId,
-        OR: [
-          { razorpayPaymentId: null },
-          { razorpayPaymentId },
-        ],
-      },
       data: {
         status: "SUCCESS",
-        razorpayPaymentId,
+        cashfreePaymentId: successful.cf_payment_id,
+        provider: "CASHFREE",
       },
     });
-
-    if (attemptUpdate.count !== 1) {
-      throw new CheckoutError(
-        "The payment attempt changed during verification.",
-        409
-      );
-    }
-
     await tx.payment.upsert({
       where: { orderId },
       create: {
         orderId,
-        razorpayOrderId: razorpayOrderId,
-        razorpayPaymentId,
+        cashfreeOrderId,
+        cashfreePaymentId: successful.cf_payment_id,
         amount: attempt.amount,
         status: "SUCCESS",
+        provider: "CASHFREE",
       },
       update: {
-        razorpayOrderId: razorpayOrderId,
-        razorpayPaymentId,
+        cashfreeOrderId,
+        cashfreePaymentId: successful.cf_payment_id,
         amount: attempt.amount,
         status: "SUCCESS",
+        provider: "CASHFREE",
       },
     });
-
-    return {
-      orderId: currentOrder.id,
-      orderNumber: currentOrder.orderNumber,
-      paymentAttemptId: attempt.id,
-      razorpayOrderId: attempt.razorpayOrderId,
-      razorpayPaymentId,
-      paymentStatus: "SUCCESS" as const,
-      newlyConfirmed: true as const,
-      orderStatus: "CONFIRMED" as const,
-    };
+    return { orderId, orderNumber: current.orderNumber, paymentStatus: "SUCCESS" as const, orderStatus: "CONFIRMED" as const, newlyConfirmed: true };
   });
-
-  // Separate internal flag from public response and send Telegram notification if newly confirmed.
-  const { newlyConfirmed, ...paymentResult } = result;
-  if (newlyConfirmed) {
-    // Fire‑and‑forget notification; errors are logged inside notifyOwner.
-    void notifyOwner(orderId, String(gatewayPayment.method ?? "Unknown"));
-  }
-  return paymentResult;
+  if (result.newlyConfirmed) void notifyOwner(orderId, "Cashfree");
+  const { newlyConfirmed: _newlyConfirmed, ...publicResult } = result;
+  return publicResult;
 };

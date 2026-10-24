@@ -97,21 +97,20 @@ export interface AdminOrder {
   }[];
 }
 
-/** POST /api/orders/:orderId/payment — enough to open Razorpay Checkout. */
+/** POST /api/orders/:orderId/payment — enough to open Cashfree Checkout. */
 export interface PaymentInitResponse {
   orderId: string;
   paymentAttemptId: string;
-  razorpayOrderId: string;
-  amount: number; // as returned by the backend (Razorpay expects paise)
+  cashfreeOrderId: string;
+  paymentSessionId: string;
+  amount: number;
   currency: string;
-  keyId: string; // public Razorpay Key ID
+  clientId: string;
 }
 
 /** Body for POST /api/orders/:orderId/payment/verify. */
 export interface VerifyPaymentRequest {
-  razorpay_order_id: string;
-  razorpay_payment_id: string;
-  razorpay_signature: string;
+  cashfree_order_id: string;
 }
 
 /** The `payment` payload returned after server-side payment verification. */
@@ -119,8 +118,6 @@ export interface VerifyPaymentResponse {
   orderId: string;
   orderNumber: string;
   paymentAttemptId: string;
-  razorpayOrderId: string;
-  razorpayPaymentId: string;
   paymentStatus: 'SUCCESS';
   orderStatus: 'CONFIRMED' | 'DELIVERED';
 }

@@ -63,7 +63,7 @@ export type InventoryReservation = Prisma.InventoryReservationModel
  */
 export type Setting = Prisma.SettingModel
 /**
- * Model RazorpayWebhookEvent
+ * Model CashfreeWebhookEvent
  *
  */
-export type RazorpayWebhookEvent = Prisma.RazorpayWebhookEventModel
+export type CashfreeWebhookEvent = Prisma.CashfreeWebhookEventModel

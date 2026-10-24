@@ -5,7 +5,7 @@ import { useCart } from '../../context/CartContext';
 import { useStoreSettings } from '../../hooks/useStoreSettings';
 import { api } from '../../services/api';
 import { apiConfigured, previewMode } from '../../services/config';
-import { openRazorpay } from '../../services/razorpay';
+import { openCashfree } from '../../services/cashfree';
 import { isProfileComplete } from '../../types/user';
 import type { OrderSummary, ValidateOrderResponse } from '../../types/order';
 import { formatINR } from '../../utils/format';
@@ -72,11 +72,7 @@ export default function CheckoutPage() {
       const order = pendingOrder ?? (await api.createOrder({ items }));
       setPendingOrder(order);
       const init = await api.initPayment(order.id);
-      const outcome = await openRazorpay(init, {
-        name: profile?.name ?? undefined,
-        email: profile?.email ?? firebaseUser?.email ?? undefined,
-        contact: profile?.phone ?? undefined,
-      });
+      const outcome = await openCashfree(init);
       if (outcome.status === 'dismissed') {
         setPayMessage('Payment was not completed. Your order is saved. You can try again.');
       } else if (outcome.status === 'failed') {
@@ -119,8 +115,8 @@ export default function CheckoutPage() {
           <OrderSummaryPanel deliveryFee={settings?.deliveryFee ?? null} validated={validated?.checkout ?? null} />
 
           <section className="panel" aria-labelledby="pay-h">
-            <h2 id="pay-h">Pay securely with Razorpay</h2>
-            {previewMode && <Notice tone="info">Preview mode: payments are disabled until the backend and Razorpay are connected.</Notice>}
+            <h2 id="pay-h">Pay securely with Cashfree</h2>
+            {previewMode && <Notice tone="info">Preview mode: payments are disabled until the backend and Cashfree are connected.</Notice>}
             {settingsLoading && <p className="muted">Loading store settings…</p>}
             {settingsError && <Notice tone="error">{settingsError} <button type="button" className="link-btn" onClick={reloadSettings}>Try again</button></Notice>}
             {settings && !settings.storeOpen && <Notice tone="warning">The store is closed right now.</Notice>}
@@ -138,7 +134,7 @@ export default function CheckoutPage() {
               By placing your order, you acknowledge our <Link to="/terms">Terms &amp; Conditions</Link>,{' '}
               <Link to="/privacy">Privacy Policy</Link>, and <Link to="/cancellation-refund">Cancellation &amp; Refund Policy</Link>.
             </p>
-            <p className="muted small">Payment is processed by Razorpay and verified by our server before your order is confirmed.</p>
+            <p className="muted small">Payment is processed by Cashfree and verified by our server before your order is confirmed.</p>
           </section>
         </div>
       </div>

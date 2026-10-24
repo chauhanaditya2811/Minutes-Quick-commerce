@@ -9,7 +9,7 @@ import settingsRoutes from "./routes/settings.routes.js";
 import adminSettingsRoutes from "./routes/admin-settings.routes.js";
 import orderRoutes from "./routes/order.routes.js";
 import adminOrderRoutes from "./routes/admin-order.routes.js";
-import razorpayWebhookRoutes from "./routes/razorpay-webhook.routes.js";
+import cashfreeWebhookRoutes from "./routes/cashfree-webhook.routes.js";
 import hostelRoutes from "./routes/hostel.routes.js";
 import adminHostelRoutes from "./routes/admin-hostel.routes.js";
 
@@ -19,9 +19,9 @@ app.use(cors());
 
 // IMPORTANT: register the webhook before the general JSON parser.
 app.use(
-  "/api/webhooks/razorpay",
+  "/api/webhooks/cashfree",
   express.raw({ type: "application/json" }),
-  razorpayWebhookRoutes
+  cashfreeWebhookRoutes
 );
 
 // Parse JSON for the rest of the API.

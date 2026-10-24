@@ -60,7 +60,7 @@ export const ModelName = {
   PaymentAttempt: 'PaymentAttempt',
   InventoryReservation: 'InventoryReservation',
   Setting: 'Setting',
-  RazorpayWebhookEvent: 'RazorpayWebhookEvent'
+  CashfreeWebhookEvent: 'CashfreeWebhookEvent'
 } as const
 
 export type ModelName = (typeof ModelName)[keyof typeof ModelName]
@@ -164,8 +164,11 @@ export type OrderItemScalarFieldEnum = (typeof OrderItemScalarFieldEnum)[keyof t
 export const PaymentScalarFieldEnum = {
   id: 'id',
   orderId: 'orderId',
+  provider: 'provider',
   razorpayOrderId: 'razorpayOrderId',
   razorpayPaymentId: 'razorpayPaymentId',
+  cashfreeOrderId: 'cashfreeOrderId',
+  cashfreePaymentId: 'cashfreePaymentId',
   status: 'status',
   amount: 'amount',
   createdAt: 'createdAt',
@@ -178,8 +181,11 @@ export type PaymentScalarFieldEnum = (typeof PaymentScalarFieldEnum)[keyof typeo
 export const PaymentAttemptScalarFieldEnum = {
   id: 'id',
   orderId: 'orderId',
+  provider: 'provider',
   razorpayOrderId: 'razorpayOrderId',
   razorpayPaymentId: 'razorpayPaymentId',
+  cashfreeOrderId: 'cashfreeOrderId',
+  cashfreePaymentId: 'cashfreePaymentId',
   amount: 'amount',
   status: 'status',
   createdAt: 'createdAt'
@@ -215,14 +221,14 @@ export const SettingScalarFieldEnum = {
 export type SettingScalarFieldEnum = (typeof SettingScalarFieldEnum)[keyof typeof SettingScalarFieldEnum]
 
 
-export const RazorpayWebhookEventScalarFieldEnum = {
+export const CashfreeWebhookEventScalarFieldEnum = {
   id: 'id',
   eventId: 'eventId',
   eventType: 'eventType',
   createdAt: 'createdAt'
 } as const
 
-export type RazorpayWebhookEventScalarFieldEnum = (typeof RazorpayWebhookEventScalarFieldEnum)[keyof typeof RazorpayWebhookEventScalarFieldEnum]
+export type CashfreeWebhookEventScalarFieldEnum = (typeof CashfreeWebhookEventScalarFieldEnum)[keyof typeof CashfreeWebhookEventScalarFieldEnum]
 
 
 export const SortOrder = {
