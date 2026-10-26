@@ -9,6 +9,16 @@ import {
 import { notifyOwner } from "./telegram.service.js";
 import { CheckoutError } from "./order.service.js";
 
+const getCashfreeNotifyUrl = () => {
+  const configuredUrl = process.env.CASHFREE_WEBHOOK_URL?.trim();
+  if (configuredUrl) return configuredUrl;
+
+  // Production defaults to the registered Azure endpoint; non-production can opt in via CASHFREE_WEBHOOK_URL.
+  return process.env.CASHFREE_ENVIRONMENT?.trim().toLowerCase() === "production"
+    ? "https://minutes-api-hostel-dqgtbzekgjbdaca0.indiasouthcentral-01.azurewebsites.net/api/webhooks/cashfree"
+    : undefined;
+};
+
 const cashfreeHeaders = () => ({
   "Content-Type": "application/json",
   "x-api-version": CASHFREE_API_VERSION,
@@ -135,6 +145,7 @@ export const createCashfreeOrderForCustomer = async (
           customer_email: order.customerEmail,
           customer_phone: order.customerPhone,
         },
+        ...(getCashfreeNotifyUrl() ? { order_meta: { notify_url: getCashfreeNotifyUrl() } } : {}),
         order_note: `Minutes order ${order.orderNumber}`,
       }),
     }));
