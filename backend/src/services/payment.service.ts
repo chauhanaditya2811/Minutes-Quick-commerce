@@ -130,6 +130,7 @@ export const createCashfreeOrderForCustomer = async (
   }
 
   const cashfreeOrderId = `MIN-${attempt.id}`;
+  const notifyUrl = getCashfreeNotifyUrl();
   const gatewayOrder =
     (await findExistingCashfreeOrder(cashfreeOrderId)) ??
     (await cashfreeRequest<CashfreeOrderResponse>("/orders", {
@@ -145,7 +146,7 @@ export const createCashfreeOrderForCustomer = async (
           customer_email: order.customerEmail,
           customer_phone: order.customerPhone,
         },
-        ...(getCashfreeNotifyUrl() ? { order_meta: { notify_url: getCashfreeNotifyUrl() } } : {}),
+        ...(notifyUrl ? { order_meta: { notify_url: notifyUrl } } : {}),
         order_note: `Minutes order ${order.orderNumber}`,
       }),
     }));
