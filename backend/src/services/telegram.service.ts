@@ -1,98 +1,128 @@
-
 import { prisma } from "../config/database.js";
 
-/**
- * Sends a Telegram message to the configured chat informing about a successful order payment.
- * This function is fire‑and‑forget; any network errors are caught and logged without affecting the caller.
- */
-export async function notifyOwner(orderId: string, paymentMethod: string): Promise<void> {
-  const botToken = process.env.TELEGRAM_BOT_TOKEN;
-  const chatId = process.env.TELEGRAM_CHAT_ID;
+// Escape dynamic text before placing it inside Telegram HTML messages.
+const escapeHtml = (value: string): string =>
+  value
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;");
 
-  if (!botToken || !chatId) {
-    console.warn(
-      "Telegram notification skipped – missing TELEGRAM_BOT_TOKEN or TELEGRAM_CHAT_ID in environment."
-    );
-    return;
-  }
+// Format prices in Indian rupees.
+const formatINR = (amount: number): string =>
+  new Intl.NumberFormat("en-IN", {
+    style: "currency",
+    currency: "INR",
+    maximumFractionDigits: 0,
+  }).format(amount);
 
+// Notify the owner after a customer's Razorpay payment is confirmed.
+export const notifyOwner = async (
+  orderId: string,
+  paymentMethod: string
+): Promise<void> => {
   try {
-    const order = await prisma.order.findUnique({
-      where: { id: orderId },
-      select: {
-        orderNumber: true,
-        total: true,
-        subtotal: true,
-        deliveryFee: true,
-        isFiveMinute: true,
-        customerName: true,
-        customerPhone: true,
-        customerHostel: true,
-        customerFloor: true,
-        customerRoom: true,
-        items: {
-          select: {
-            productName: true,
-            quantity: true,
-            price: true,
-            subtotal: true,
-          },
-        },
-      },
-    });
+    const botToken = process.env.TELEGRAM_BOT_TOKEN?.trim();
+    const chatId = process.env.TELEGRAM_CHAT_ID?.trim();
 
-    if (!order) {
-      console.warn("Telegram notification skipped – order not found", { orderId });
+    // Skip notifications when Telegram has not been configured.
+    if (!botToken || !chatId) {
+      console.warn(
+        "Telegram notification skipped: bot token or chat ID is not configured."
+      );
       return;
     }
 
-    const itemLines = order.items
-      .map((item) => `  • ${item.productName} × ${item.quantity} — ₹${item.subtotal}`)
-      .join("\n");
-
-    const text = [
-      `✅ *New Order Confirmed*`,
-      ``,
-      `*Order #:* ${order.orderNumber}`,
-      `*Payment:* ${paymentMethod}`,
-      order.isFiveMinute ? `⚡ *5-Minute Delivery*` : "",
-      ``,
-      `*Items:*`,
-      itemLines,
-      ``,
-      `*Subtotal:* ₹${order.subtotal}`,
-      `*Delivery Fee:* ₹${order.deliveryFee}`,
-      `*Total:* ₹${order.total}`,
-      ``,
-      `*Deliver to:*`,
-      `${order.customerName}`,
-      `${order.customerHostel}, Floor ${order.customerFloor}, Room ${order.customerRoom}`,
-      `📞 ${order.customerPhone}`,
-    ]
-      .filter(Boolean)
-      .join("\n");
-
-    const url = `https://api.telegram.org/bot${botToken}/sendMessage`;
-    const payload = {
-      chat_id: chatId,
-      text,
-      parse_mode: "Markdown",
-    };
-
-    const response = await fetch(url, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(payload),
+    // Read order information from the database.
+    const order = await prisma.order.findUnique({
+      where: { id: orderId },
+      include: { items: true },
     });
 
-    if (!response.ok) {
-      const errorBody = await response.text();
-      console.warn("Telegram API responded with error", {
-        status: response.status,
-        body: errorBody,
-      });
+    if (!order) {
+      console.error(
+        "Telegram notification skipped: order was not found."
+      );
+      return;
     }
-  } catch (err) {
-    console.warn("Failed to send Telegram notification", { error: err });
+
+    // Format each item using the saved order snapshot.
+    const items = order.items
+      .map(
+        (item) =>
+          `• ${escapeHtml(item.productName)} — ${item.quantity} × ` +
+          `${formatINR(item.price)} / ${escapeHtml(item.unit)} = ` +
+          `${formatINR(item.subtotal)}`
+      )
+      .join("\n");
+
+    // Build the order message using Telegram's HTML formatting.
+    const message = [
+      "<b>🛍 New Minutes Order Confirmed!</b>",
+      "",
+      `<b>Order:</b> ${escapeHtml(order.orderNumber)}`,
+      `<b>Status:</b> ${escapeHtml(order.orderStatus)}`,
+      `<b>Payment method:</b> ${escapeHtml(paymentMethod)}`,
+      `<b>Total:</b> ${formatINR(order.total)}`,
+      "",
+      "<b>Items</b>",
+      items || "No items",
+      "",
+      "<b>Customer Details</b>",
+      `<b>Name:</b> ${escapeHtml(order.customerName)}`,
+      `<b>Phone:</b> ${escapeHtml(order.customerPhone)}`,
+      `<b>Email:</b> ${escapeHtml(order.customerEmail)}`,
+      `<b>Hostel:</b> ${escapeHtml(order.customerHostel)}`,
+      `<b>Floor:</b> ${order.customerFloor}`,
+      `<b>Room:</b> ${escapeHtml(order.customerRoom)}`,
+      "",
+      "<b>Bill Summary</b>",
+      `<b>Subtotal:</b> ${formatINR(order.subtotal)}`,
+      `<b>Delivery:</b> ${formatINR(order.deliveryFee)}`,
+      `<b>Total:</b> ${formatINR(order.total)}`,
+    ].join("\n");
+
+    // Send the notification through Telegram's Bot API.
+    const response = await fetch(
+      `https://api.telegram.org/bot${botToken}/sendMessage`,
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          chat_id: chatId,
+          text: message,
+          parse_mode: "HTML",
+          disable_web_page_preview: true,
+        }),
+        signal: AbortSignal.timeout(8000),
+      }
+    );
+
+    const result: unknown = await response.json().catch(() => null);
+
+    // Check both the HTTP response and Telegram's API result.
+    if (
+      !response.ok ||
+      typeof result !== "object" ||
+      result === null ||
+      !("ok" in result) ||
+      result.ok !== true
+    ) {
+      console.error("Telegram order notification failed.", {
+        httpStatus: response.status,
+      });
+      return;
+    }
+
+    console.info("Telegram order notification sent.", {
+      orderNumber: order.orderNumber,
+    });
+  } catch {
+    // A Telegram error must not undo a successfully confirmed payment.
+    console.error(
+      "Telegram order notification failed due to a network or service error."
+    );
   }
-}
+};
