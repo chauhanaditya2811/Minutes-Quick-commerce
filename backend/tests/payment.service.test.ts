@@ -76,13 +76,26 @@ describe("Cashfree payment service", () => {
   });
 
   it("creates a Cashfree order using the server amount", async () => {
+    mocks.fetch
+      .mockResolvedValueOnce(new Response("not found", { status: 404 }))
+      .mockResolvedValueOnce(new Response(JSON.stringify({
+        order_id: "MIN-attempt-1",
+        payment_session_id: "session-1",
+        order_amount: 140,
+        order_currency: "INR",
+      }), { status: 200, headers: { "content-type": "application/json" } }));
+
     const result = await createCashfreeOrderForCustomer("firebase-1", "order-1");
     expect(result.paymentSessionId).toBe("session-1");
+    expect(mocks.fetch).toHaveBeenCalledWith(
+      "https://sandbox.cashfree.com/pg/orders/MIN-attempt-1",
+      expect.objectContaining({ method: "GET" }),
+    );
     expect(mocks.fetch).toHaveBeenCalledWith(
       "https://sandbox.cashfree.com/pg/orders",
       expect.objectContaining({ method: "POST" }),
     );
-    expect(JSON.parse(mocks.fetch.mock.calls[0][1].body).order_amount).toBe(140);
+    expect(JSON.parse(mocks.fetch.mock.calls[1][1].body).order_amount).toBe(140);
   });
 
   it("does not create an additional payment attempt when a pending Cashfree attempt can be reused", async () => {
