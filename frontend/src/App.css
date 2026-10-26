@@ -116,6 +116,7 @@
 .card__price-row { display: flex; align-items: baseline; justify-content: space-between; gap: 6px; margin-top: auto; margin-bottom: 8px; }
 .low { font-size: 0.72rem; color: #b45309; }
 .card .stepper { width: 100%; justify-content: space-between; }
+.card .btn--block { height: 40px; min-width: 0; padding-right: 8px; padding-left: 8px; white-space: nowrap; flex-wrap: nowrap; }
 
 /* Keep the Add to Cart control consistent on narrow mobile screens. */
 @media (max-width: 639px) {
