@@ -1,6 +1,7 @@
 import { createHmac, timingSafeEqual } from "node:crypto";
 import { prisma } from "../config/database.js";
 import { getCashfreeWebhookSecret } from "../config/cashfree.js";
+import { notifyOwner } from "./telegram.service.js";
 
 export class CashfreeWebhookError extends Error {
   constructor(message: string, readonly statusCode: number) {
@@ -103,7 +104,7 @@ export const processCashfreeWebhook = async (
   }
 
   try {
-    return await prisma.$transaction(async (tx) => {
+    const result = await prisma.$transaction(async (tx) => {
       const duplicate = await tx.cashfreeWebhookEvent.findUnique({ where: { eventId: id } });
       if (duplicate) return { received: true, processed: false, reason: "duplicate_event" };
       await tx.cashfreeWebhookEvent.create({ data: { eventId: id, eventType: payload.type as string } });
@@ -130,14 +131,14 @@ export const processCashfreeWebhook = async (
         attempt.order.paymentStatus === "SUCCESS" &&
         ["CONFIRMED", "DELIVERED"].includes(attempt.order.orderStatus)
       ) {
-        return { received: true, processed: false, reason: "already_processed"         };
-        }
-        if (attempt.order.orderStatus !== "PENDING_PAYMENT") {
-          throw new CashfreeWebhookError(
-            "The order is not eligible for payment confirmation.",
-            409,
-          );
-        }
+        return { received: true, processed: false, reason: "already_processed" };
+      }
+      if (attempt.order.orderStatus !== "PENDING_PAYMENT") {
+        throw new CashfreeWebhookError(
+          "The order is not eligible for payment confirmation.",
+          409,
+        );
+      }
       await tx.order.update({ where: { id: attempt.order.id }, data: { paymentStatus: "SUCCESS", orderStatus: "CONFIRMED" } });
       await tx.paymentAttempt.update({
         where: { id: attempt.id },
@@ -161,8 +162,23 @@ export const processCashfreeWebhook = async (
           provider: "CASHFREE",
         },
       });
-      return { received: true, processed: true, event: payload.type, orderId: attempt.order.id, paymentStatus: "SUCCESS", orderStatus: "CONFIRMED" };
+      return {
+        received: true,
+        processed: true,
+        event: payload.type,
+        orderId: attempt.order.id,
+        paymentStatus: "SUCCESS" as const,
+        orderStatus: "CONFIRMED" as const,
+        newlyConfirmed: true,
+      };
     });
+    if (result.newlyConfirmed) {
+      void notifyOwner(result.orderId, "Cashfree").catch((error: unknown) => {
+        console.error("Cashfree webhook Telegram notification failed:", error);
+      });
+    }
+    const { newlyConfirmed: _newlyConfirmed, ...publicResult } = result;
+    return publicResult;
   } catch (error) {
     if (isRecord(error) && error.code === "P2002") {
       return { received: true, processed: false, reason: "duplicate_event" };
