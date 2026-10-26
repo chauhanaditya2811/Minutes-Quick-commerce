@@ -34,6 +34,19 @@ const cashfreeRequest = async <T>(path: string, init: RequestInit): Promise<T> =
   return body as T;
 };
 
+const findExistingCashfreeOrder = async (
+  cashfreeOrderId: string,
+): Promise<CashfreeOrderResponse | null> => {
+  try {
+    return await cashfreeRequest<CashfreeOrderResponse>(
+      `/orders/${encodeURIComponent(cashfreeOrderId)}`,
+      { method: "GET" },
+    );
+  } catch {
+    return null;
+  }
+};
+
 interface CashfreeOrderResponse {
   order_id: string;
   payment_session_id: string;
@@ -107,22 +120,24 @@ export const createCashfreeOrderForCustomer = async (
   }
 
   const cashfreeOrderId = `MIN-${attempt.id}`;
-  const gatewayOrder = await cashfreeRequest<CashfreeOrderResponse>("/orders", {
-    method: "POST",
-    headers: { "x-idempotency-key": createHash("sha256").update(cashfreeOrderId).digest("hex") },
-    body: JSON.stringify({
-      order_id: cashfreeOrderId,
-      order_amount: order.total,
-      order_currency: "INR",
-      customer_details: {
-        customer_id: order.userId,
-        customer_name: order.customerName,
-        customer_email: order.customerEmail,
-        customer_phone: order.customerPhone,
-      },
-      order_note: `Minutes order ${order.orderNumber}`,
-    }),
-  });
+  const gatewayOrder =
+    (await findExistingCashfreeOrder(cashfreeOrderId)) ??
+    (await cashfreeRequest<CashfreeOrderResponse>("/orders", {
+      method: "POST",
+      headers: { "x-idempotency-key": createHash("sha256").update(cashfreeOrderId).digest("hex") },
+      body: JSON.stringify({
+        order_id: cashfreeOrderId,
+        order_amount: order.total,
+        order_currency: "INR",
+        customer_details: {
+          customer_id: order.userId,
+          customer_name: order.customerName,
+          customer_email: order.customerEmail,
+          customer_phone: order.customerPhone,
+        },
+        order_note: `Minutes order ${order.orderNumber}`,
+      }),
+    }));
 
   await prisma.$transaction(async (tx) => {
     await tx.order.update({
