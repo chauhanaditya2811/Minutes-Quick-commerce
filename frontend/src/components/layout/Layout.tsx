@@ -3,11 +3,17 @@ import { useEffect } from 'react';
 import Navbar from '../Navbar';
 import Footer from '../Footer';
 import PreviewBanner from './PreviewBanner';
+import FloatingViewCart from '../cart/FloatingViewCart';
+import { useCart } from '../../context/CartContext';
 
 const TINTED = ['/checkout', '/account', '/orders'];
+// Pages where the cart shortcut would duplicate or cover the main task.
+const NO_FLOATING_CART = ['/cart', '/checkout', '/orders', '/login', '/register', '/forgot-password'];
 
 export default function Layout() {
   const { pathname } = useLocation();
+  const { lines } = useCart();
+  const showFloatingCart = lines.length > 0 && !NO_FLOATING_CART.some((p) => pathname.startsWith(p));
   const tinted = TINTED.some((p) => pathname.startsWith(p));
 
   useEffect(() => {
@@ -15,7 +21,7 @@ export default function Layout() {
   }, [pathname]);
 
   return (
-    <div className="app">
+    <div className={`app${showFloatingCart ? ' app--floating-cart' : ''}`}>
       <PreviewBanner />
       <Navbar />
       <main className={`main${tinted ? ' main--tinted' : ''}`}>
@@ -24,6 +30,7 @@ export default function Layout() {
         </div>
       </main>
       <Footer />
+      {showFloatingCart && <FloatingViewCart />}
     </div>
   );
 }
