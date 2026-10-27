@@ -1,7 +1,6 @@
 import { Link } from 'react-router-dom';
 import { useCart } from '../../context/CartContext';
 import { formatINR } from '../../utils/format';
-import { CartIcon } from '../ui/Icons';
 
 /** Floating bottom-center shortcut to the existing cart page. Rendered only while the cart has items. */
 export default function FloatingViewCart() {
@@ -9,21 +8,27 @@ export default function FloatingViewCart() {
   if (lines.length === 0) return null;
 
   const units = lines.reduce((sum, l) => sum + l.quantity, 0);
+  const latest = lines[lines.length - 1].product;
+  const itemsLabel = `${units} ${units === 1 ? 'item' : 'items'}`;
   return (
     <div className="floating-cart">
       <Link
         to="/cart"
         className="floating-cart__btn"
-        aria-label={`View cart, ${units} ${units === 1 ? 'item' : 'items'}, total ${formatINR(subtotal)}`}
+        aria-label={`View cart, ${itemsLabel}, total ${formatINR(subtotal)}`}
       >
-        <span className="floating-cart__icon" aria-hidden="true">
-          <CartIcon width={20} height={20} />
+        <span key={latest.id} className="floating-cart__thumb" aria-hidden="true">
+          <img src={latest.imageUrl} alt="" />
         </span>
-        <span className="floating-cart__info" aria-hidden="true">
-          <span key={units} className="floating-cart__count">{units} {units === 1 ? 'item' : 'items'}</span>
-          <span className="floating-cart__total">{formatINR(subtotal)}</span>
+        <span className="floating-cart__text" aria-hidden="true">
+          <span className="floating-cart__title">View cart</span>
+          <span key={units} className="floating-cart__sub">{itemsLabel} · {formatINR(subtotal)}</span>
         </span>
-        <span className="floating-cart__label" aria-hidden="true">View Cart ›</span>
+        <span className="floating-cart__chevron" aria-hidden="true">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.6" strokeLinecap="round" strokeLinejoin="round">
+            <path d="m9 6 6 6-6 6" />
+          </svg>
+        </span>
       </Link>
     </div>
   );

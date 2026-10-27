@@ -6,6 +6,7 @@ import { formatINR } from '../../utils/format';
 import ProductGrid from '../../components/products/ProductGrid';
 //import Loading from '../../components/Loading';
 import Notice from '../../components/ui/Notice';
+import StoreClosedBanner from '../../components/StoreClosedBanner';
 import EmptyState from '../../components/ui/EmptyState';
 import ProductGridSkeleton from '../../components/skeletons/ProductGridSkeleton';
 
@@ -40,9 +41,7 @@ export default function HomePage() {
           Could not load store information: {settingsError} <button type="button" className="link-btn" onClick={reloadSettings}>Try again</button>
         </Notice>
       )}
-      {settings && !settings.storeOpen && (
-        <Notice tone="warning">The store is closed right now. You can browse, but ordering is paused.</Notice>
-      )}
+      {settings && !settings.storeOpen && <StoreClosedBanner />}
 
    {loading && <ProductGridSkeleton />}
       {error && (
