@@ -1,4 +1,5 @@
 import { createHash } from "node:crypto";
+import type { Prisma } from "../generated/prisma/client.js";
 import { prisma } from "../config/database.js";
 import {
   CASHFREE_API_VERSION,
@@ -85,15 +86,28 @@ interface CashfreePayment {
   order_id: string;
 }
 
-export const createCashfreeOrderForCustomer = async (
-  firebaseUid: string,
+/** Who may pay for an order: its signed-in customer, or the guest holding its checkout token. */
+export type OrderOwner = { firebaseUid: string } | { guestTokenHash: string };
+
+// Ownership is enforced in the database query itself, so a guest order never matches the
+// signed-in path and a signed-in customer's order never matches a guest token.
+const ownedBy = (owner: OrderOwner): Prisma.OrderWhereInput =>
+  "firebaseUid" in owner
+    ? { user: { firebaseUid: owner.firebaseUid } }
+    : { userId: null, guestAccessTokenHash: owner.guestTokenHash };
+
+export const createCashfreeOrderForCustomer = (firebaseUid: string, orderId: string) =>
+  createCashfreeOrderForOwner({ firebaseUid }, orderId);
+
+export const createCashfreeOrderForOwner = async (
+  owner: OrderOwner,
   orderId: string,
 ) => {
   const clientId = getCashfreeClientId();
   getCashfreeClientSecret();
   const prepared = await prisma.$transaction(async (tx) => {
     const order = await tx.order.findFirst({
-      where: { id: orderId, user: { firebaseUid } },
+      where: { id: orderId, ...ownedBy(owner) },
       include: { paymentAttempts: { orderBy: { createdAt: "desc" } }, items: true },
     });
     if (!order) throw new CheckoutError("Order not found.", 404);
@@ -178,9 +192,10 @@ export const createCashfreeOrderForCustomer = async (
         order_amount: order.total,
         order_currency: "INR",
         customer_details: {
-          customer_id: order.userId,
+          // Guests have no account, so Cashfree gets a per-order customer reference.
+          customer_id: order.userId ?? `guest_${order.id}`,
           customer_name: order.customerName,
-          customer_email: order.customerEmail,
+          ...(order.customerEmail ? { customer_email: order.customerEmail } : {}),
           customer_phone: order.customerPhone,
         },
         ...(notifyUrl ? { order_meta: { notify_url: notifyUrl } } : {}),
@@ -236,8 +251,14 @@ interface VerificationInput {
   cashfree_order_id: unknown;
 }
 
-export const verifyCashfreePaymentForCustomer = async (
+export const verifyCashfreePaymentForCustomer = (
   firebaseUid: string,
+  orderId: string,
+  input: VerificationInput,
+) => verifyCashfreePaymentForOwner({ firebaseUid }, orderId, input);
+
+export const verifyCashfreePaymentForOwner = async (
+  owner: OrderOwner,
   orderId: string,
   input: VerificationInput,
 ) => {
@@ -250,10 +271,10 @@ export const verifyCashfreePaymentForCustomer = async (
   }
   const cashfreeOrderId = input.cashfree_order_id;
   const attempt = await prisma.paymentAttempt.findFirst({
-    where: { orderId, cashfreeOrderId, provider: "CASHFREE" },
-    include: { order: { include: { user: { select: { firebaseUid: true } } } } },
+    where: { orderId, cashfreeOrderId, provider: "CASHFREE", order: ownedBy(owner) },
+    include: { order: true },
   });
-  if (!attempt?.order || attempt.order.user.firebaseUid !== firebaseUid) {
+  if (!attempt?.order) {
     throw new CheckoutError("Payment attempt not found.", 404);
   }
 

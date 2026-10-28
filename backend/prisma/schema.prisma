@@ -91,8 +91,14 @@ model Order {
   id          String @id @default(cuid())
   orderNumber String @unique
 
-  userId String
-  user   User   @relation(fields: [userId], references: [id])
+  // Null for guest orders, which are owned by guestAccessTokenHash instead.
+  // A CHECK constraint (migration 20261030000000) requires one of the two.
+  userId String?
+  user   User?   @relation(fields: [userId], references: [id], onDelete: Restrict)
+
+  // SHA-256 of the guest's secret checkout token. The token itself is never stored;
+  // it doubles as the idempotency key for repeated guest checkout submissions.
+  guestAccessTokenHash String? @unique
 
   // Store hostel whose inventory the order was placed against. Null for orders
   // created before hostel-wise inventory; customerHostel keeps the name snapshot.
@@ -111,7 +117,7 @@ model Order {
 
   // Delivery/customer snapshot
   customerName   String
-  customerEmail  String
+  customerEmail  String? // null for guest orders
   customerImage  String?
   customerPhone  String
   customerHostel String
@@ -203,8 +209,9 @@ model InventoryReservation {
   productId String
   product   Product @relation(fields: [productId], references: [id])
 
-  userId String
-  user   User   @relation(fields: [userId], references: [id])
+  // Null for holds on guest orders.
+  userId String?
+  user   User?   @relation(fields: [userId], references: [id], onDelete: Restrict)
 
   orderId String?
   order   Order?  @relation(fields: [orderId], references: [id])

@@ -11,11 +11,30 @@ import { isProfileComplete } from '../../types/user';
 import type { OrderSummary, ValidateOrderResponse } from '../../types/order';
 import { formatINR } from '../../utils/format';
 import DeliveryDetailsForm from '../../components/checkout/DeliveryDetailsForm';
+import GuestCheckout from '../../components/checkout/GuestCheckout';
+import Loading from '../../components/Loading';
 import OrderSummaryPanel from '../../components/checkout/OrderSummary';
 import EmptyState from '../../components/ui/EmptyState';
 import Notice from '../../components/ui/Notice';
 
+/** Signed-in customers keep their saved-details checkout; everyone else can check out as a guest. */
 export default function CheckoutPage() {
+  const { firebaseUser, loading } = useAuth();
+  const { lines } = useCart();
+  if (loading) return <Loading label="Checking sign-in…" />;
+  if (firebaseUser) return <SignedInCheckout />;
+  if (lines.length === 0) {
+    return (
+      <EmptyState title="Nothing to check out">
+        <p>Your cart is empty.</p>
+        <Link to="/" className="btn btn--yellow">Browse products</Link>
+      </EmptyState>
+    );
+  }
+  return <GuestCheckout />;
+}
+
+function SignedInCheckout() {
   const { lines, subtotal, clearCart } = useCart();
   const { profile, firebaseUser, profileError } = useAuth();
   const { selectedHostel } = useHostel();

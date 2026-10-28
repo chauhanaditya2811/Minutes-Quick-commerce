@@ -9,9 +9,9 @@ import { useCart } from '../../context/CartContext';
 import { useHostel } from '../../context/HostelContext';
 import HostelPicker from '../hostel/HostelPicker';
 
-const TINTED = ['/checkout', '/account', '/orders'];
+const TINTED = ['/checkout', '/account', '/orders', '/guest-orders'];
 // Pages where the cart shortcut would duplicate or cover the main task.
-const NO_FLOATING_CART = ['/cart', '/checkout', '/orders', '/login', '/register', '/forgot-password'];
+const NO_FLOATING_CART = ['/cart', '/checkout', '/orders', '/guest-orders', '/login', '/register', '/forgot-password'];
 
 export default function Layout() {
   const { pathname } = useLocation();

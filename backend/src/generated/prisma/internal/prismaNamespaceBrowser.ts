@@ -141,6 +141,7 @@ export const OrderScalarFieldEnum = {
   id: 'id',
   orderNumber: 'orderNumber',
   userId: 'userId',
+  guestAccessTokenHash: 'guestAccessTokenHash',
   hostelId: 'hostelId',
   subtotal: 'subtotal',
   deliveryFee: 'deliveryFee',
