@@ -3,7 +3,6 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 const mocks = vi.hoisted(() => ({
   product: {
     create: vi.fn(),
-    findMany: vi.fn(),
     findFirst: vi.fn(),
     update: vi.fn(),
   },
@@ -15,32 +14,22 @@ vi.mock("../src/config/database.js", () => ({
 
 import {
   createProduct,
-  getProducts,
   updateProduct,
 } from "../src/services/product.service.js";
 
-describe("manual product stock service", () => {
+describe("product catalogue service", () => {
   beforeEach(() => {
     vi.clearAllMocks();
   });
 
-  it("creates products with the required image URL and configured stock", async () => {
-    mocks.product.create.mockResolvedValue({
-      id: "product-1",
-      name: "Water",
-      imageUrl: "https://images.example.test/water.jpg",
-      description: null,
-      price: 20,
-      unit: "bottle",
-      stock: 0,
-    });
+  it("creates products without writing legacy global stock", async () => {
+    mocks.product.create.mockResolvedValue({ id: "product-1" });
 
-    const product = await createProduct({
+    await createProduct({
       name: "Water",
       imageUrl: "https://images.example.test/water.jpg",
       price: 20,
       unit: "bottle",
-      stock: 0,
     });
 
     expect(mocks.product.create).toHaveBeenCalledWith({
@@ -50,44 +39,19 @@ describe("manual product stock service", () => {
         description: null,
         price: 20,
         unit: "bottle",
-        stock: 0,
       },
     });
-    expect(product.stock).toBe(0);
   });
 
-  it("keeps non-deleted zero-stock products visible in the catalog", async () => {
-    const outOfStockProduct = {
-      id: "product-1",
-      name: "Water",
-      imageUrl: "https://images.example.test/water.jpg",
-      price: 20,
-      unit: "bottle",
-      stock: 0,
-      isDeleted: false,
-    };
-    mocks.product.findMany.mockResolvedValue([outOfStockProduct]);
-
-    await expect(getProducts()).resolves.toEqual([outOfStockProduct]);
-    expect(mocks.product.findMany).toHaveBeenCalledWith({
-      where: { isDeleted: false },
-      orderBy: { createdAt: "desc" },
-    });
-  });
-
-  it("updates stock only to the admin-provided value", async () => {
+  it("updates catalogue fields without touching legacy global stock", async () => {
     mocks.product.findFirst.mockResolvedValue({ id: "product-1" });
-    mocks.product.update.mockResolvedValue({
-      id: "product-1",
-      stock: 7,
-    });
+    mocks.product.update.mockResolvedValue({ id: "product-1" });
 
     await updateProduct("product-1", {
       name: "Water",
       imageUrl: "https://images.example.test/water.jpg",
       price: 20,
       unit: "bottle",
-      stock: 7,
     });
 
     expect(mocks.product.update).toHaveBeenCalledWith({
@@ -98,8 +62,21 @@ describe("manual product stock service", () => {
         description: null,
         price: 20,
         unit: "bottle",
-        stock: 7,
       },
     });
+  });
+
+  it("does not update deleted or missing products", async () => {
+    mocks.product.findFirst.mockResolvedValue(null);
+
+    await expect(
+      updateProduct("missing", {
+        name: "Water",
+        imageUrl: "https://images.example.test/water.jpg",
+        price: 20,
+        unit: "bottle",
+      })
+    ).resolves.toBeNull();
+    expect(mocks.product.update).not.toHaveBeenCalled();
   });
 });

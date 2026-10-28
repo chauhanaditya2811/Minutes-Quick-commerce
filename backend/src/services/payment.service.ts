@@ -6,8 +6,20 @@ import {
   getCashfreeClientId,
   getCashfreeClientSecret,
 } from "../config/cashfree.js";
-import { notifyOwner } from "./telegram.service.js";
-import { CheckoutError } from "./order.service.js";
+import { notifyOwner, notifyStockShortfall } from "./telegram.service.js";
+import { CheckoutError, finalizePaidOrder } from "./order.service.js";
+import { InventoryReservationError, extendOrClaimReservations } from "./inventory.service.js";
+
+// Cashfree requires an order expiry comfortably in the future; payments after the stock hold
+// ends are still handled safely by finalizePaidOrder's late-payment path.
+const MIN_CASHFREE_EXPIRY_MS = 16 * 60_000;
+
+// Cashfree documents order_expiry_time as ISO 8601 with an offset, e.g. 2026-10-29T10:20:12+05:30.
+const toCashfreeExpiry = (holdExpiresAt: Date) => {
+  const expiry = new Date(Math.max(holdExpiresAt.getTime(), Date.now() + MIN_CASHFREE_EXPIRY_MS));
+  const ist = new Date(expiry.getTime() + 330 * 60_000);
+  return `${ist.toISOString().slice(0, 19)}+05:30`;
+};
 
 const getCashfreeNotifyUrl = () => {
   const configuredUrl = process.env.CASHFREE_WEBHOOK_URL?.trim();
@@ -62,6 +74,7 @@ interface CashfreeOrderResponse {
   payment_session_id: string;
   order_amount: number;
   order_currency: string;
+  order_status?: string;
 }
 
 interface CashfreePayment {
@@ -78,10 +91,10 @@ export const createCashfreeOrderForCustomer = async (
 ) => {
   const clientId = getCashfreeClientId();
   getCashfreeClientSecret();
-  const { order, attempt } = await prisma.$transaction(async (tx) => {
+  const prepared = await prisma.$transaction(async (tx) => {
     const order = await tx.order.findFirst({
       where: { id: orderId, user: { firebaseUid } },
-      include: { paymentAttempts: { orderBy: { createdAt: "desc" } } },
+      include: { paymentAttempts: { orderBy: { createdAt: "desc" } }, items: true },
     });
     if (!order) throw new CheckoutError("Order not found.", 404);
     if (
@@ -93,13 +106,28 @@ export const createCashfreeOrderForCustomer = async (
     if (!Number.isSafeInteger(order.total) || order.total < 1) {
       throw new CheckoutError("The order amount is invalid.", 400);
     }
+    // Keep (or re-take) this order's stock hold for as long as the customer is paying.
+    let holdExpiresAt: Date | null;
+    try {
+      holdExpiresAt = await extendOrClaimReservations(tx, {
+        id: order.id,
+        userId: order.userId,
+        hostelId: order.hostelId,
+        items: order.items.map(({ productId, productName, quantity }) => ({ productId, productName, quantity })),
+      });
+    } catch (error) {
+      if (error instanceof InventoryReservationError) {
+        throw new CheckoutError(`${error.message} Please review your cart and place a new order.`, error.statusCode);
+      }
+      throw error;
+    }
     const latest = order.paymentAttempts[0];
     if (
       latest?.provider === "CASHFREE" &&
       ["PENDING", "CREATED"].includes(latest.status) &&
       latest.amount === order.total
     ) {
-      return { order, attempt: latest };
+      return { order, attempt: latest, holdExpiresAt };
     }
     const attempt = await tx.paymentAttempt.create({
       data: { orderId: order.id, amount: order.total, status: "PENDING", provider: "CASHFREE" },
@@ -110,23 +138,32 @@ export const createCashfreeOrderForCustomer = async (
         data: { paymentStatus: "PENDING" },
       });
     }
-    return { order, attempt };
+    return { order, attempt, holdExpiresAt };
   });
+  const { order, holdExpiresAt } = prepared;
+  let { attempt } = prepared;
 
   if (attempt.cashfreeOrderId) {
     const existing = await cashfreeRequest<CashfreeOrderResponse>(
       `/orders/${encodeURIComponent(attempt.cashfreeOrderId)}`,
       { method: "GET" },
     );
-    return {
-      orderId: order.id,
-      paymentAttemptId: attempt.id,
-      cashfreeOrderId: existing.order_id,
-      paymentSessionId: existing.payment_session_id,
-      amount: existing.order_amount,
-      currency: existing.order_currency,
-      clientId,
-    };
+    if (!existing.order_status || existing.order_status === "ACTIVE") {
+      return {
+        orderId: order.id,
+        paymentAttemptId: attempt.id,
+        cashfreeOrderId: existing.order_id,
+        paymentSessionId: existing.payment_session_id,
+        amount: existing.order_amount,
+        currency: existing.order_currency,
+        clientId,
+        holdExpiresAt,
+      };
+    }
+    // The earlier Cashfree order expired or was terminated: start a fresh attempt.
+    attempt = await prisma.paymentAttempt.create({
+      data: { orderId: order.id, amount: order.total, status: "PENDING", provider: "CASHFREE" },
+    });
   }
 
   const cashfreeOrderId = `MIN-${attempt.id}`;
@@ -147,6 +184,7 @@ export const createCashfreeOrderForCustomer = async (
           customer_phone: order.customerPhone,
         },
         ...(notifyUrl ? { order_meta: { notify_url: notifyUrl } } : {}),
+        ...(holdExpiresAt ? { order_expiry_time: toCashfreeExpiry(holdExpiresAt) } : {}),
         order_note: `Minutes order ${order.orderNumber}`,
       }),
     }));
@@ -190,6 +228,7 @@ export const createCashfreeOrderForCustomer = async (
     amount: gatewayOrder.order_amount,
     currency: gatewayOrder.order_currency,
     clientId,
+    holdExpiresAt,
   };
 };
 
@@ -233,48 +272,21 @@ export const verifyCashfreePaymentForCustomer = async (
     throw new CheckoutError("The payment has not been completed.", 409);
   }
 
-  const result = await prisma.$transaction(async (tx) => {
-    const current = await tx.order.findUnique({ where: { id: orderId } });
-    if (!current) throw new CheckoutError("Order not found.", 404);
-    if (
-      current.paymentStatus === "SUCCESS" &&
-      ["CONFIRMED", "DELIVERED"].includes(current.orderStatus)
-    ) {
-      return { orderId, orderNumber: current.orderNumber, paymentStatus: "SUCCESS" as const, orderStatus: current.orderStatus, newlyConfirmed: false };
-    }
-    if (current.orderStatus !== "PENDING_PAYMENT") {
-      throw new CheckoutError("The order is not eligible for payment confirmation.", 409);
-    }
-    await tx.order.update({ where: { id: orderId }, data: { paymentStatus: "SUCCESS", orderStatus: "CONFIRMED" } });
-    await tx.paymentAttempt.update({
-      where: { id: attempt.id },
-      data: {
-        status: "SUCCESS",
-        cashfreePaymentId: successful.cf_payment_id,
-        provider: "CASHFREE",
-      },
-    });
-    await tx.payment.upsert({
-      where: { orderId },
-      create: {
-        orderId,
-        cashfreeOrderId,
-        cashfreePaymentId: successful.cf_payment_id,
-        amount: attempt.amount,
-        status: "SUCCESS",
-        provider: "CASHFREE",
-      },
-      update: {
-        cashfreeOrderId,
-        cashfreePaymentId: successful.cf_payment_id,
-        amount: attempt.amount,
-        status: "SUCCESS",
-        provider: "CASHFREE",
-      },
-    });
-    return { orderId, orderNumber: current.orderNumber, paymentStatus: "SUCCESS" as const, orderStatus: "CONFIRMED" as const, newlyConfirmed: true };
-  });
+  const result = await prisma.$transaction((tx) =>
+    finalizePaidOrder(tx, {
+      orderId,
+      attemptId: attempt.id,
+      cashfreeOrderId,
+      cashfreePaymentId: successful.cf_payment_id,
+      amount: attempt.amount,
+    })
+  );
   if (result.newlyConfirmed) void notifyOwner(orderId, "Cashfree");
-  const { newlyConfirmed: _newlyConfirmed, ...publicResult } = result;
-  return publicResult;
+  if (result.shortfall) void notifyStockShortfall(orderId);
+  return {
+    orderId,
+    orderNumber: result.order.orderNumber,
+    paymentStatus: "SUCCESS" as const,
+    orderStatus: result.order.orderStatus,
+  };
 };

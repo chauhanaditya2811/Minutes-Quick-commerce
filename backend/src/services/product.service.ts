@@ -6,7 +6,6 @@ export interface CreateProductData {
   description?: string;
   price: number;
   unit: string;
-  stock: number;
 }
 
 export interface UpdateProductData {
@@ -15,10 +14,9 @@ export interface UpdateProductData {
   description?: string;
   price: number;
   unit: string;
-  stock: number;
 }
 
-// Creates a new product in PostgreSQL.
+// Creates a new product. Stock is managed per hostel in ProductInventory.
 export const createProduct = async (data: CreateProductData) => {
   return prisma.product.create({
     data: {
@@ -27,29 +25,6 @@ export const createProduct = async (data: CreateProductData) => {
       description: data.description ?? null,
       price: data.price,
       unit: data.unit,
-      stock: data.stock,
-    },
-  });
-};
-
-// Returns all products that are visible to customers.
-export const getProducts = async () => {
-  return prisma.product.findMany({
-    where: {
-      isDeleted: false,
-    },
-    orderBy: {
-      createdAt: "desc",
-    },
-  });
-};
-
-// Returns a single non-deleted product by its ID.
-export const getProductById = async (id: string) => {
-  return prisma.product.findFirst({
-    where: {
-      id,
-      isDeleted: false,
     },
   });
 };
@@ -80,7 +55,6 @@ export const updateProduct = async (
       description: data.description ?? null,
       price: data.price,
       unit: data.unit,
-      stock: data.stock,
     },
   });
 };

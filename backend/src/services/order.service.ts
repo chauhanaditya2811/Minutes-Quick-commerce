@@ -1,6 +1,13 @@
 import { randomUUID } from "node:crypto";
 import type { Prisma } from "../generated/prisma/client.js";
 import { prisma } from "../config/database.js";
+import {
+  InventoryReservationError,
+  consumeOrderReservations,
+  releaseUserPendingReservations,
+  reservationExpiry,
+  reserveOrderStock,
+} from "./inventory.service.js";
 
 const SETTINGS_ID = "store-settings";
 const MAX_ORDER_AMOUNT = 2_147_483_647;
@@ -12,8 +19,13 @@ export interface CheckoutItemInput {
 
 type CheckoutClient = Pick<
   Prisma.TransactionClient,
-  "user" | "hostel" | "setting" | "product"
+  "user" | "hostel" | "setting" | "productInventory"
 >;
+
+export interface CheckoutInput {
+  hostelId: unknown;
+  items: unknown;
+}
 
 export class CheckoutError extends Error {
   constructor(
@@ -70,12 +82,21 @@ const parseCheckoutItems = (items: unknown): CheckoutItemInput[] => {
   return parsedItems;
 };
 
+const parseCheckoutHostelId = (hostelId: unknown): string => {
+  if (typeof hostelId !== "string" || !hostelId.trim()) {
+    throw new CheckoutError("Select a hostel before checkout.", 400);
+  }
+
+  return hostelId.trim();
+};
+
 const validateCheckoutWithClient = async (
   client: CheckoutClient,
   firebaseUid: string,
-  input: unknown
+  input: CheckoutInput
 ) => {
-  const items = parseCheckoutItems(input);
+  const storeHostelId = parseCheckoutHostelId(input.hostelId);
+  const items = parseCheckoutItems(input.items);
 
   const user = await client.user.findUnique({
     where: { firebaseUid },
@@ -102,6 +123,19 @@ const validateCheckoutWithClient = async (
     throw new CheckoutError("Your hostel is inactive or no longer available. Please update your profile.", 400);
   }
 
+  // Orders are fulfilled from the delivery hostel's own stock, so the store the
+  // customer browsed must be the hostel saved in their delivery details.
+  if (storeHostelId !== hostel.id) {
+    const storeHostel = await client.hostel.findUnique({ where: { id: storeHostelId } });
+    if (!storeHostel || !storeHostel.isActive) {
+      throw new CheckoutError("The selected hostel is no longer available. Please choose another hostel.", 409);
+    }
+    throw new CheckoutError(
+      `Your delivery details are for ${hostel.name}, but you are shopping at ${storeHostel.name}. Update your delivery hostel or switch store.`,
+      409
+    );
+  }
+
   const settings = await client.setting.findUnique({
     where: { id: SETTINGS_ID },
   });
@@ -125,23 +159,33 @@ const validateCheckoutWithClient = async (
     throw new CheckoutError("Store settings are invalid.", 503);
   }
 
-  const products = await client.product.findMany({
+  const inventories = await client.productInventory.findMany({
     where: {
-      id: { in: items.map(({ productId }) => productId) },
-      isDeleted: false,
+      hostelId: hostel.id,
+      productId: { in: items.map(({ productId }) => productId) },
+      isAvailable: true,
+      product: { isDeleted: false },
     },
     select: {
-      id: true,
-      name: true,
-      price: true,
-      unit: true,
-      stock: true,
+      quantity: true,
+      product: {
+        select: {
+          id: true,
+          name: true,
+          price: true,
+          unit: true,
+        },
+      },
     },
   });
+  const products = inventories.map(({ quantity, product }) => ({
+    ...product,
+    stock: quantity,
+  }));
 
   if (products.length !== items.length) {
     throw new CheckoutError(
-      "One or more products are no longer available.",
+      `One or more products are no longer available at ${hostel.name}.`,
       409
     );
   }
@@ -208,6 +252,7 @@ const validateCheckoutWithClient = async (
   }
 
   return {
+    hostelId: hostel.id,
     customer: {
       id: user.id,
       name: user.name.trim(),
@@ -227,21 +272,25 @@ const validateCheckoutWithClient = async (
 
 export const validateCheckout = (
   firebaseUid: string,
-  items: unknown
-) => validateCheckoutWithClient(prisma, firebaseUid, items);
+  input: CheckoutInput
+) => validateCheckoutWithClient(prisma, firebaseUid, input);
 
-export const createOrder = async (firebaseUid: string, input: unknown) =>
+// Creates the order and holds its stock at the order's hostel in one transaction:
+// either both happen or neither does.
+export const createOrder = async (firebaseUid: string, input: CheckoutInput) =>
   prisma.$transaction(async (tx) => {
-    const checkout = await validateCheckoutWithClient(
-      tx,
-      firebaseUid,
-      isRecord(input) ? input.items : input
-    );
+    // Free this customer's holds on earlier unpaid orders first, so an abandoned
+    // checkout never blocks their own new order.
+    const customer = await tx.user.findUnique({ where: { firebaseUid }, select: { id: true } });
+    if (customer) await releaseUserPendingReservations(tx, customer.id);
 
-    return tx.order.create({
+    const checkout = await validateCheckoutWithClient(tx, firebaseUid, input);
+
+    const order = await tx.order.create({
       data: {
         orderNumber: `MIN-${randomUUID().replaceAll("-", "").toUpperCase()}`,
         userId: checkout.customer.id,
+        hostelId: checkout.hostelId,
         subtotal: checkout.subtotal,
         deliveryFee: checkout.deliveryFee,
         total: checkout.total,
@@ -269,6 +318,24 @@ export const createOrder = async (firebaseUid: string, input: unknown) =>
         paymentAttempts: true,
       },
     });
+
+    const holdExpiresAt = reservationExpiry();
+    try {
+      await reserveOrderStock(tx, {
+        userId: checkout.customer.id,
+        orderId: order.id,
+        hostelId: checkout.hostelId,
+        items: checkout.items.map(({ productId, productName, quantity }) => ({ productId, productName, quantity })),
+        expiresAt: holdExpiresAt,
+      });
+    } catch (error) {
+      if (error instanceof InventoryReservationError) {
+        throw new CheckoutError(error.message, error.statusCode);
+      }
+      throw error;
+    }
+
+    return { ...order, holdExpiresAt };
   });
 
 export const getCustomerOrders = (firebaseUid: string) =>
@@ -306,6 +373,7 @@ const adminOrderSelection = {
   customerHostel: true,
   customerFloor: true,
   customerRoom: true,
+  inventoryShortfall: true,
   subtotal: true,
   deliveryFee: true,
   total: true,
@@ -384,46 +452,82 @@ const getOrderForPaymentTransition = (
     include: { items: true, paymentAttempts: true },
   });
 
-// Call only after a payment provider has independently verified success.
-export const confirmOrderPaymentAfterVerification = async (
-  orderId: string
-) =>
-  prisma.$transaction(async (tx) => {
-    const updated = await tx.order.updateMany({
-      where: {
-        id: orderId,
-        orderStatus: "PENDING_PAYMENT",
-        paymentStatus: { in: ["CREATED", "PENDING", "FAILED"] },
-      },
-      data: {
-        paymentStatus: "SUCCESS",
-        orderStatus: "CONFIRMED",
-      },
-    });
+export interface VerifiedPayment {
+  orderId: string;
+  attemptId: string;
+  cashfreeOrderId: string;
+  cashfreePaymentId: string;
+  amount: number;
+}
 
-    if (updated.count > 0) {
-      await tx.paymentAttempt.updateMany({
-        where: {
-          orderId,
-          status: { in: ["CREATED", "PENDING", "FAILED"] },
-        },
-        data: { status: "SUCCESS" },
-      });
-    }
-
-    const order = await getOrderForPaymentTransition(tx, orderId);
-    if (
-      order?.paymentStatus === "SUCCESS" &&
-      ["CONFIRMED", "DELIVERED"].includes(order.orderStatus)
-    ) {
-      return order;
-    }
-
-    throw new CheckoutError(
-      "Order is not eligible for payment confirmation.",
-      409
-    );
+/**
+ * Confirms an order whose payment the provider has independently verified, and finalises its
+ * stock. Shared by payment verification and the webhook. Idempotent: the conditional update lets
+ * exactly one caller confirm the order; any other (a retry, a duplicate webhook, or verification
+ * racing the webhook) waits on the row lock, sees it already confirmed, and changes nothing.
+ */
+export const finalizePaidOrder = async (tx: Prisma.TransactionClient, payment: VerifiedPayment) => {
+  const updated = await tx.order.updateMany({
+    where: { id: payment.orderId, orderStatus: "PENDING_PAYMENT" },
+    data: { paymentStatus: "SUCCESS", orderStatus: "CONFIRMED" },
   });
+  const order = await tx.order.findUnique({ where: { id: payment.orderId }, include: { items: true } });
+  if (!order) throw new CheckoutError("Order not found.", 404);
+
+  if (updated.count === 0) {
+    if (order.paymentStatus === "SUCCESS" && ["CONFIRMED", "DELIVERED"].includes(order.orderStatus)) {
+      return { order, newlyConfirmed: false, shortfall: false };
+    }
+    throw new CheckoutError("The order is not eligible for payment confirmation.", 409);
+  }
+
+  const { shortfall } = await consumeOrderReservations(tx, {
+    id: order.id,
+    userId: order.userId,
+    hostelId: order.hostelId,
+    items: order.items.map(({ productId, quantity }) => ({ productId, quantity })),
+  });
+  if (shortfall) {
+    await tx.order.update({ where: { id: order.id }, data: { inventoryShortfall: true } });
+  }
+
+  await tx.paymentAttempt.update({
+    where: { id: payment.attemptId },
+    data: { status: "SUCCESS", cashfreePaymentId: payment.cashfreePaymentId, provider: "CASHFREE" },
+  });
+  const paymentData = {
+    cashfreeOrderId: payment.cashfreeOrderId,
+    cashfreePaymentId: payment.cashfreePaymentId,
+    amount: payment.amount,
+    status: "SUCCESS" as const,
+    provider: "CASHFREE" as const,
+  };
+  await tx.payment.upsert({
+    where: { orderId: order.id },
+    create: { orderId: order.id, ...paymentData },
+    update: paymentData,
+  });
+
+  return { order: { ...order, inventoryShortfall: shortfall }, newlyConfirmed: true, shortfall };
+};
+
+/**
+ * Records a failed payment attempt without ever overwriting a success that committed first.
+ * Stock stays held: the customer can retry until the hold expires.
+ */
+export const recordFailedPaymentAttempt = async (
+  tx: Prisma.TransactionClient,
+  failure: { orderId: string; attemptId: string; cashfreePaymentId: string }
+) => {
+  await tx.paymentAttempt.updateMany({
+    where: { id: failure.attemptId, status: { not: "SUCCESS" } },
+    data: { status: "FAILED", cashfreePaymentId: failure.cashfreePaymentId, provider: "CASHFREE" },
+  });
+  await tx.order.updateMany({
+    where: { id: failure.orderId, orderStatus: "PENDING_PAYMENT", paymentStatus: { not: "SUCCESS" } },
+    data: { paymentStatus: "FAILED" },
+  });
+};
 
 export const markOrderPaymentFailed = async (orderId: string) =>
   prisma.$transaction(async (tx) => {

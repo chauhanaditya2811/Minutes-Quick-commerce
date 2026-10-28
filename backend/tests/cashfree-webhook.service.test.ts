@@ -10,6 +10,9 @@ const mocks = vi.hoisted(() => ({
   paymentUpsert: vi.fn(),
   transaction: vi.fn(),
   notifyOwner: vi.fn(),
+  notifyStockShortfall: vi.fn(),
+  finalize: vi.fn(),
+  recordFailed: vi.fn(),
 }));
 
 vi.mock("../src/config/database.js", () => ({
@@ -26,6 +29,13 @@ vi.mock("../src/config/cashfree.js", () => ({
 }));
 vi.mock("../src/services/telegram.service.js", () => ({
   notifyOwner: mocks.notifyOwner,
+  notifyStockShortfall: mocks.notifyStockShortfall,
+}));
+// Stock and order transitions are covered against a real database in tests/inventory.
+vi.mock("../src/services/order.service.js", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("../src/services/order.service.js")>()),
+  finalizePaidOrder: mocks.finalize,
+  recordFailedPaymentAttempt: mocks.recordFailed,
 }));
 
 import { processCashfreeWebhook } from "../src/services/cashfree-webhook.service.js";
@@ -78,7 +88,17 @@ describe("Cashfree webhook service", () => {
       },
     });
     mocks.notifyOwner.mockResolvedValue(undefined);
+    mocks.finalize.mockResolvedValue({ order: { id: "order-1" }, newlyConfirmed: true, shortfall: false });
+    mocks.recordFailed.mockResolvedValue(undefined);
   });
+
+  const verifiedPayment = {
+    orderId: "order-1",
+    attemptId: "attempt-1",
+    cashfreeOrderId: "MIN-attempt-1",
+    cashfreePaymentId: "cf-pay-1",
+    amount: 140,
+  };
 
   it("rejects an invalid signature before opening a transaction", async () => {
     const request = signed(payload());
@@ -91,10 +111,9 @@ describe("Cashfree webhook service", () => {
     const request = signed(payload());
     const result = await processCashfreeWebhook(request.body, request.signature, request.timestamp, "event-1");
     expect(result).toMatchObject({ processed: true, paymentStatus: "SUCCESS" });
-    expect(mocks.orderUpdate).toHaveBeenCalledWith(
-      expect.objectContaining({ data: { paymentStatus: "SUCCESS", orderStatus: "CONFIRMED" } }),
-    );
+    expect(mocks.finalize).toHaveBeenCalledWith(tx, verifiedPayment);
     expect(mocks.notifyOwner).toHaveBeenCalledOnce();
+    expect(mocks.notifyStockShortfall).not.toHaveBeenCalled();
     expect(mocks.notifyOwner).toHaveBeenCalledWith("order-1", "Cashfree");
     expect(result).not.toHaveProperty("newlyConfirmed");
   });
@@ -104,7 +123,7 @@ describe("Cashfree webhook service", () => {
     const request = signed(payload());
     const result = await processCashfreeWebhook(request.body, request.signature, request.timestamp, "event-1");
     expect(result).toMatchObject({ processed: false, reason: "duplicate_event" });
-    expect(mocks.orderUpdate).not.toHaveBeenCalled();
+    expect(mocks.finalize).not.toHaveBeenCalled();
     expect(mocks.notifyOwner).not.toHaveBeenCalled();
   });
 
@@ -112,9 +131,12 @@ describe("Cashfree webhook service", () => {
     const request = signed(payload("FAILED"));
     const result = await processCashfreeWebhook(request.body, request.signature, request.timestamp, "event-2");
     expect(result).toMatchObject({ processed: true, paymentStatus: "FAILED" });
-    expect(mocks.orderUpdate).toHaveBeenCalledWith(
-      expect.objectContaining({ data: { paymentStatus: "FAILED" } }),
-    );
+    expect(mocks.recordFailed).toHaveBeenCalledWith(tx, {
+      orderId: "order-1",
+      attemptId: "attempt-1",
+      cashfreePaymentId: "cf-pay-1",
+    });
+    expect(mocks.finalize).not.toHaveBeenCalled();
     expect(mocks.notifyOwner).not.toHaveBeenCalled();
   });
 
@@ -123,11 +145,12 @@ describe("Cashfree webhook service", () => {
     const request = signed(body);
     await expect(processCashfreeWebhook(request.body, request.signature, request.timestamp, "event-3"))
       .rejects.toMatchObject({ statusCode: 409 });
-    expect(mocks.orderUpdate).not.toHaveBeenCalled();
+    expect(mocks.finalize).not.toHaveBeenCalled();
     expect(mocks.notifyOwner).not.toHaveBeenCalled();
   });
 
   it("does not notify for an already-confirmed order", async () => {
+    mocks.finalize.mockResolvedValue({ order: { id: "order-1" }, newlyConfirmed: false, shortfall: false });
     mocks.attemptFindFirst.mockResolvedValue({
       id: "attempt-1",
       amount: 140,
@@ -144,7 +167,24 @@ describe("Cashfree webhook service", () => {
     const result = await processCashfreeWebhook(request.body, request.signature, request.timestamp, "event-4");
     expect(result).toMatchObject({ processed: false, reason: "already_processed" });
     expect(mocks.notifyOwner).not.toHaveBeenCalled();
-    expect(mocks.orderUpdate).not.toHaveBeenCalled();
+  });
+
+  it("alerts the owner when a paid order found less stock than ordered", async () => {
+    mocks.finalize.mockResolvedValue({ order: { id: "order-1" }, newlyConfirmed: true, shortfall: true });
+    const request = signed(payload());
+    const result = await processCashfreeWebhook(request.body, request.signature, request.timestamp, "event-7");
+    expect(result).toMatchObject({ processed: true, paymentStatus: "SUCCESS" });
+    expect(result).not.toHaveProperty("shortfall");
+    expect(mocks.notifyStockShortfall).toHaveBeenCalledWith("order-1");
+  });
+
+  it("rejects confirmation of an order that is no longer payable", async () => {
+    const { CheckoutError } = await import("../src/services/order.service.js");
+    mocks.finalize.mockRejectedValue(new CheckoutError("The order is not eligible for payment confirmation.", 409));
+    const request = signed(payload());
+    await expect(processCashfreeWebhook(request.body, request.signature, request.timestamp, "event-8"))
+      .rejects.toMatchObject({ statusCode: 409 });
+    expect(mocks.notifyOwner).not.toHaveBeenCalled();
   });
 
   it("does not notify when the transaction fails", async () => {
@@ -161,7 +201,7 @@ describe("Cashfree webhook service", () => {
     const result = await processCashfreeWebhook(request.body, request.signature, request.timestamp, "event-6");
     await new Promise((resolve) => setImmediate(resolve));
     expect(result).toMatchObject({ processed: true, paymentStatus: "SUCCESS" });
-    expect(mocks.orderUpdate).toHaveBeenCalled();
+    expect(mocks.finalize).toHaveBeenCalled();
     expect(mocks.notifyOwner).toHaveBeenCalledWith("order-1", "Cashfree");
   });
 });

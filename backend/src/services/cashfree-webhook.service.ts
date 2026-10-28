@@ -1,7 +1,8 @@
 import { createHmac, timingSafeEqual } from "node:crypto";
 import { prisma } from "../config/database.js";
 import { getCashfreeWebhookSecret } from "../config/cashfree.js";
-import { notifyOwner } from "./telegram.service.js";
+import { notifyOwner, notifyStockShortfall } from "./telegram.service.js";
+import { CheckoutError, finalizePaidOrder, recordFailedPaymentAttempt } from "./order.service.js";
 
 export class CashfreeWebhookError extends Error {
   constructor(message: string, readonly statusCode: number) {
@@ -118,50 +119,31 @@ export const processCashfreeWebhook = async (
         throw new CashfreeWebhookError("The webhook payment does not match the stored order amount.", 409);
       }
       if (isFailureEvent) {
-        await tx.paymentAttempt.update({
-          where: { id: attempt.id },
-          data: { status: "FAILED", cashfreePaymentId: paymentId, provider: "CASHFREE" },
+        await recordFailedPaymentAttempt(tx, {
+          orderId: attempt.order.id,
+          attemptId: attempt.id,
+          cashfreePaymentId: paymentId,
         });
-        if (attempt.order.paymentStatus !== "SUCCESS") {
-          await tx.order.update({ where: { id: attempt.order.id }, data: { paymentStatus: "FAILED" } });
-        }
         return { received: true, processed: true, event: payload.type, paymentStatus: "FAILED" };
       }
-      if (
-        attempt.order.paymentStatus === "SUCCESS" &&
-        ["CONFIRMED", "DELIVERED"].includes(attempt.order.orderStatus)
-      ) {
+      let finalized;
+      try {
+        finalized = await finalizePaidOrder(tx, {
+          orderId: attempt.order.id,
+          attemptId: attempt.id,
+          cashfreeOrderId: orderId,
+          cashfreePaymentId: paymentId,
+          amount: attempt.amount,
+        });
+      } catch (error) {
+        if (error instanceof CheckoutError) {
+          throw new CashfreeWebhookError("The order is not eligible for payment confirmation.", 409);
+        }
+        throw error;
+      }
+      if (!finalized.newlyConfirmed) {
         return { received: true, processed: false, reason: "already_processed" };
       }
-      if (attempt.order.orderStatus !== "PENDING_PAYMENT") {
-        throw new CashfreeWebhookError(
-          "The order is not eligible for payment confirmation.",
-          409,
-        );
-      }
-      await tx.order.update({ where: { id: attempt.order.id }, data: { paymentStatus: "SUCCESS", orderStatus: "CONFIRMED" } });
-      await tx.paymentAttempt.update({
-        where: { id: attempt.id },
-        data: { status: "SUCCESS", cashfreePaymentId: paymentId, provider: "CASHFREE" },
-      });
-      await tx.payment.upsert({
-        where: { orderId: attempt.order.id },
-        create: {
-          orderId: attempt.order.id,
-          cashfreeOrderId: orderId,
-          cashfreePaymentId: paymentId,
-          amount: attempt.amount,
-          status: "SUCCESS",
-          provider: "CASHFREE",
-        },
-        update: {
-          cashfreeOrderId: orderId,
-          cashfreePaymentId: paymentId,
-          amount: attempt.amount,
-          status: "SUCCESS",
-          provider: "CASHFREE",
-        },
-      });
       return {
         received: true,
         processed: true,
@@ -170,14 +152,16 @@ export const processCashfreeWebhook = async (
         paymentStatus: "SUCCESS" as const,
         orderStatus: "CONFIRMED" as const,
         newlyConfirmed: true,
+        shortfall: finalized.shortfall,
       };
     });
     if (result.newlyConfirmed) {
       void notifyOwner(result.orderId, "Cashfree").catch((error: unknown) => {
         console.error("Cashfree webhook Telegram notification failed:", error);
       });
+      if (result.shortfall) void notifyStockShortfall(result.orderId);
     }
-    const { newlyConfirmed: _newlyConfirmed, ...publicResult } = result;
+    const { newlyConfirmed: _newlyConfirmed, shortfall: _shortfall, ...publicResult } = result;
     return publicResult;
   } catch (error) {
     if (isRecord(error) && error.code === "P2002") {
