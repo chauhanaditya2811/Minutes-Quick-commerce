@@ -1,10 +1,10 @@
 import { API_BASE_URL, apiConfigured } from './config';
 import type {
   AdminProduct,
-  InventoryUpdateEntry,
+  HostelStock,
+  HostelStockUpdateEntry,
   Product,
   ProductInput,
-  ProductInventory,
   StoreSettings,
 } from '../types/product';
 import type { UpdateProfileInput, UserProfile } from '../types/user';
@@ -200,10 +200,10 @@ export const api = {
   updateAdminSettings: (body: StoreSettings) =>
     request<StoreSettings>('/api/admin/settings', { method: 'PUT', body, auth: true }),
   getAdminProducts: () => request<AdminProduct[]>('/api/admin/products', { auth: true }),
-  getProductInventory: (id: string) =>
-    request<ProductInventory>(`/api/admin/products/${encodeURIComponent(id)}/inventory`, { auth: true }),
-  updateProductInventory: (id: string, entries: InventoryUpdateEntry[]) =>
-    request<ProductInventory>(`/api/admin/products/${encodeURIComponent(id)}/inventory`, {
+  getHostelStock: (hostelId: string) =>
+    request<HostelStock>(`/api/admin/hostels/${encodeURIComponent(hostelId)}/inventory`, { auth: true }),
+  updateHostelStock: (hostelId: string, entries: HostelStockUpdateEntry[]) =>
+    request<HostelStock>(`/api/admin/hostels/${encodeURIComponent(hostelId)}/inventory`, {
       method: 'PUT',
       body: { entries },
       auth: true,

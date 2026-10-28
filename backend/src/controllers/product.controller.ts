@@ -8,8 +8,10 @@ import {
   InventoryServiceError,
   getAdminProductsWithInventory,
   getHostelCatalog,
+  getHostelInventory,
   getHostelProduct,
   getProductInventory,
+  updateHostelInventory,
   updateProductInventory,
 } from "../services/product-inventory.service.js";
 
@@ -314,5 +316,42 @@ export const deleteProductController = async (
     res.status(500).json({
       message: "Failed to delete product.",
     });
+  }
+};
+// Admin-only stock of every product at one hostel.
+export const getHostelInventoryController = async (
+  req: Request,
+  res: Response
+): Promise<void> => {
+  const { id } = req.params;
+
+  if (typeof id !== "string" || !id.trim()) {
+    res.status(400).json({ message: "A hostel ID is required." });
+    return;
+  }
+
+  try {
+    res.status(200).json(await getHostelInventory(id));
+  } catch (error) {
+    sendInventoryError(error, res, "Failed to get hostel stock.");
+  }
+};
+
+// Admin-only bulk save of several products' stock at one hostel.
+export const updateHostelInventoryController = async (
+  req: Request,
+  res: Response
+): Promise<void> => {
+  const { id } = req.params;
+
+  if (typeof id !== "string" || !id.trim()) {
+    res.status(400).json({ message: "A hostel ID is required." });
+    return;
+  }
+
+  try {
+    res.status(200).json(await updateHostelInventory(id, req.body?.entries));
+  } catch (error) {
+    sendInventoryError(error, res, "Failed to save hostel stock.");
   }
 };
