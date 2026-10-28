@@ -83,6 +83,56 @@ jobs:
           if-no-files-found: error
           include-hidden-files: true
 
+  migration-rehearsal:
+    runs-on: ubuntu-latest
+    needs: build
+    # Rehearse only on the dedicated test branch during PR validation.
+    if: github.event_name == 'pull_request'
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '24.x'
+          cache: npm
+          cache-dependency-path: backend/package-lock.json
+
+      - name: Install backend dependencies
+        run: npm ci
+        working-directory: backend
+
+      - name: Confirm migration-test database is not production
+        run: |
+          node --input-type=module <<'NODE'
+          const test = new URL(process.env.MIGRATION_TEST_DATABASE_URL);
+          const production = new URL(process.env.PRODUCTION_DATABASE_URL);
+          if (!["postgres:", "postgresql:"].includes(test.protocol) ||
+              !["postgres:", "postgresql:"].includes(production.protocol)) {
+            throw new Error("Database secrets must be PostgreSQL connection URLs.");
+          }
+          if (test.hostname === production.hostname) {
+            throw new Error("Test and production database hosts match; refusing migration rehearsal.");
+          }
+          console.log("Database targets are distinct.");
+          NODE
+        env:
+          MIGRATION_TEST_DATABASE_URL: ${{ secrets.MIGRATION_TEST_DATABASE_URL }}
+          PRODUCTION_DATABASE_URL: ${{ secrets.PRODUCTION_DATABASE_URL }}
+
+      - name: Apply migrations to Neon migration-test branch
+        run: npx prisma migrate deploy
+        working-directory: backend
+        env:
+          DATABASE_URL: ${{ secrets.MIGRATION_TEST_DATABASE_URL }}
+
+      - name: Verify migration status after rehearsal
+        run: npx prisma migrate status
+        working-directory: backend
+        env:
+          DATABASE_URL: ${{ secrets.MIGRATION_TEST_DATABASE_URL }}
+
   deploy:
     runs-on: ubuntu-latest
     needs: build
