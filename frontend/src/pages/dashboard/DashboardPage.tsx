@@ -13,26 +13,33 @@ const TABS = [
   { id: 'hostels', label: 'Hostels' },
 ] as const;
 
+type TabId = (typeof TABS)[number]['id'];
+
 export default function DashboardPage() {
-  const [tab, setTab] = useState<(typeof TABS)[number]['id']>('products');
-  const [stockFocus, setStockFocus] = useState<string | null>(null);
-  const manageStock = (productId: string) => {
-    setStockFocus(productId);
-    setTab('stock');
+  const [tab, setTab] = useState<TabId>('products');
+  const [stockDirty, setStockDirty] = useState(false);
+
+  // Leaving Stock management unmounts it, so confirm before discarding unsaved edits.
+  const goTo = (next: TabId) => {
+    if (next === tab) return;
+    if (tab === 'stock' && stockDirty && !window.confirm('You have unsaved stock changes. Leave without saving?')) return;
+    setStockDirty(false);
+    setTab(next);
   };
+
   return (
     <div className="page">
       <h1>Dashboard</h1>
       <div className="tabs" role="tablist" aria-label="Dashboard sections">
         {TABS.map((t) => (
-          <button key={t.id} role="tab" type="button" aria-selected={tab === t.id} className={`tab${tab === t.id ? ' tab--on' : ''}`} onClick={() => setTab(t.id)}>
+          <button key={t.id} role="tab" type="button" aria-selected={tab === t.id} className={`tab${tab === t.id ? ' tab--on' : ''}`} onClick={() => goTo(t.id)}>
             {t.label}
           </button>
         ))}
       </div>
-      {tab === 'products' && <ProductManager onGoToHostels={() => setTab('hostels')} onManageStock={manageStock} />}
+      {tab === 'products' && <ProductManager onGoToHostels={() => goTo('hostels')} onManageStock={() => goTo('stock')} />}
       {tab === 'stock' && (
-        <StockManager focusProductId={stockFocus} onGoToProducts={() => setTab('products')} onGoToHostels={() => setTab('hostels')} />
+        <StockManager onGoToProducts={() => goTo('products')} onGoToHostels={() => goTo('hostels')} onDirtyChange={setStockDirty} />
       )}
       {tab === 'settings' && <SettingsPanel />}
       {tab === 'orders' && <OrdersShell />}

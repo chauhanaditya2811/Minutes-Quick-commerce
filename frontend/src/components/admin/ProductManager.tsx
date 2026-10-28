@@ -32,8 +32,8 @@ function AvailabilityCell({ product, hostels, view }: { product: AdminProduct; h
 
 interface Props {
   onGoToHostels?: () => void;
-  /** Opens the Stock management tab at this product. */
-  onManageStock: (productId: string) => void;
+  /** Opens the hostel-first Stock management tab. */
+  onManageStock: () => void;
 }
 
 export default function ProductManager({ onGoToHostels, onManageStock }: Props) {
@@ -66,13 +66,10 @@ export default function ProductManager({ onGoToHostels, onManageStock }: Props) 
       <ProductForm
         product={editing === 'new' ? null : editing}
         onCancel={() => setEditing(null)}
-        onSaved={(saved, created) => {
+        onSaved={(_saved, created) => {
           setEditing(null);
-          if (created) {
-            onManageStock(saved.id); // a new product is hidden everywhere until its stock is set
-            return;
-          }
-          setMessage('Product saved.');
+          // A new product is unavailable at every hostel until its stock is set.
+          setMessage(created ? 'Product added. It isn’t available at any hostel yet: set its stock in Stock management.' : 'Product saved.');
           reload();
         }}
       />
@@ -83,7 +80,10 @@ export default function ProductManager({ onGoToHostels, onManageStock }: Props) 
     <section className="panel">
       <div className="panel__head">
         <h2>Products</h2>
-        <button type="button" className="btn btn--yellow btn--sm" onClick={() => setEditing('new')} disabled={previewMode}>Add product</button>
+        <span className="panel__actions">
+          <button type="button" className="btn btn--outline btn--sm panel__action" onClick={onManageStock}>Stock management</button>
+          <button type="button" className="btn btn--yellow btn--sm" onClick={() => setEditing('new')} disabled={previewMode}>Add product</button>
+        </span>
       </div>
       {previewMode && <Notice tone="info">Preview mode: editing is disabled until the backend is connected.</Notice>}
       {message && <Notice tone="success">{message}</Notice>}
@@ -129,7 +129,6 @@ export default function ProductManager({ onGoToHostels, onManageStock }: Props) 
                 <td data-label="Availability"><AvailabilityCell product={p} hostels={hostels} view={view} /></td>
                 <td className="table__actions" data-label="Actions">
                   <span className="product-table__action-links">
-                    <button type="button" className="link-btn inv-toggle" onClick={() => onManageStock(p.id)}>Manage stock</button>
                     <button type="button" className="link-btn" disabled={previewMode} onClick={() => setEditing(p)}>Edit</button>
                     <button type="button" className="link-btn link-btn--danger" disabled={previewMode} onClick={() => void remove(p)}>Delete</button>
                   </span>

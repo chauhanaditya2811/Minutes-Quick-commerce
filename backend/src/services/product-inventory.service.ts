@@ -19,6 +19,23 @@ export interface InventoryUpdateEntry {
   expectedQuantity?: number;
 }
 
+export interface HostelInventoryUpdateEntry {
+  productId: string;
+  isAvailable: boolean;
+  quantity: number;
+  expectedQuantity?: number;
+}
+
+// One product/hostel row to save; `label` names it in conflict messages.
+interface InventoryWrite {
+  productId: string;
+  hostelId: string;
+  isAvailable: boolean;
+  quantity: number;
+  expectedQuantity?: number;
+  label: string;
+}
+
 const catalogProductSelection = {
   id: true,
   name: true,
@@ -136,10 +153,10 @@ export const getProductInventory = async (productId: string) => {
   };
 };
 
-// Validates an admin inventory payload without touching the database.
-export const parseInventoryEntries = (input: unknown): InventoryUpdateEntry[] => {
+// Validates an admin inventory payload keyed by hostel or by product, without touching the database.
+const parseEntries = (input: unknown, key: "hostelId" | "productId", noun: string) => {
   if (!Array.isArray(input) || input.length === 0) {
-    throw new InventoryServiceError("Provide at least one hostel inventory entry.", 400);
+    throw new InventoryServiceError(`Provide at least one ${noun} inventory entry.`, 400);
   }
   if (input.length > MAX_INVENTORY_ENTRIES) {
     throw new InventoryServiceError("Too many inventory entries.", 400);
@@ -147,14 +164,15 @@ export const parseInventoryEntries = (input: unknown): InventoryUpdateEntry[] =>
 
   const seen = new Set<string>();
   return input.map((entry) => {
-    if (!isRecord(entry) || typeof entry.hostelId !== "string" || !entry.hostelId.trim()) {
-      throw new InventoryServiceError("Every entry needs a hostel ID.", 400);
+    const rawId = isRecord(entry) ? entry[key] : undefined;
+    if (!isRecord(entry) || typeof rawId !== "string" || !rawId.trim()) {
+      throw new InventoryServiceError(`Every entry needs a ${noun} ID.`, 400);
     }
-    const hostelId = entry.hostelId.trim();
-    if (seen.has(hostelId)) {
-      throw new InventoryServiceError("Each hostel can only appear once.", 400);
+    const id = rawId.trim();
+    if (seen.has(id)) {
+      throw new InventoryServiceError(`Each ${noun} can only appear once.`, 400);
     }
-    seen.add(hostelId);
+    seen.add(id);
     if (typeof entry.isAvailable !== "boolean") {
       throw new InventoryServiceError("Availability must be true or false.", 400);
     }
@@ -168,12 +186,33 @@ export const parseInventoryEntries = (input: unknown): InventoryUpdateEntry[] =>
       throw new InventoryServiceError("Expected quantity is invalid.", 400);
     }
     return {
-      hostelId,
+      id,
       isAvailable: entry.isAvailable,
       quantity: entry.quantity,
-      ...(entry.expectedQuantity === undefined ? {} : { expectedQuantity: entry.expectedQuantity }),
+      ...(entry.expectedQuantity === undefined ? {} : { expectedQuantity: entry.expectedQuantity as number }),
     };
   });
+};
+
+export const parseInventoryEntries = (input: unknown): InventoryUpdateEntry[] =>
+  parseEntries(input, "hostelId", "hostel").map(({ id, ...entry }) => ({ hostelId: id, ...entry }));
+
+export const parseHostelInventoryEntries = (input: unknown): HostelInventoryUpdateEntry[] =>
+  parseEntries(input, "productId", "product").map(({ id, ...entry }) => ({ productId: id, ...entry }));
+
+// Saving can race another admin creating the same product/hostel row at the same moment.
+const saveOrReportConflict = async (writes: InventoryWrite[]) => {
+  try {
+    await saveInventoryWrites(writes);
+  } catch (error) {
+    if (isRecord(error) && error.code === "P2002") {
+      throw new InventoryServiceError(
+        "Stock was changed by someone else at the same time. Refresh and try again.",
+        409
+      );
+    }
+    throw error;
+  }
 };
 
 // Saves several hostel inventory rows for one product atomically.
@@ -194,29 +233,87 @@ export const updateProductInventory = async (productId: string, input: unknown) 
     );
   }
 
-  try {
-    await saveInventoryEntries(productId, entries, hostelNames);
-  } catch (error) {
-    // Another admin created the same product/hostel row at the same moment.
-    if (isRecord(error) && error.code === "P2002") {
-      throw new InventoryServiceError(
-        "Stock was changed by someone else at the same time. Refresh and try again.",
-        409
-      );
-    }
-    throw error;
-  }
+  await saveOrReportConflict(
+    entries.map((entry) => ({ ...entry, productId, label: hostelNames.get(entry.hostelId) ?? entry.hostelId }))
+  );
 
   return getProductInventory(productId);
 };
 
-const saveInventoryEntries = (
-  productId: string,
-  entries: InventoryUpdateEntry[],
-  hostelNames: Map<string, string>
-) =>
+const findHostel = async (hostelId: string) => {
+  const hostel = await prisma.hostel.findUnique({ where: { id: hostelId } });
+  if (!hostel) throw new InventoryServiceError("Hostel not found.", 404);
+  return hostel;
+};
+
+// Returns every non-deleted product with its stock at one hostel (active or inactive).
+// Products with no stock row yet are listed as unavailable with quantity 0 and `exists: false`.
+export const getHostelInventory = async (hostelId: string) => {
+  const hostel = await findHostel(hostelId);
+  const products = await prisma.product.findMany({
+    where: { isDeleted: false },
+    orderBy: { name: "asc" },
+    select: { id: true, name: true, imageUrl: true, unit: true, price: true },
+  });
+  const [rows, reserved] = await Promise.all([
+    prisma.productInventory.findMany({ where: { hostelId } }),
+    getActiveReservedQuantities(products.map((product) => product.id)),
+  ]);
+  const rowsByProduct = new Map(rows.map((row) => [row.productId, row]));
+
+  return {
+    hostelId: hostel.id,
+    hostelName: hostel.name,
+    hostelActive: hostel.isActive,
+    products: products.map((product) => {
+      const row = rowsByProduct.get(product.id);
+      return {
+        productId: product.id,
+        name: product.name,
+        imageUrl: product.imageUrl,
+        unit: product.unit,
+        price: product.price,
+        isAvailable: row?.isAvailable ?? false,
+        quantity: row?.quantity ?? 0,
+        reserved: reserved.get(`${product.id}:${hostel.id}`) ?? 0,
+        exists: Boolean(row),
+        updatedAt: row?.updatedAt ?? null,
+      };
+    }),
+  };
+};
+
+// Saves stock for several products at one hostel atomically. Only `quantity` and
+// `isAvailable` change; reservations for payments in progress are never touched.
+export const updateHostelInventory = async (hostelId: string, input: unknown) => {
+  const entries = parseHostelInventoryEntries(input);
+  await findHostel(hostelId);
+
+  const products = await prisma.product.findMany({
+    where: { id: { in: entries.map(({ productId }) => productId) }, isDeleted: false },
+    select: { id: true, name: true },
+  });
+  const productNames = new Map(products.map((product) => [product.id, product.name]));
+  const unknown = entries.filter(({ productId }) => !productNames.has(productId));
+  if (unknown.length > 0) {
+    throw new InventoryServiceError(
+      `Unknown or deleted product ID(s): ${unknown.map(({ productId }) => productId).join(", ")}.`,
+      400
+    );
+  }
+
+  await saveOrReportConflict(
+    entries.map((entry) => ({ ...entry, hostelId, label: productNames.get(entry.productId) ?? entry.productId }))
+  );
+
+  return getHostelInventory(hostelId);
+};
+
+// Writes rows in one transaction; any conflict rolls back every row.
+const saveInventoryWrites = (writes: InventoryWrite[]) =>
   prisma.$transaction(async (tx) => {
-    for (const entry of entries) {
+    for (const entry of writes) {
+      const { productId } = entry;
       const data = { isAvailable: entry.isAvailable, quantity: entry.quantity };
 
       if (entry.expectedQuantity === undefined) {
@@ -245,7 +342,7 @@ const saveInventoryEntries = (
       }
 
       throw new InventoryServiceError(
-        `Stock for ${hostelNames.get(entry.hostelId)} changed since you opened it. Refresh and try again.`,
+        `Stock for ${entry.label} changed since you opened it. Refresh and try again.`,
         409
       );
     }

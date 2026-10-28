@@ -42,8 +42,11 @@ import {
   getAdminProductsWithInventory,
   getHostelCatalog,
   getHostelProduct,
+  getHostelInventory,
   getProductInventory,
+  parseHostelInventoryEntries,
   parseInventoryEntries,
+  updateHostelInventory,
   updateProductInventory,
 } from "../src/services/product-inventory.service.js";
 
@@ -268,5 +271,110 @@ describe("inventory updates", () => {
     await expect(
       updateProductInventory("product-1", [{ hostelId: "hostel-a", isAvailable: true, quantity: 1 }])
     ).rejects.toMatchObject({ statusCode: 409 });
+  });
+});
+
+describe("hostel-first stock management", () => {
+  const water = { id: "product-2", name: "Water", imageUrl: "https://images.example.test/w.jpg", unit: "bottle", price: 10 };
+
+  beforeEach(() => {
+    vi.resetAllMocks();
+    mocks.reservationGroupBy.mockResolvedValue([]);
+    mocks.transaction.mockImplementation(async (callback: (tx: unknown) => Promise<unknown>) =>
+      callback({ productInventory })
+    );
+    mocks.hostelFindUnique.mockResolvedValue(hostelA);
+    mocks.productFindMany.mockImplementation(async (args?: { where?: { id?: unknown } }) =>
+      args?.where?.id
+        ? [{ id: "product-1", name: "Maggi" }, { id: "product-2", name: "Water" }]
+        : [{ id: maggi.id, name: maggi.name, imageUrl: maggi.imageUrl, unit: maggi.unit, price: maggi.price }, water]
+    );
+    mocks.inventoryFindMany.mockResolvedValue([]);
+    mocks.inventoryUpdateMany.mockResolvedValue({ count: 1 });
+  });
+
+  it("lists every product for one hostel, with missing rows as unavailable and zero", async () => {
+    mocks.inventoryFindMany.mockResolvedValue([
+      { productId: "product-1", hostelId: "hostel-a", quantity: 0, isAvailable: true, updatedAt: new Date(0) },
+    ]);
+    mocks.reservationGroupBy.mockResolvedValue([
+      { productId: "product-1", hostelId: "hostel-a", _sum: { quantity: 2 } },
+      { productId: "product-1", hostelId: "hostel-b", _sum: { quantity: 9 } },
+    ]);
+
+    const inventory = await getHostelInventory("hostel-a");
+
+    expect(inventory).toMatchObject({ hostelId: "hostel-a", hostelName: "Hostel A", hostelActive: true });
+    expect(mocks.inventoryFindMany).toHaveBeenCalledWith({ where: { hostelId: "hostel-a" } });
+    expect(inventory.products).toEqual([
+      expect.objectContaining({ productId: "product-1", isAvailable: true, quantity: 0, reserved: 2, exists: true }),
+      expect.objectContaining({ productId: "product-2", isAvailable: false, quantity: 0, reserved: 0, exists: false }),
+    ]);
+  });
+
+  it("returns inactive hostels so their stock can still be prepared", async () => {
+    mocks.hostelFindUnique.mockResolvedValue(hostelB);
+    await expect(getHostelInventory("hostel-b")).resolves.toMatchObject({ hostelActive: false });
+  });
+
+  it("returns 404 for an unknown hostel", async () => {
+    mocks.hostelFindUnique.mockResolvedValue(null);
+    await expect(getHostelInventory("ghost")).rejects.toMatchObject({ statusCode: 404 });
+    await expect(
+      updateHostelInventory("ghost", [{ productId: "product-1", isAvailable: true, quantity: 1 }])
+    ).rejects.toMatchObject({ statusCode: 404 });
+    expect(mocks.transaction).not.toHaveBeenCalled();
+  });
+
+  it.each([
+    ["an empty list", []],
+    ["a missing product ID", [{ isAvailable: true, quantity: 1 }]],
+    ["duplicate products", [
+      { productId: "product-1", isAvailable: true, quantity: 1 },
+      { productId: "product-1", isAvailable: false, quantity: 0 },
+    ]],
+    ["a negative quantity", [{ productId: "product-1", isAvailable: true, quantity: -1 }]],
+    ["a fractional quantity", [{ productId: "product-1", isAvailable: true, quantity: 2.5 }]],
+    ["an unsafe quantity", [{ productId: "product-1", isAvailable: true, quantity: Number.MAX_SAFE_INTEGER + 1 }]],
+    ["a non-boolean availability", [{ productId: "product-1", isAvailable: 1, quantity: 1 }]],
+  ])("rejects %s", (_label, input) => {
+    expect(() => parseHostelInventoryEntries(input)).toThrow(InventoryServiceError);
+  });
+
+  it("saves several products for one hostel in a single transaction", async () => {
+    await updateHostelInventory("hostel-a", [
+      { productId: "product-1", isAvailable: true, quantity: 20, expectedQuantity: 0 },
+      { productId: "product-2", isAvailable: false, quantity: 0, expectedQuantity: 0 },
+    ]);
+
+    expect(mocks.transaction).toHaveBeenCalledOnce();
+    expect(mocks.inventoryUpdateMany).toHaveBeenNthCalledWith(1, {
+      where: { productId: "product-1", hostelId: "hostel-a", quantity: 0 },
+      data: { isAvailable: true, quantity: 20 },
+    });
+    expect(mocks.inventoryUpdateMany).toHaveBeenNthCalledWith(2, {
+      where: { productId: "product-2", hostelId: "hostel-a", quantity: 0 },
+      data: { isAvailable: false, quantity: 0 },
+    });
+  });
+
+  it("rejects unknown or deleted products before writing", async () => {
+    mocks.productFindMany.mockResolvedValue([{ id: "product-1", name: "Maggi" }]);
+    await expect(
+      updateHostelInventory("hostel-a", [
+        { productId: "product-1", isAvailable: true, quantity: 1 },
+        { productId: "deleted-product", isAvailable: true, quantity: 1 },
+      ])
+    ).rejects.toMatchObject({ statusCode: 400, message: "Unknown or deleted product ID(s): deleted-product." });
+    expect(mocks.transaction).not.toHaveBeenCalled();
+  });
+
+  it("names the product whose stock changed since the admin opened the hostel", async () => {
+    mocks.inventoryUpdateMany.mockResolvedValue({ count: 0 });
+    mocks.inventoryFindUnique.mockResolvedValue({ id: "row-1" });
+
+    await expect(
+      updateHostelInventory("hostel-a", [{ productId: "product-2", isAvailable: true, quantity: 5, expectedQuantity: 3 }])
+    ).rejects.toMatchObject({ statusCode: 409, message: "Stock for Water changed since you opened it. Refresh and try again." });
   });
 });

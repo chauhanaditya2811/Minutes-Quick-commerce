@@ -34,6 +34,7 @@ vi.mock("firebase-admin/auth", () => ({ getAuth: () => ({ verifyIdToken: mocks.v
 
 import productRoutes from "../src/routes/product.routes.js";
 import adminProductRoutes from "../src/routes/admin-product.routes.js";
+import adminHostelRoutes from "../src/routes/admin-hostel.routes.js";
 
 describe("hostel-scoped product routes", () => {
   let server: Server;
@@ -46,6 +47,7 @@ describe("hostel-scoped product routes", () => {
     const app = express();
     app.use(express.json());
     app.use("/api/products", productRoutes);
+    app.use("/api/admin/hostels", adminHostelRoutes);
     app.use("/api/admin", adminProductRoutes);
     server = createServer(app);
     await new Promise<void>((resolve) => server.listen(0, "127.0.0.1", resolve));
@@ -154,5 +156,45 @@ describe("hostel-scoped product routes", () => {
     const body = await response.json();
     expect(body.hostels[0]).toMatchObject({ hostelId: "hostel-a", quantity: 30, isAvailable: true });
     expect(mocks.inventoryUpsert).toHaveBeenCalledOnce();
+  });
+
+  it("protects hostel stock endpoints from guests and non-admins", async () => {
+    expect((await fetch(`${baseUrl}/api/admin/hostels/hostel-a/inventory`)).status).toBe(401);
+    expect(
+      (await fetch(`${baseUrl}/api/admin/hostels/hostel-a/inventory`, { headers: { authorization: "Bearer customer" } })).status
+    ).toBe(403);
+    const put = await fetch(`${baseUrl}/api/admin/hostels/hostel-a/inventory`, {
+      method: "PUT",
+      headers: { authorization: "Bearer customer", "content-type": "application/json" },
+      body: JSON.stringify({ entries: [{ productId: "product-1", isAvailable: true, quantity: 1 }] }),
+    });
+    expect(put.status).toBe(403);
+    expect(mocks.transaction).not.toHaveBeenCalled();
+  });
+
+  it("returns one hostel's stock for every product to admins", async () => {
+    mocks.productFindMany.mockResolvedValue([
+      { id: "product-1", name: "Maggi", imageUrl: "https://x.test/m.jpg", unit: "pack", price: 15 },
+    ]);
+    mocks.inventoryFindMany.mockResolvedValue([
+      { productId: "product-1", hostelId: "hostel-a", quantity: 12, isAvailable: true, updatedAt: new Date(0) },
+    ]);
+
+    const response = await fetch(`${baseUrl}/api/admin/hostels/hostel-a/inventory`, { headers: { authorization: "Bearer admin" } });
+
+    expect(response.status).toBe(200);
+    const body = await response.json();
+    expect(body).toMatchObject({ hostelId: "hostel-a", hostelName: "Hostel A" });
+    expect(body.products[0]).toMatchObject({ productId: "product-1", quantity: 12, isAvailable: true, reserved: 0 });
+  });
+
+  it("rejects invalid hostel stock payloads with 400 before writing", async () => {
+    const response = await fetch(`${baseUrl}/api/admin/hostels/hostel-a/inventory`, {
+      method: "PUT",
+      headers: { authorization: "Bearer admin", "content-type": "application/json" },
+      body: JSON.stringify({ entries: [{ productId: "product-1", isAvailable: true, quantity: 1.5 }] }),
+    });
+    expect(response.status).toBe(400);
+    expect(mocks.transaction).not.toHaveBeenCalled();
   });
 });
