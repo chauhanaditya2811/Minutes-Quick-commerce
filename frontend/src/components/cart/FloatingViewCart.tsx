@@ -6,8 +6,8 @@ import type { Product } from '../../types/product';
 
 /** Matches the exit keyframes in App.css (collapse, then drop). */
 const EXIT_MS = 420;
-/** Centre of the photo from the pill's left edge: 7px padding + half of the 46px photo. */
-const PHOTO_CENTER_PX = 30;
+/** Centre of the photo from the pill's left edge: 6px padding + half of the 40px photo. */
+const PHOTO_CENTER_PX = 26;
 
 interface Snapshot {
   latest: Product;

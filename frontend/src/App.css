@@ -476,7 +476,8 @@
 }
 
 /* ---------- Floating View Cart ---------- */
-.app--floating-cart { padding-bottom: calc(88px + env(safe-area-inset-bottom, 0px)); }
+/* Room under the page so the floating WhatsApp button and View cart pill never cover content. */
+.app--floating-actions { padding-bottom: calc(80px + env(safe-area-inset-bottom, 0px)); }
 
 .floating-cart {
   position: fixed;
@@ -486,7 +487,8 @@
   z-index: 25;
   display: flex;
   justify-content: center;
-  padding: 0 16px;
+  /* 16px edge + 52px WhatsApp button + 12px gap on both sides keeps the pill centred and clear of it */
+  padding: 0 80px;
   pointer-events: none; /* only the pill itself captures taps */
 }
 
@@ -509,10 +511,10 @@
   overflow: hidden;
   display: flex;
   align-items: center;
-  gap: 12px;
-  min-width: 232px;
+  gap: 10px;
+  min-width: 0;
   max-width: 100%;
-  padding: 7px 8px 7px 7px; /* 7px around the 46px photo makes the opening circle exactly 60px */
+  padding: 6px; /* 6px around the 40px photo makes the pill 52px tall and the opening circle 52px */
   --fc-shift: 0px;
   border-radius: 999px;
   background: linear-gradient(180deg, #ffd23f 0%, var(--yellow) 100%);
@@ -540,16 +542,16 @@
 .floating-cart__photo {
   flex: none;
   display: block;
-  width: 46px;
-  height: 46px;
+  width: 40px;
+  height: 40px;
   animation: floating-cart-photo-out 0.3s cubic-bezier(0.25, 0.9, 0.3, 1) 0.38s both;
 }
 /* The photo itself: keyed by product, so each newly added product pops in place. */
 .floating-cart__thumb {
   display: grid;
   place-items: center;
-  width: 46px;
-  height: 46px;
+  width: 40px;
+  height: 40px;
   border-radius: 50%;
   background: #fff;
   box-shadow: inset 0 0 0 2px rgba(17, 24, 39, 0.06);
@@ -559,15 +561,17 @@
 .floating-cart__thumb img { width: 80%; height: 80%; object-fit: contain; }
 
 .floating-cart__text { display: flex; flex-direction: column; line-height: 1.2; flex: 1; min-width: 0; padding-right: 4px; animation: floating-cart-reveal 0.24s ease-out 0.52s both; }
-.floating-cart__title { font-size: 1rem; font-weight: 800; }
-.floating-cart__sub { font-size: 0.78rem; font-weight: 600; opacity: 0.8; animation: floating-cart-bump 0.3s ease; transform-origin: left center; }
+.floating-cart__title { font-size: 0.95rem; font-weight: 800; }
+.floating-cart__sub { font-size: 0.74rem; font-weight: 600; opacity: 0.8; animation: floating-cart-bump 0.3s ease; transform-origin: left center; }
+.floating-cart__title,
+.floating-cart__sub { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 
 .floating-cart__chevron {
   flex: none;
   display: grid;
   place-items: center;
-  width: 38px;
-  height: 38px;
+  width: 32px;
+  height: 32px;
   border-radius: 50%;
   background: rgba(17, 24, 39, 0.12);
   animation: floating-cart-reveal 0.24s ease-out 0.58s both;
@@ -588,12 +592,12 @@
   100% { transform: translateY(0); }
 }
 @keyframes floating-cart-expand {
-  from { clip-path: inset(0 calc(50% - 30px) 0 calc(50% - 30px) round 30px); }
-  to { clip-path: inset(0 0 0 0 round 30px); }
+  from { clip-path: inset(0 calc(50% - 26px) 0 calc(50% - 26px) round 26px); }
+  to { clip-path: inset(0 0 0 0 round 26px); }
 }
 @keyframes floating-cart-collapse {
-  from { clip-path: inset(0 0 0 0 round 30px); }
-  to { clip-path: inset(0 calc(50% - 30px) 0 calc(50% - 30px) round 30px); }
+  from { clip-path: inset(0 0 0 0 round 26px); }
+  to { clip-path: inset(0 calc(50% - 26px) 0 calc(50% - 26px) round 26px); }
 }
 @keyframes floating-cart-photo-out {
   from { translate: var(--fc-shift) 0; }
@@ -648,6 +652,34 @@
   .floating-cart--leaving .floating-cart__photo,
   .floating-cart--leaving .floating-cart__text,
   .floating-cart--leaving .floating-cart__chevron { animation: none; }
+}
+
+/* ---------- Floating WhatsApp button ---------- */
+.whatsapp-fab {
+  position: fixed;
+  right: 16px;
+  bottom: calc(14px + env(safe-area-inset-bottom, 0px)); /* same baseline as the View cart pill */
+  z-index: 26;
+  display: grid;
+  place-items: center;
+  width: 52px;
+  height: 52px;
+  border-radius: 50%;
+  background: #25d366;
+  color: #fff;
+  box-shadow: 0 10px 22px rgba(37, 211, 102, 0.35), 0 4px 10px rgba(17, 24, 39, 0.18);
+  animation: whatsapp-fab-in 0.4s cubic-bezier(0.34, 1.56, 0.64, 1) 0.2s both;
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+  -webkit-tap-highlight-color: transparent;
+}
+.whatsapp-fab:hover { transform: translateY(-2px); box-shadow: 0 12px 26px rgba(37, 211, 102, 0.45), 0 4px 12px rgba(17, 24, 39, 0.22); text-decoration: none; }
+.whatsapp-fab:active { transform: scale(0.94); }
+.whatsapp-fab:focus-visible { outline: 3px solid var(--ink); outline-offset: 3px; }
+@keyframes whatsapp-fab-in {
+  from { transform: scale(0.4); opacity: 0; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .whatsapp-fab { animation: none; transition: none; }
 }
 
 /* ---------- Store closed banner ---------- */
