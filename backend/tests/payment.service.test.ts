@@ -247,14 +247,45 @@ describe("Cashfree payment service", () => {
   });
 
   it("rejects payment attempts owned by another customer", async () => {
-    mocks.findFirst.mockResolvedValue({
-      ...baseAttempt,
-      cashfreeOrderId: "MIN-attempt-1",
-      order: { ...baseOrder, user: { firebaseUid: "another-user" } },
-    });
+    // Ownership is part of the query, so another customer's attempt is simply not found.
+    mocks.findFirst.mockResolvedValue(null);
     await expect(verifyCashfreePaymentForCustomer("firebase-1", "order-1", {
       cashfree_order_id: "MIN-attempt-1",
     })).rejects.toMatchObject({ statusCode: 404 });
+    expect(mocks.findFirst).toHaveBeenCalledWith(expect.objectContaining({
+      where: expect.objectContaining({ order: { user: { firebaseUid: "firebase-1" } } }),
+    }));
     expect(mocks.fetch).not.toHaveBeenCalled();
+  });
+
+  it("scopes guest payment verification to the guest's own order token", async () => {
+    const { verifyCashfreePaymentForOwner } = await import("../src/services/payment.service.js");
+    mocks.findFirst.mockResolvedValue(null);
+    await expect(verifyCashfreePaymentForOwner({ guestTokenHash: "hash-1" }, "order-1", {
+      cashfree_order_id: "MIN-attempt-1",
+    })).rejects.toMatchObject({ statusCode: 404 });
+    expect(mocks.findFirst).toHaveBeenCalledWith(expect.objectContaining({
+      where: expect.objectContaining({ order: { userId: null, guestAccessTokenHash: "hash-1" } }),
+    }));
+    expect(mocks.fetch).not.toHaveBeenCalled();
+  });
+
+  it("creates a Cashfree order for a guest without an account or email", async () => {
+    const { createCashfreeOrderForOwner } = await import("../src/services/payment.service.js");
+    mocks.findFirst.mockResolvedValue({ ...baseOrder, userId: null, customerEmail: null, paymentAttempts: [] });
+    mocks.fetch
+      .mockResolvedValueOnce(new Response("not found", { status: 404 }))
+      .mockResolvedValueOnce(new Response(JSON.stringify({
+        order_id: "MIN-attempt-1", payment_session_id: "session-guest", order_amount: 140, order_currency: "INR",
+      }), { status: 200 }));
+
+    const result = await createCashfreeOrderForOwner({ guestTokenHash: "hash-1" }, "order-1");
+
+    expect(result.paymentSessionId).toBe("session-guest");
+    expect(mocks.findFirst).toHaveBeenCalledWith(expect.objectContaining({
+      where: { id: "order-1", userId: null, guestAccessTokenHash: "hash-1" },
+    }));
+    const customer = JSON.parse(mocks.fetch.mock.calls[1][1].body).customer_details;
+    expect(customer).toEqual({ customer_id: "guest_order-1", customer_name: "Customer", customer_phone: "9999999999" });
   });
 });

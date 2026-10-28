@@ -25,7 +25,7 @@ export interface OrderStockItem {
 
 export interface OrderStockTarget {
   id: string;
-  userId: string;
+  userId: string | null; // null for guest orders
   hostelId: string | null;
   items: OrderStockItem[];
 }
@@ -82,7 +82,7 @@ const takeUpTo = async (tx: Tx, productId: string, hostelId: string, quantity: n
 /** Holds stock at one hostel for an order. Throws (rolling back the caller's transaction) if any item is short. */
 export const reserveOrderStock = async (
   tx: Tx,
-  input: { userId: string; orderId: string; hostelId: string; items: OrderStockItem[]; expiresAt: Date }
+  input: { userId: string | null; orderId: string; hostelId: string; items: OrderStockItem[]; expiresAt: Date }
 ) => {
   for (const item of [...input.items].sort(byProductId)) {
     if (!Number.isInteger(item.quantity) || item.quantity <= 0) {
@@ -134,6 +134,15 @@ const restoreReservations = async (
     restored += 1;
   }
   return restored;
+};
+
+/** Releases the live holds of one unpaid order, e.g. a guest checkout replaced by a newer one. */
+export const releaseOrderReservations = async (tx: Tx, orderId: string) => {
+  const reservations = await tx.inventoryReservation.findMany({
+    where: { orderId, status: "ACTIVE", order: { orderStatus: "PENDING_PAYMENT" } },
+    select: { id: true, productId: true, hostelId: true, quantity: true },
+  });
+  return restoreReservations(tx, reservations, "RELEASED");
 };
 
 /** Releases a customer's holds on their other unpaid orders, e.g. after they abandoned a checkout. */

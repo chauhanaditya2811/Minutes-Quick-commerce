@@ -14,10 +14,17 @@ import type {
   AdminOrder,
   CustomerOrder,
   PaymentInitResponse,
+  GuestOrder,
+  GuestOrderRequest,
+  GuestPlacedOrder,
+  GuestValidateRequest,
   ValidateOrderResponse,
   VerifyPaymentRequest,
   VerifyPaymentResponse,
 } from '../types/order';
+
+/** Guest orders are reachable only with their secret checkout token, sent in this header. */
+const guestHeaders = (token: string) => ({ 'X-Guest-Order-Token': token });
 
 export class ApiError extends Error {
   status: number;
@@ -43,13 +50,14 @@ interface RequestOptions {
   body?: unknown;
   formData?: FormData;
   auth?: boolean;
+  headers?: Record<string, string>;
 }
 
 async function request<T>(path: string, opts: RequestOptions = {}): Promise<T> {
   if (!apiConfigured) {
     throw new ApiError('The backend URL is not configured. Set VITE_API_BASE_URL.', 0);
   }
-  const headers: Record<string, string> = {};
+  const headers: Record<string, string> = { ...opts.headers };
   if (opts.auth) {
     const token = await tokenProvider();
     if (!token) throw new ApiError('You need to sign in first.', 401);
@@ -174,6 +182,34 @@ export const api = {
         method: 'POST',
         body,
         auth: true,
+      }),
+      'payment',
+    ),
+
+  // Guest checkout (no sign-in; each order is gated by its own secret token)
+  validateGuestOrder: (body: GuestValidateRequest) =>
+    request<ValidateOrderResponse>('/api/guest/checkout/validate', { method: 'POST', body }),
+  createGuestOrder: async (body: GuestOrderRequest) =>
+    envelopeValue<GuestPlacedOrder>(await request<unknown>('/api/guest/orders', { method: 'POST', body }), 'order'),
+  getGuestOrder: async (orderId: string, token: string) =>
+    envelopeValue<GuestOrder>(
+      await request<unknown>(`/api/guest/orders/${encodeURIComponent(orderId)}`, { headers: guestHeaders(token) }),
+      'order',
+    ),
+  initGuestPayment: async (orderId: string, token: string) =>
+    envelopeValue<PaymentInitResponse>(
+      await request<unknown>(`/api/guest/orders/${encodeURIComponent(orderId)}/payment`, {
+        method: 'POST',
+        headers: guestHeaders(token),
+      }),
+      'payment',
+    ),
+  verifyGuestPayment: async (orderId: string, token: string, body: VerifyPaymentRequest) =>
+    envelopeValue<VerifyPaymentResponse>(
+      await request<unknown>(`/api/guest/orders/${encodeURIComponent(orderId)}/payment/verify`, {
+        method: 'POST',
+        body,
+        headers: guestHeaders(token),
       }),
       'payment',
     ),

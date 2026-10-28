@@ -71,7 +71,7 @@ export const notifyOwner = async (
       "<b>Customer Details</b>",
       `<b>Name:</b> ${escapeHtml(order.customerName)}`,
       `<b>Phone:</b> ${escapeHtml(order.customerPhone)}`,
-      `<b>Email:</b> ${escapeHtml(order.customerEmail)}`,
+      order.customerEmail ? `<b>Email:</b> ${escapeHtml(order.customerEmail)}` : "<b>Account:</b> Guest checkout (no email)",
       `<b>Hostel:</b> ${escapeHtml(order.customerHostel)}`,
       `<b>Floor:</b> ${order.customerFloor}`,
       `<b>Room:</b> ${escapeHtml(order.customerRoom)}`,

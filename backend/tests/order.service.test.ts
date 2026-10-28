@@ -437,9 +437,12 @@ describe("checkout validation service", () => {
         },
       },
     });
-    expect(query.select).not.toHaveProperty("payment");
+    // Only the Cashfree transaction references are exposed, never the full payment row.
+    expect(query.select.payment).toEqual({ select: { cashfreeOrderId: true, cashfreePaymentId: true } });
+    expect(query.select.userId).toBe(true);
     expect(query.select).not.toHaveProperty("paymentAttempts");
     expect(query.select).not.toHaveProperty("user");
+    expect(query.select).not.toHaveProperty("guestAccessTokenHash");
   });
 
   it("marks only successfully paid confirmed orders delivered and sets deliveredAt", async () => {

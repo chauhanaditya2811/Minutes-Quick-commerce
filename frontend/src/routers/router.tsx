@@ -8,6 +8,7 @@ import ProductDetailsPage from '../pages/products/ProductDetailsPage';
 import CartPage from '../pages/cart/CartPage';
 import CheckoutPage from '../pages/checkout/CheckoutPage';
 import OrderConfirmationPage from '../pages/orders/OrderConfirmationPage';
+import GuestOrderPage from '../pages/orders/GuestOrderPage';
 import OrdersPage from '../pages/orders/OrdersPage';
 import AccountPage from '../pages/account/AccountPage';
 import AuthPage from '../pages/auth/AuthPage';
@@ -31,9 +32,12 @@ export const router = createBrowserRouter([
       { path: '/terms', element: <TermsPage /> },
       { path: '/privacy', element: <PrivacyPage /> },
       { path: '/account', element: <PrivateRoute><AccountPage /></PrivateRoute> },
-      { path: '/checkout', element: <PrivateRoute><HostelRoute><CheckoutPage /></HostelRoute></PrivateRoute> },
+      // Open to guests: CheckoutPage uses the signed-in flow when an account is signed in.
+      { path: '/checkout', element: <HostelRoute><CheckoutPage /></HostelRoute> },
       { path: '/orders', element: <PrivateRoute><OrdersPage /></PrivateRoute> },
       { path: '/orders/:orderId/confirmation', element: <PrivateRoute><OrderConfirmationPage /></PrivateRoute> },
+      // Guest order page: opened with the order's secret token, not an account.
+      { path: '/guest-orders/:orderId', element: <GuestOrderPage /> },
       { path: '*', element: <NotFoundPage /> },
     ],
   },

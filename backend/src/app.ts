@@ -12,8 +12,13 @@ import adminOrderRoutes from "./routes/admin-order.routes.js";
 import cashfreeWebhookRoutes from "./routes/cashfree-webhook.routes.js";
 import hostelRoutes from "./routes/hostel.routes.js";
 import adminHostelRoutes from "./routes/admin-hostel.routes.js";
+import guestRoutes from "./routes/guest.routes.js";
 
 const app = express();
+
+// Azure App Service sits behind one front-end proxy; trust it so req.ip is the client's
+// address (used by the per-IP rate limits on public guest checkout routes).
+app.set("trust proxy", 1);
 
 app.use(cors());
 
@@ -43,5 +48,8 @@ app.use("/api/admin/settings", adminSettingsRoutes);
 
 //order routes
 app.use("/api/orders", orderRoutes);
+
+// Public guest checkout (no sign-in); every guest order is gated by its own secret token.
+app.use("/api/guest", guestRoutes);
 
 export default app;
