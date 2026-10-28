@@ -3,9 +3,11 @@ import ProductManager from '../../components/admin/ProductManager';
 import SettingsPanel from '../../components/admin/SettingsPanel';
 import OrdersShell from '../../components/admin/OrdersShell';
 import HostelManager from '../../components/admin/HostelManager';
+import StockManager from '../../components/admin/StockManager';
 
 const TABS = [
   { id: 'products', label: 'Products' },
+  { id: 'stock', label: 'Stock management' },
   { id: 'settings', label: 'Store settings' },
   { id: 'orders', label: 'Orders' },
   { id: 'hostels', label: 'Hostels' },
@@ -13,6 +15,11 @@ const TABS = [
 
 export default function DashboardPage() {
   const [tab, setTab] = useState<(typeof TABS)[number]['id']>('products');
+  const [stockFocus, setStockFocus] = useState<string | null>(null);
+  const manageStock = (productId: string) => {
+    setStockFocus(productId);
+    setTab('stock');
+  };
   return (
     <div className="page">
       <h1>Dashboard</h1>
@@ -23,7 +30,10 @@ export default function DashboardPage() {
           </button>
         ))}
       </div>
-      {tab === 'products' && <ProductManager />}
+      {tab === 'products' && <ProductManager onGoToHostels={() => setTab('hostels')} onManageStock={manageStock} />}
+      {tab === 'stock' && (
+        <StockManager focusProductId={stockFocus} onGoToProducts={() => setTab('products')} onGoToHostels={() => setTab('hostels')} />
+      )}
       {tab === 'settings' && <SettingsPanel />}
       {tab === 'orders' && <OrdersShell />}
       {tab === 'hostels' && <HostelManager />}

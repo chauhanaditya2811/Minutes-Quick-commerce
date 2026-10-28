@@ -1,5 +1,12 @@
 import { API_BASE_URL, apiConfigured } from './config';
-import type { Product, ProductInput, StoreSettings } from '../types/product';
+import type {
+  AdminProduct,
+  InventoryUpdateEntry,
+  Product,
+  ProductInput,
+  ProductInventory,
+  StoreSettings,
+} from '../types/product';
 import type { UpdateProfileInput, UserProfile } from '../types/user';
 import type {
   OrderRequest,
@@ -129,8 +136,10 @@ function mapOrder(order: BackendOrder): OrderSummary {
 
 export const api = {
   // Public
-  getProducts: () => request<Product[]>('/api/products'),
-  getProduct: (id: string) => request<Product>(`/api/products/${encodeURIComponent(id)}`),
+  getProducts: (hostelId: string) =>
+    request<Product[]>(`/api/products?hostelId=${encodeURIComponent(hostelId)}`),
+  getProduct: (id: string, hostelId: string) =>
+    request<Product>(`/api/products/${encodeURIComponent(id)}?hostelId=${encodeURIComponent(hostelId)}`),
   getSettings: () => request<StoreSettings>('/api/settings'),
   getHostels: () => request<Hostel[]>('/api/hostels'),
 
@@ -190,6 +199,15 @@ export const api = {
     request<void>(`/api/admin/hostels/${encodeURIComponent(id)}/permanent`, { method: 'DELETE', auth: true }),
   updateAdminSettings: (body: StoreSettings) =>
     request<StoreSettings>('/api/admin/settings', { method: 'PUT', body, auth: true }),
+  getAdminProducts: () => request<AdminProduct[]>('/api/admin/products', { auth: true }),
+  getProductInventory: (id: string) =>
+    request<ProductInventory>(`/api/admin/products/${encodeURIComponent(id)}/inventory`, { auth: true }),
+  updateProductInventory: (id: string, entries: InventoryUpdateEntry[]) =>
+    request<ProductInventory>(`/api/admin/products/${encodeURIComponent(id)}/inventory`, {
+      method: 'PUT',
+      body: { entries },
+      auth: true,
+    }),
   createProduct: (body: ProductInput) =>
     request<Product>('/api/admin/products', { method: 'POST', body, auth: true }),
   updateProduct: (id: string, body: ProductInput) =>

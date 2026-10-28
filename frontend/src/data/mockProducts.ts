@@ -3,6 +3,13 @@
  * Never imported by pages directly — see hooks/useProducts.ts and hooks/useStoreSettings.ts.
  */
 import type { Product, StoreSettings } from '../types/product';
+import type { Hostel } from '../services/api';
+
+export const mockHostels: Hostel[] = [
+  { id: 'mh1', name: 'Aravali Hostel' },
+  { id: 'mh2', name: 'Kailash Hostel' },
+  { id: 'mh3', name: 'Nilgiri Hostel' },
+];
 
 const art = (emoji: string, bg: string): string =>
   'data:image/svg+xml;utf8,' +

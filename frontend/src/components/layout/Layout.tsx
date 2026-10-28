@@ -5,6 +5,8 @@ import Footer from '../Footer';
 import PreviewBanner from './PreviewBanner';
 import FloatingViewCart from '../cart/FloatingViewCart';
 import { useCart } from '../../context/CartContext';
+import { useHostel } from '../../context/HostelContext';
+import HostelPicker from '../hostel/HostelPicker';
 
 const TINTED = ['/checkout', '/account', '/orders'];
 // Pages where the cart shortcut would duplicate or cover the main task.
@@ -13,6 +15,7 @@ const NO_FLOATING_CART = ['/cart', '/checkout', '/orders', '/login', '/register'
 export default function Layout() {
   const { pathname } = useLocation();
   const { lines } = useCart();
+  const { pickerOpen } = useHostel();
   const showFloatingCart = lines.length > 0 && !NO_FLOATING_CART.some((p) => pathname.startsWith(p));
   const tinted = TINTED.some((p) => pathname.startsWith(p));
 
@@ -30,7 +33,8 @@ export default function Layout() {
         </div>
       </main>
       <Footer />
-      {showFloatingCart && <FloatingViewCart />}
+      <FloatingViewCart visible={showFloatingCart} />
+      {pickerOpen && <HostelPicker variant="modal" />}
     </div>
   );
 }

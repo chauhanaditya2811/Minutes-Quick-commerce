@@ -8,6 +8,7 @@ export interface OrderItemInput {
 
 /** Body for POST /api/orders/validate and POST /api/orders. */
 export interface OrderRequest {
+  hostelId: string; // store hostel; must match the profile's delivery hostel
   items: OrderItemInput[];
 }
 
@@ -88,6 +89,8 @@ export interface AdminOrder {
   orderStatus: OrderStatus;
   createdAt: string;
   deliveredAt: string | null;
+  /** A late payment found less stock than ordered at the hostel; needs manual follow-up. */
+  inventoryShortfall?: boolean;
   items: {
     productName: string;
     price: number;
@@ -106,6 +109,8 @@ export interface PaymentInitResponse {
   amount: number;
   currency: string;
   clientId: string;
+  /** When the stock held for this order is released if payment hasn't completed. */
+  holdExpiresAt?: string | null;
 }
 
 /** Body for POST /api/orders/:orderId/payment/verify. */

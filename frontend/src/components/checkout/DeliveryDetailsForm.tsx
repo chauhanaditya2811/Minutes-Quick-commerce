@@ -4,20 +4,21 @@ import { previewMode } from '../../services/config';
 import Field from '../ui/Field';
 import Notice from '../ui/Notice';
 import SelectField from '../ui/SelectField';
-import { api, type Hostel } from '../../services/api';
+import type { Hostel } from '../../services/api';
+import { useHostel } from '../../context/HostelContext';
 
 interface Props {
   submitLabel: string;
   onSaved?: () => void;
+  /** Checkout passes the store hostel: delivery must go to the hostel whose stock is in the cart. */
+  lockedHostel?: Hostel | null;
 }
 
 /** Shared by the Account page and Checkout. Saves via PUT /api/users/me. */
-export default function DeliveryDetailsForm({ submitLabel, onSaved }: Props) {
+export default function DeliveryDetailsForm({ submitLabel, onSaved, lockedHostel }: Props) {
   const { profile, firebaseUser, saveProfile } = useAuth();
+  const { hostels, hostelsLoading, hostelsError, openPicker } = useHostel();
   const [form, setForm] = useState({ name: '', phone: '', hostelId: '', floor: '', room: '' });
-  const [hostels, setHostels] = useState<Hostel[]>([]);
-  const [hostelsLoading, setHostelsLoading] = useState(true);
-  const [hostelsError, setHostelsError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [saved, setSaved] = useState(false);
@@ -35,10 +36,8 @@ export default function DeliveryDetailsForm({ submitLabel, onSaved }: Props) {
   }, [profile]);
 
   useEffect(() => {
-    api.getHostels().then(setHostels).catch((e: unknown) =>
-      setHostelsError(e instanceof Error ? e.message : 'Could not load hostels.'),
-    ).finally(() => setHostelsLoading(false));
-  }, []);
+    if (lockedHostel) setForm((f) => ({ ...f, hostelId: lockedHostel.id }));
+  }, [lockedHostel, profile]);
 
   const set = (k: keyof typeof form) => (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     setSaved(false);
@@ -63,7 +62,7 @@ export default function DeliveryDetailsForm({ submitLabel, onSaved }: Props) {
       await saveProfile({
         name: form.name.trim(),
         phone,
-        hostelId: form.hostelId,
+        hostelId: lockedHostel?.id ?? form.hostelId,
         floor,
         room: form.room.trim(),
       });
@@ -77,7 +76,9 @@ export default function DeliveryDetailsForm({ submitLabel, onSaved }: Props) {
   };
 
   const disabled = previewMode && !firebaseUser;
-  const selectedHostelMissing = Boolean(profile?.hostelId && !hostels.some((hostel) => hostel.id === profile.hostelId));
+  const selectedHostelMissing = Boolean(
+    !lockedHostel && profile?.hostelId && !hostelsLoading && !hostelsError && !hostels.some((hostel) => hostel.id === profile.hostelId),
+  );
   const hostelSelectionChanged = form.hostelId !== (profile?.hostelId ?? '');
 
   return (
@@ -86,7 +87,16 @@ export default function DeliveryDetailsForm({ submitLabel, onSaved }: Props) {
       <Field label="Full name" value={form.name} onChange={set('name')} required autoComplete="name" />
       <Field label="Email address" value={profile?.email ?? firebaseUser?.email ?? ''} readOnly disabled hint="Email comes from your sign-in and can't be changed here." />
       <Field label="Phone number" value={form.phone} onChange={set('phone')} required type="tel" inputMode="tel" autoComplete="tel" placeholder="10-digit mobile number" />
-      {hostelsLoading ? <p className="field__hint">Loading available hostels…</p> : hostelsError ? <Notice tone="error">{hostelsError}</Notice> : hostels.length === 0 ? <Notice tone="warning">No hostels are available yet. Please contact the store administrator.</Notice> : (
+      {lockedHostel ? (
+        <div className="field">
+          <span className="field__label">Hostel</span>
+          <div className="locked-hostel">
+            <strong>{lockedHostel.name}</strong>
+            <button type="button" className="link-btn" onClick={openPicker}>Change</button>
+          </div>
+          <p className="field__hint">Your order is delivered to the hostel you’re shopping at.</p>
+        </div>
+      ) : hostelsLoading ? <p className="field__hint">Loading available hostels…</p> : hostelsError ? <Notice tone="error">{hostelsError}</Notice> : hostels.length === 0 ? <Notice tone="warning">No hostels are available yet. Please contact the store administrator.</Notice> : (
         <SelectField label="Hostel" value={form.hostelId} onChange={set('hostelId')} required disabled={disabled}>
           <option value="">Select your hostel</option>
           {hostels.map((hostel) => <option key={hostel.id} value={hostel.id}>{hostel.name}</option>)}
@@ -105,7 +115,7 @@ export default function DeliveryDetailsForm({ submitLabel, onSaved }: Props) {
       </div>
       {error && <Notice tone="error">{error}</Notice>}
       {saved && <Notice tone="success">Details saved.</Notice>}
-      <button type="submit" className="btn btn--blue" disabled={saving || disabled || hostelsLoading || Boolean(hostelsError) || hostels.length === 0}>
+      <button type="submit" className="btn btn--blue" disabled={saving || disabled || (!lockedHostel && (hostelsLoading || Boolean(hostelsError) || hostels.length === 0))}>
         {saving ? 'Saving…' : hostelSelectionChanged ? 'Save updated details' : submitLabel}
       </button>
     </form>
