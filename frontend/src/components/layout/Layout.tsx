@@ -4,6 +4,7 @@ import Navbar from '../Navbar';
 import Footer from '../Footer';
 import PreviewBanner from './PreviewBanner';
 import FloatingViewCart from '../cart/FloatingViewCart';
+import WhatsAppButton from './WhatsAppButton';
 import { useCart } from '../../context/CartContext';
 import { useHostel } from '../../context/HostelContext';
 import HostelPicker from '../hostel/HostelPicker';
@@ -24,7 +25,7 @@ export default function Layout() {
   }, [pathname]);
 
   return (
-    <div className={`app${showFloatingCart ? ' app--floating-cart' : ''}`}>
+    <div className="app app--floating-actions">
       <PreviewBanner />
       <Navbar />
       <main className={`main${tinted ? ' main--tinted' : ''}`}>
@@ -34,6 +35,7 @@ export default function Layout() {
       </main>
       <Footer />
       <FloatingViewCart visible={showFloatingCart} />
+      <WhatsAppButton />
       {pickerOpen && <HostelPicker variant="modal" />}
     </div>
   );
