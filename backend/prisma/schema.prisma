@@ -29,12 +29,15 @@ model User {
 }
 
 model Hostel {
-  id        String   @id @default(cuid())
-  name      String   @unique
-  isActive  Boolean  @default(true)
-  users     User[]
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id           String                 @id @default(cuid())
+  name         String                 @unique
+  isActive     Boolean                @default(true)
+  users        User[]
+  inventories  ProductInventory[]
+  orders       Order[]
+  reservations InventoryReservation[]
+  createdAt    DateTime               @default(now())
+  updatedAt    DateTime               @updatedAt
 
   @@map("hostels")
 }
@@ -46,17 +49,42 @@ model Product {
   description String?
   price       Int
   unit        String
+  /// Legacy global stock from before hostel-wise inventory. Kept for reference only;
+  /// customer stock now lives in ProductInventory.
   stock       Int     @default(0)
   isDeleted   Boolean @default(false)
 
   orderItems   OrderItem[]
   reservations InventoryReservation[]
+  inventories  ProductInventory[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
   @@index([isDeleted])
   @@map("products")
+}
+
+// Stock of one product at one hostel. A missing row means unavailable there.
+model ProductInventory {
+  id String @id @default(cuid())
+
+  productId String
+  product   Product @relation(fields: [productId], references: [id], onDelete: Restrict)
+
+  hostelId String
+  hostel   Hostel @relation(fields: [hostelId], references: [id], onDelete: Cascade)
+
+  // Guarded by a CHECK ("quantity" >= 0) constraint in the migration.
+  quantity    Int     @default(0)
+  isAvailable Boolean @default(false)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([productId, hostelId])
+  @@index([hostelId, isAvailable])
+  @@map("product_inventories")
 }
 
 model Order {
@@ -66,13 +94,20 @@ model Order {
   userId String
   user   User   @relation(fields: [userId], references: [id])
 
+  // Store hostel whose inventory the order was placed against. Null for orders
+  // created before hostel-wise inventory; customerHostel keeps the name snapshot.
+  hostelId String?
+  hostel   Hostel? @relation(fields: [hostelId], references: [id], onDelete: Restrict)
+
   subtotal    Int
   deliveryFee Int
   total       Int
 
-  paymentStatus PaymentStatus
-  orderStatus   OrderStatus
-  isFiveMinute  Boolean       @default(false)
+  paymentStatus      PaymentStatus
+  orderStatus        OrderStatus
+  isFiveMinute       Boolean       @default(false)
+  // Set when a late payment found less hostel stock than was ordered; needs manual follow-up.
+  inventoryShortfall Boolean       @default(false)
 
   // Delivery/customer snapshot
   customerName   String
@@ -92,6 +127,7 @@ model Order {
   deliveredAt DateTime?
 
   @@index([userId])
+  @@index([hostelId])
   @@index([orderStatus])
   @@index([createdAt])
   @@map("orders")
@@ -173,6 +209,10 @@ model InventoryReservation {
   orderId String?
   order   Order?  @relation(fields: [orderId], references: [id])
 
+  // Hostel whose product_inventories row the units were taken from.
+  hostelId String?
+  hostel   Hostel? @relation(fields: [hostelId], references: [id], onDelete: Restrict)
+
   quantity  Int
   status    ReservationStatus @default(ACTIVE)
   expiresAt DateTime
@@ -184,6 +224,8 @@ model InventoryReservation {
   @@index([userId])
   @@index([status, expiresAt])
   @@index([orderId])
+  @@index([orderId, status])
+  @@index([hostelId])
   @@map("inventory_reservations")
 }
 

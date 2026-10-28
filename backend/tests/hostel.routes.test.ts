@@ -3,9 +3,9 @@ import express from "express";
 import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
 
 const mocks = vi.hoisted(() => ({
-  hostelFindMany: vi.fn(), hostelFindFirst: vi.fn(), hostelCreate: vi.fn(), hostelUpdate: vi.fn(), hostelUpdateMany: vi.fn(), hostelFindUnique: vi.fn(), hostelDelete: vi.fn(), userFindFirst: vi.fn(), verifyIdToken: vi.fn(),
+  hostelFindMany: vi.fn(), hostelFindFirst: vi.fn(), hostelCreate: vi.fn(), hostelUpdate: vi.fn(), hostelUpdateMany: vi.fn(), hostelFindUnique: vi.fn(), hostelDelete: vi.fn(), userFindFirst: vi.fn(), orderFindFirst: vi.fn(), verifyIdToken: vi.fn(),
 }));
-vi.mock("../src/config/database.js", () => ({ prisma: { hostel: { findMany: mocks.hostelFindMany, findFirst: mocks.hostelFindFirst, create: mocks.hostelCreate, update: mocks.hostelUpdate, updateMany: mocks.hostelUpdateMany, findUnique: mocks.hostelFindUnique, delete: mocks.hostelDelete }, user: { findFirst: mocks.userFindFirst } } }));
+vi.mock("../src/config/database.js", () => ({ prisma: { hostel: { findMany: mocks.hostelFindMany, findFirst: mocks.hostelFindFirst, create: mocks.hostelCreate, update: mocks.hostelUpdate, updateMany: mocks.hostelUpdateMany, findUnique: mocks.hostelFindUnique, delete: mocks.hostelDelete }, user: { findFirst: mocks.userFindFirst }, order: { findFirst: mocks.orderFindFirst } } }));
 vi.mock("../src/config/firebase.js", () => ({ default: {} }));
 vi.mock("firebase-admin/auth", () => ({ getAuth: () => ({ verifyIdToken: mocks.verifyIdToken }) }));
 
@@ -23,7 +23,7 @@ describe("hostel routes", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     mocks.verifyIdToken.mockImplementation(async (token: string) => token === "admin" ? { uid: "a", email: "admin@example.test" } : token === "customer" ? { uid: "c", email: "customer@example.test" } : Promise.reject(new Error("bad token")));
-    mocks.hostelFindMany.mockResolvedValue([]); mocks.hostelFindFirst.mockResolvedValue(null); mocks.hostelCreate.mockResolvedValue({ id: "h1", name: "Block A", isActive: true }); mocks.hostelUpdateMany.mockResolvedValue({ count: 1 }); mocks.hostelFindUnique.mockResolvedValue({ id: "h1", name: "Block A", isActive: false }); mocks.userFindFirst.mockResolvedValue(null); mocks.hostelDelete.mockResolvedValue({});
+    mocks.hostelFindMany.mockResolvedValue([]); mocks.hostelFindFirst.mockResolvedValue(null); mocks.hostelCreate.mockResolvedValue({ id: "h1", name: "Block A", isActive: true }); mocks.hostelUpdateMany.mockResolvedValue({ count: 1 }); mocks.hostelFindUnique.mockResolvedValue({ id: "h1", name: "Block A", isActive: false }); mocks.userFindFirst.mockResolvedValue(null); mocks.orderFindFirst.mockResolvedValue(null); mocks.hostelDelete.mockResolvedValue({});
   });
   afterAll(async () => { if (server?.listening) await new Promise<void>((resolve, reject) => server.close((error) => error ? reject(error) : resolve())); if (previousAdminEmail === undefined) delete process.env.ADMIN_EMAIL; else process.env.ADMIN_EMAIL = previousAdminEmail; });
   it("lists active hostels publicly", async () => {
@@ -72,6 +72,14 @@ describe("hostel routes", () => {
     const response = await fetch(`${baseUrl}/api/admin/hostels/h1/permanent`, { method: "DELETE", headers: { authorization: "Bearer admin" } });
     expect(response.status).toBe(409);
     await expect(response.json()).resolves.toEqual({ message: "This hostel cannot be deleted because user profiles still reference it. Reassign those users before deleting the hostel." });
+    expect(mocks.hostelDelete).not.toHaveBeenCalled();
+  });
+  it("rejects permanent deletion when an order references the hostel", async () => {
+    mocks.orderFindFirst.mockResolvedValue({ id: "order-1" });
+    const response = await fetch(`${baseUrl}/api/admin/hostels/h1/permanent`, { method: "DELETE", headers: { authorization: "Bearer admin" } });
+    expect(response.status).toBe(409);
+    await expect(response.json()).resolves.toEqual({ message: "This hostel cannot be deleted because orders were placed against it. Deactivate it instead." });
+    expect(mocks.orderFindFirst).toHaveBeenCalledWith({ where: { hostelId: "h1" }, select: { id: true } });
     expect(mocks.hostelDelete).not.toHaveBeenCalled();
   });
   it("returns 404 when permanently deleting a nonexistent hostel", async () => {

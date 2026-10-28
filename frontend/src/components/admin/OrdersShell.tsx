@@ -99,7 +99,10 @@ export default function OrdersShell() {
                   </td>
                   <td data-label="Total">{formatINR(order.total)}</td>
                   <td data-label="Payment"><span className="status">{order.paymentStatus.replace(/_/g, ' ')}</span></td>
-                  <td data-label="Order status"><span className={`status status--${order.orderStatus.toLowerCase()}`}>{order.orderStatus.replace(/_/g, ' ')}</span></td>
+                  <td data-label="Order status">
+                    <span className={`status status--${order.orderStatus.toLowerCase()}`}>{order.orderStatus.replace(/_/g, ' ')}</span>
+                    {order.inventoryShortfall && <span className="status status--shortfall" title="Paid after the stock hold expired and the hostel no longer had enough stock. Fulfil or refund manually.">Stock shortfall</span>}
+                  </td>
                   <td data-label="Created"><time dateTime={order.createdAt}>{formatDate(order.createdAt)}</time></td>
                   <td data-label="Action">
                     {canDeliver ? (

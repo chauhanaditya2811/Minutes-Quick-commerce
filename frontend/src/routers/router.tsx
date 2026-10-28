@@ -2,6 +2,7 @@ import { createBrowserRouter } from 'react-router-dom';
 import Layout from '../components/layout/Layout';
 import PrivateRoute from './PrivateRoute';
 import AdminRoute from './AdminRoute';
+import HostelRoute from './HostelRoute';
 import HomePage from '../pages/home/HomePage';
 import ProductDetailsPage from '../pages/products/ProductDetailsPage';
 import CartPage from '../pages/cart/CartPage';
@@ -18,9 +19,9 @@ export const router = createBrowserRouter([
   {
     element: <Layout />,
     children: [
-      { path: '/', element: <HomePage /> },
-      { path: '/products/:id', element: <ProductDetailsPage /> },
-      { path: '/cart', element: <CartPage /> },
+      { path: '/', element: <HostelRoute><HomePage /></HostelRoute> },
+      { path: '/products/:id', element: <HostelRoute><ProductDetailsPage /></HostelRoute> },
+      { path: '/cart', element: <HostelRoute><CartPage /></HostelRoute> },
       { path: '/login', element: <AuthPage mode="login" /> },
       { path: '/register', element: <AuthPage mode="register" /> },
       { path: '/forgot-password', element: <AuthPage mode="reset-password" /> },
@@ -30,7 +31,7 @@ export const router = createBrowserRouter([
       { path: '/terms', element: <TermsPage /> },
       { path: '/privacy', element: <PrivacyPage /> },
       { path: '/account', element: <PrivateRoute><AccountPage /></PrivateRoute> },
-      { path: '/checkout', element: <PrivateRoute><CheckoutPage /></PrivateRoute> },
+      { path: '/checkout', element: <PrivateRoute><HostelRoute><CheckoutPage /></HostelRoute></PrivateRoute> },
       { path: '/orders', element: <PrivateRoute><OrdersPage /></PrivateRoute> },
       { path: '/orders/:orderId/confirmation', element: <PrivateRoute><OrderConfirmationPage /></PrivateRoute> },
       { path: '*', element: <NotFoundPage /> },

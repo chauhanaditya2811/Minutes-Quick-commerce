@@ -70,6 +70,17 @@ export const permanentlyDeleteHostel = async (id: string) => {
     );
   }
 
+  const order = await prisma.order.findFirst({
+    where: { hostelId: id },
+    select: { id: true },
+  });
+  if (order) {
+    throw new HostelServiceError(
+      "This hostel cannot be deleted because orders were placed against it. Deactivate it instead.",
+      409,
+    );
+  }
+
   try {
     await prisma.hostel.delete({ where: { id } });
   } catch (error) {
@@ -80,7 +91,7 @@ export const permanentlyDeleteHostel = async (id: string) => {
       error.code === "P2003"
     ) {
       throw new HostelServiceError(
-        "This hostel cannot be deleted because user profiles still reference it. Reassign those users before deleting the hostel.",
+        "This hostel cannot be deleted because users or orders still reference it. Deactivate it instead.",
         409,
       );
     }

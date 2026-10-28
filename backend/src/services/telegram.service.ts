@@ -126,3 +126,50 @@ export const notifyOwner = async (
     );
   }
 };
+// Alert the owner that a paid order found less hostel stock than it needed.
+export const notifyStockShortfall = async (orderId: string): Promise<void> => {
+  try {
+    const botToken = process.env.TELEGRAM_BOT_TOKEN?.trim();
+    const chatId = process.env.TELEGRAM_CHAT_ID?.trim();
+    if (!botToken || !chatId) {
+      console.warn("Telegram shortfall alert skipped: bot token or chat ID is not configured.");
+      return;
+    }
+
+    const order = await prisma.order.findUnique({
+      where: { id: orderId },
+      include: { items: true },
+    });
+    if (!order) return;
+
+    const items = order.items
+      .map((item) => `• ${escapeHtml(item.productName)} × ${item.quantity}`)
+      .join("\n");
+    const message = [
+      "<b>⚠️ Stock shortfall on a paid order</b>",
+      "",
+      `<b>Order:</b> ${escapeHtml(order.orderNumber)}`,
+      `<b>Hostel:</b> ${escapeHtml(order.customerHostel)}`,
+      `<b>Customer:</b> ${escapeHtml(order.customerName)} (${escapeHtml(order.customerPhone)})`,
+      "",
+      "The payment completed after the stock hold expired and the hostel no longer had enough stock.",
+      "Please fulfil or refund this order manually.",
+      "",
+      "<b>Items</b>",
+      items || "No items",
+    ].join("\n");
+
+    const response = await fetch(`https://api.telegram.org/bot${botToken}/sendMessage`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ chat_id: chatId, text: message, parse_mode: "HTML", disable_web_page_preview: true }),
+      signal: AbortSignal.timeout(8000),
+    });
+    if (!response.ok) {
+      console.error("Telegram shortfall alert failed.", { httpStatus: response.status });
+    }
+  } catch {
+    // An alert failure must not affect the confirmed payment.
+    console.error("Telegram shortfall alert failed due to a network or service error.");
+  }
+};

@@ -4,6 +4,9 @@ import {
   createProductController,
   updateProductController,
   deleteProductController,
+  getAdminProductsController,
+  getProductInventoryController,
+  updateProductInventoryController,
 } from "../controllers/product.controller.js";
 import { uploadProductImageController } from "../controllers/image.controller.js";
 import { authenticateFirebaseToken } from "../middleware/auth.middleware.js";
@@ -19,6 +22,30 @@ router.post(
   requireAdmin,
   upload.single("image"),
   uploadProductImageController
+);
+
+// Admin-only product list with per-hostel inventory.
+router.get(
+  "/products",
+  authenticateFirebaseToken,
+  requireAdmin,
+  getAdminProductsController
+);
+
+// Admin-only inventory of one product across every hostel.
+router.get(
+  "/products/:id/inventory",
+  authenticateFirebaseToken,
+  requireAdmin,
+  getProductInventoryController
+);
+
+// Admin-only bulk save of one product's hostel inventory.
+router.put(
+  "/products/:id/inventory",
+  authenticateFirebaseToken,
+  requireAdmin,
+  updateProductInventoryController
 );
 
 // Admin-only product creation.

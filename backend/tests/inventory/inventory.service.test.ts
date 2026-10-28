@@ -1,335 +1,212 @@
-import { afterAll, afterEach, beforeAll, describe, expect, it } from "vitest";
+import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
 import { prisma } from "../../src/config/database.js";
 import {
-  consumeReservation,
+  consumeOrderReservations,
   expireReservations,
-  releaseReservation,
-  reserveMultipleProducts,
-  reserveStock,
+  extendOrClaimReservations,
+  releaseUserPendingReservations,
+  reserveOrderStock,
 } from "../../src/services/inventory.service.js";
+import { createInventoryFixture } from "./fixtures.js";
 
-describe("Inventory reservation service", () => {
-  let userId: string | undefined;
-  let productId: string | undefined;
+// Runs against the real minutes_test database: these tests prove the SQL-level guarantees.
+describe("hostel inventory reservations (minutes_test)", () => {
+  let fx: Awaited<ReturnType<typeof createInventoryFixture>>;
+  let hostelA: string;
+  let hostelB: string;
+  let maggi: string;
+  let water: string;
+  let userId: string;
 
-  beforeAll(async () => {
-    const [database] = await prisma.$queryRaw<{ name: string }[]>`
-      SELECT current_database() AS name
-    `;
-
-    if (database?.name !== "minutes_test") {
-      throw new Error("Inventory tests must connect to minutes_test.");
-    }
-
-    const uniqueId = crypto.randomUUID();
-
-    const user = await prisma.user.create({
-      data: {
-        firebaseUid: `inventory-test-${uniqueId}`,
-        email: `inventory-test-${uniqueId}@example.com`,
-        name: "Inventory Test User",
-      },
-    });
-
-    userId = user.id;
-
-    const product = await prisma.product.create({
-      data: {
-        name: "Inventory Test Product",
-        description: "Product created for automated inventory testing",
-        imageUrl: "https://example.com/inventory-test.jpg",
-        price: 100,
-        unit: "piece",
-        stock: 10,
-      },
-    });
-
-    productId = product.id;
+  const inFuture = (minutes = 15) => new Date(Date.now() + minutes * 60_000);
+  const reserve = (orderId: string, items: { productId: string; quantity: number }[], hostelId = hostelA, expiresAt = inFuture()) =>
+    prisma.$transaction((tx) => reserveOrderStock(tx, { userId, orderId, hostelId, items, expiresAt }));
+  const orderTarget = (order: { id: string; hostelId: string | null; items: { productId: string; quantity: number }[] }) => ({
+    id: order.id,
+    userId,
+    hostelId: order.hostelId,
+    items: order.items.map(({ productId, quantity }) => ({ productId, quantity })),
   });
 
-  afterEach(async () => {
-    if (!productId) {
-      return;
-    }
+  beforeAll(async () => {
+    fx = await createInventoryFixture();
+    hostelA = (await fx.hostel("Svc Hostel A")).id;
+    hostelB = (await fx.hostel("Svc Hostel B")).id;
+    maggi = (await fx.product("Svc Maggi")).id;
+    water = (await fx.product("Svc Water")).id;
+    userId = (await fx.customer(hostelA)).id;
+  });
 
-    await prisma.inventoryReservation.deleteMany({
-      where: { productId },
-    });
-    await prisma.product.update({
-      where: { id: productId },
-      data: { stock: 10, isDeleted: false },
-    });
+  beforeEach(async () => {
+    await prisma.inventoryReservation.deleteMany({ where: { userId } });
+    await fx.setStock(maggi, hostelA, 10);
+    await fx.setStock(maggi, hostelB, 10);
+    await fx.setStock(water, hostelA, 5);
   });
 
   afterAll(async () => {
-    try {
-      if (productId) {
-        await prisma.inventoryReservation.deleteMany({
-          where: { productId },
-        });
-
-        await prisma.product.deleteMany({
-          where: { id: productId },
-        });
-      }
-
-      if (userId) {
-        await prisma.user.deleteMany({
-          where: { id: userId },
-        });
-      }
-    } finally {
-      await prisma.$disconnect();
-    }
+    await fx.cleanup();
   });
 
-  it("reserves stock and creates an active reservation", async () => {
-    if (!userId || !productId) {
-      throw new Error("Test user and product were not created.");
-    }
+  it("takes stock only from the order's hostel", async () => {
+    const order = await fx.pendingOrder(userId, hostelA, [{ productId: maggi, quantity: 2 }]);
+    await reserve(order.id, [{ productId: maggi, quantity: 2 }]);
 
-    const reservation = await reserveStock(userId, productId, 3);
-
-    const product = await prisma.product.findUniqueOrThrow({
-      where: { id: productId },
-    });
-
-    expect(reservation.quantity).toBe(3);
-    expect(reservation.status).toBe("ACTIVE");
-    expect(product.stock).toBe(7);
+    expect(await fx.stock(maggi, hostelA)).toBe(8);
+    expect(await fx.stock(maggi, hostelB)).toBe(10);
+    const [hold] = await prisma.inventoryReservation.findMany({ where: { orderId: order.id } });
+    expect(hold).toMatchObject({ status: "ACTIVE", hostelId: hostelA, quantity: 2 });
   });
 
-  it("rejects invalid and insufficient quantities without changing stock", async () => {
-    if (!userId || !productId) {
-      throw new Error("Test user and product were not created.");
-    }
+  it("rejects a request above available stock and rolls back every item", async () => {
+    const order = await fx.pendingOrder(userId, hostelA, []);
+    await expect(
+      reserve(order.id, [
+        { productId: maggi, quantity: 3 },
+        { productId: water, quantity: 6 },
+      ])
+    ).rejects.toMatchObject({ statusCode: 409 });
 
-    await expect(reserveStock(userId, productId, 0)).rejects.toThrow(
-      "Quantity must be a positive integer."
-    );
-    await expect(reserveStock(userId, productId, 11)).rejects.toThrow(
-      "Insufficient stock."
-    );
-
-    const product = await prisma.product.findUniqueOrThrow({
-      where: { id: productId },
-    });
-    expect(product.stock).toBe(10);
+    expect(await fx.stock(maggi, hostelA)).toBe(10);
+    expect(await fx.stock(water, hostelA)).toBe(5);
+    expect(await prisma.inventoryReservation.count({ where: { orderId: order.id } })).toBe(0);
   });
 
-  it("allows only one concurrent reservation for the last unit", async () => {
-    if (!userId || !productId) {
-      throw new Error("Test user and product were not created.");
-    }
+  it("never reserves a product disabled at the hostel", async () => {
+    await fx.setStock(maggi, hostelA, 10, false);
+    const order = await fx.pendingOrder(userId, hostelA, []);
+    await expect(reserve(order.id, [{ productId: maggi, quantity: 1 }])).rejects.toMatchObject({ statusCode: 409 });
+    expect(await fx.stock(maggi, hostelA)).toBe(10);
+  });
 
-    await prisma.product.update({
-      where: { id: productId },
-      data: { stock: 1 },
-    });
+  it("lets only one of two concurrent reservations take the last unit", async () => {
+    await fx.setStock(maggi, hostelA, 1);
+    const first = await fx.pendingOrder(userId, hostelA, []);
+    const second = await fx.pendingOrder(userId, hostelA, []);
 
     const results = await Promise.allSettled([
-      reserveStock(userId, productId, 1),
-      reserveStock(userId, productId, 1),
+      reserve(first.id, [{ productId: maggi, quantity: 1 }]),
+      reserve(second.id, [{ productId: maggi, quantity: 1 }]),
     ]);
 
-    const fulfilled = results.filter(
-      (result): result is PromiseFulfilledResult<
-        Awaited<ReturnType<typeof reserveStock>>
-      > => result.status === "fulfilled"
-    );
-    const product = await prisma.product.findUniqueOrThrow({
-      where: { id: productId },
-    });
-    const activeReservations = await prisma.inventoryReservation.count({
-      where: { productId, status: "ACTIVE" },
-    });
-
-    expect(fulfilled).toHaveLength(1);
-    expect(product.stock).toBe(0);
-    expect(activeReservations).toBe(1);
+    expect(results.filter((r) => r.status === "fulfilled")).toHaveLength(1);
+    expect(await fx.stock(maggi, hostelA)).toBe(0);
+    expect(await prisma.inventoryReservation.count({ where: { userId, status: "ACTIVE" } })).toBe(1);
   });
 
-  it("aggregates duplicate products when reserving multiple items", async () => {
-    if (!userId || !productId) {
-      throw new Error("Test user and product were not created.");
-    }
+  it("never over-reserves limited stock under many concurrent requests", async () => {
+    await fx.setStock(maggi, hostelA, 3);
+    const orders = await Promise.all(Array.from({ length: 6 }, () => fx.pendingOrder(userId, hostelA, [])));
 
-    const reservations = await reserveMultipleProducts(userId, [
-      { productId, quantity: 2 },
-      { productId, quantity: 3 },
-    ]);
-    const product = await prisma.product.findUniqueOrThrow({
-      where: { id: productId },
-    });
+    const results = await Promise.allSettled(orders.map((o) => reserve(o.id, [{ productId: maggi, quantity: 1 }])));
 
-    expect(reservations).toHaveLength(1);
-    expect(reservations[0]?.quantity).toBe(5);
-    expect(product.stock).toBe(5);
+    expect(results.filter((r) => r.status === "fulfilled")).toHaveLength(3);
+    expect(await fx.stock(maggi, hostelA)).toBe(0);
+    const held = await prisma.inventoryReservation.aggregate({ where: { userId, status: "ACTIVE" }, _sum: { quantity: true } });
+    expect(held._sum.quantity).toBe(3);
   });
 
-  it("rolls back every stock change when a multi-product reservation fails", async () => {
-    if (!userId || !productId) {
-      throw new Error("Test user and product were not created.");
-    }
+  it("expires overdue holds and returns their stock exactly once", async () => {
+    const order = await fx.pendingOrder(userId, hostelA, [{ productId: maggi, quantity: 4 }]);
+    await reserve(order.id, [{ productId: maggi, quantity: 4 }], hostelA, new Date(Date.now() - 1000));
+    expect(await fx.stock(maggi, hostelA)).toBe(6);
 
-    const secondProduct = await prisma.product.create({
-      data: {
-        name: "Inventory Rollback Test Product",
-        imageUrl: "https://example.com/inventory-rollback-test.jpg",
-        price: 50,
-        unit: "piece",
-        stock: 1,
-      },
-    });
+    // Concurrent and repeated runs (other test files may also be running expiry) must restore once:
+    // a double restore would leave 14.
+    await Promise.all([expireReservations(), expireReservations()]);
+    await expireReservations();
 
-    try {
-      await expect(
-        reserveMultipleProducts(userId, [
-          { productId, quantity: 2 },
-          { productId: secondProduct.id, quantity: 2 },
-        ])
-      ).rejects.toThrow(
-        `Product ${secondProduct.id} is unavailable or has insufficient stock.`
-      );
-
-      const [firstAfter, secondAfter, reservations] = await Promise.all([
-        prisma.product.findUniqueOrThrow({ where: { id: productId } }),
-        prisma.product.findUniqueOrThrow({
-          where: { id: secondProduct.id },
-        }),
-        prisma.inventoryReservation.count({
-          where: { productId: { in: [productId, secondProduct.id] } },
-        }),
-      ]);
-
-      expect(firstAfter.stock).toBe(10);
-      expect(secondAfter.stock).toBe(1);
-      expect(reservations).toBe(0);
-    } finally {
-      await prisma.inventoryReservation.deleteMany({
-        where: { productId: secondProduct.id },
-      });
-      await prisma.product.delete({
-        where: { id: secondProduct.id },
-      });
-    }
+    expect(await fx.stock(maggi, hostelA)).toBe(10);
+    expect(await prisma.inventoryReservation.findFirst({ where: { orderId: order.id } })).toMatchObject({ status: "EXPIRED" });
   });
 
-  it("does not reserve stock for a deleted product", async () => {
-    if (!userId || !productId) {
-      throw new Error("Test user and product were not created.");
-    }
+  it("does not expire a hold that a payment retry has extended", async () => {
+    const order = await fx.pendingOrder(userId, hostelA, [{ productId: maggi, quantity: 2 }]);
+    await reserve(order.id, [{ productId: maggi, quantity: 2 }], hostelA, new Date(Date.now() - 1000));
 
-    await prisma.product.update({
-      where: { id: productId },
-      data: { isDeleted: true },
-    });
+    await prisma.$transaction((tx) => extendOrClaimReservations(tx, orderTarget(order)));
+    await expireReservations();
 
-    await expect(reserveStock(userId, productId, 1)).rejects.toThrow(
-      "Product not found."
-    );
+    // Whether the retry extended the hold or (if another file's expiry ran first) re-took it,
+    // exactly 2 units stay held under one live reservation.
+    expect(await fx.stock(maggi, hostelA)).toBe(8);
+    const live = await prisma.inventoryReservation.findMany({ where: { orderId: order.id, status: "ACTIVE" } });
+    expect(live).toHaveLength(1);
+    expect(live[0].quantity).toBe(2);
+    expect(live[0].expiresAt.getTime()).toBeGreaterThan(Date.now());
   });
 
-  it("restores stock once when releasing an active reservation", async () => {
-    if (!userId || !productId) {
-      throw new Error("Test user and product were not created.");
-    }
+  it("re-takes stock when payment restarts after the hold expired", async () => {
+    const order = await fx.pendingOrder(userId, hostelA, [{ productId: maggi, quantity: 2 }]);
+    await reserve(order.id, [{ productId: maggi, quantity: 2 }], hostelA, new Date(Date.now() - 1000));
+    await expireReservations();
+    expect(await fx.stock(maggi, hostelA)).toBe(10);
 
-    const reservation = await reserveStock(userId, productId, 3);
-    const released = await releaseReservation(reservation.id, userId);
+    await prisma.$transaction((tx) => extendOrClaimReservations(tx, orderTarget(order)));
 
-    expect(released.status).toBe("RELEASED");
-    await expect(
-      releaseReservation(reservation.id, userId)
-    ).rejects.toThrow("Reservation not found or no longer active.");
-
-    const product = await prisma.product.findUniqueOrThrow({
-      where: { id: productId },
-    });
-    expect(product.stock).toBe(10);
+    expect(await fx.stock(maggi, hostelA)).toBe(8);
+    expect(await prisma.inventoryReservation.count({ where: { orderId: order.id, status: "ACTIVE" } })).toBe(1);
   });
 
-  it("consumes an active reservation without restoring stock", async () => {
-    if (!userId || !productId) {
-      throw new Error("Test user and product were not created.");
-    }
-
-    const reservation = await reserveStock(userId, productId, 3);
-    const consumed = await consumeReservation(reservation.id, userId);
-    const product = await prisma.product.findUniqueOrThrow({
-      where: { id: productId },
-    });
-
-    expect(consumed.status).toBe("CONSUMED");
-    expect(product.stock).toBe(7);
-  });
-
-  it("rejects consumption after the reservation has expired", async () => {
-    if (!userId || !productId) {
-      throw new Error("Test user and product were not created.");
-    }
-
-    const reservation = await reserveStock(userId, productId, 3);
-    await prisma.inventoryReservation.update({
-      where: { id: reservation.id },
-      data: { expiresAt: new Date(Date.now() - 1_000) },
-    });
+  it("refuses to restart payment when the expired hold's stock has gone", async () => {
+    const order = await fx.pendingOrder(userId, hostelA, [{ productId: maggi, quantity: 2 }]);
+    await reserve(order.id, [{ productId: maggi, quantity: 2 }], hostelA, new Date(Date.now() - 1000));
+    await expireReservations();
+    await fx.setStock(maggi, hostelA, 1);
 
     await expect(
-      consumeReservation(reservation.id, userId)
-    ).rejects.toThrow("Reservation not found, expired, or no longer active.");
-
-    const [unchangedReservation, product] = await Promise.all([
-      prisma.inventoryReservation.findUniqueOrThrow({
-        where: { id: reservation.id },
-      }),
-      prisma.product.findUniqueOrThrow({ where: { id: productId } }),
-    ]);
-
-    expect(unchangedReservation.status).toBe("ACTIVE");
-    expect(product.stock).toBe(7);
+      prisma.$transaction((tx) => extendOrClaimReservations(tx, orderTarget(order)))
+    ).rejects.toMatchObject({ statusCode: 409 });
+    expect(await fx.stock(maggi, hostelA)).toBe(1);
   });
 
-  it("does not consume an already consumed reservation twice", async () => {
-    if (!userId || !productId) {
-      throw new Error("Test user and product were not created.");
-    }
+  it("releases a customer's holds on their other unpaid orders", async () => {
+    const abandoned = await fx.pendingOrder(userId, hostelA, [{ productId: maggi, quantity: 3 }]);
+    await reserve(abandoned.id, [{ productId: maggi, quantity: 3 }]);
+    const current = await fx.pendingOrder(userId, hostelA, [{ productId: maggi, quantity: 1 }]);
+    await reserve(current.id, [{ productId: maggi, quantity: 1 }]);
 
-    const reservation = await reserveStock(userId, productId, 3);
-    await consumeReservation(reservation.id, userId);
+    const released = await prisma.$transaction((tx) => releaseUserPendingReservations(tx, userId, current.id));
 
-    await expect(
-      consumeReservation(reservation.id, userId)
-    ).rejects.toThrow("Reservation not found, expired, or no longer active.");
-
-    const product = await prisma.product.findUniqueOrThrow({
-      where: { id: productId },
-    });
-    expect(product.stock).toBe(7);
+    expect(released).toBe(1);
+    expect(await fx.stock(maggi, hostelA)).toBe(9);
+    expect(await prisma.inventoryReservation.findFirst({ where: { orderId: abandoned.id } })).toMatchObject({ status: "RELEASED" });
   });
 
-  it("expires overdue reservations and restores stock only once", async () => {
-    if (!userId || !productId) {
-      throw new Error("Test user and product were not created.");
-    }
+  it("consumes live holds without taking stock a second time", async () => {
+    const order = await fx.pendingOrder(userId, hostelA, [{ productId: maggi, quantity: 2 }]);
+    await reserve(order.id, [{ productId: maggi, quantity: 2 }]);
 
-    const reservation = await reserveStock(userId, productId, 3);
-    await prisma.inventoryReservation.update({
-      where: { id: reservation.id },
-      data: { expiresAt: new Date(Date.now() - 1_000) },
+    const result = await prisma.$transaction((tx) => consumeOrderReservations(tx, orderTarget(order)));
+
+    expect(result.shortfall).toBe(false);
+    expect(await fx.stock(maggi, hostelA)).toBe(8);
+    expect(await prisma.inventoryReservation.findFirst({ where: { orderId: order.id } })).toMatchObject({ status: "CONSUMED" });
+    // A later expiry run must not hand consumed stock back.
+    await prisma.inventoryReservation.updateMany({ where: { orderId: order.id }, data: { expiresAt: new Date(0) } });
+    await expireReservations();
+    expect(await fx.stock(maggi, hostelA)).toBe(8);
+  });
+
+  it("takes as much as is left, never below zero, and reports a shortfall", async () => {
+    const order = await fx.pendingOrder(userId, hostelA, [{ productId: maggi, quantity: 4 }]);
+    await fx.setStock(maggi, hostelA, 1);
+
+    const result = await prisma.$transaction((tx) => consumeOrderReservations(tx, orderTarget(order)));
+
+    expect(result.shortfall).toBe(true);
+    expect(await fx.stock(maggi, hostelA)).toBe(0);
+    expect(await prisma.inventoryReservation.findFirst({ where: { orderId: order.id } })).toMatchObject({
+      status: "CONSUMED",
+      quantity: 1,
     });
+  });
 
-    await expect(expireReservations()).resolves.toEqual({ expiredCount: 1 });
-
-    const expired = await prisma.inventoryReservation.findUniqueOrThrow({
-      where: { id: reservation.id },
-    });
-    const product = await prisma.product.findUniqueOrThrow({
-      where: { id: productId },
-    });
-
-    expect(expired.status).toBe("EXPIRED");
-    expect(product.stock).toBe(10);
-    await expect(expireReservations()).resolves.toEqual({ expiredCount: 0 });
+  it("leaves stock untouched for orders placed before hostel inventory", async () => {
+    const legacy = await fx.pendingOrder(userId, null, [{ productId: maggi, quantity: 2 }]);
+    const result = await prisma.$transaction((tx) => consumeOrderReservations(tx, orderTarget(legacy)));
+    expect(result.shortfall).toBe(false);
+    expect(await fx.stock(maggi, hostelA)).toBe(10);
+    expect(await fx.stock(maggi, hostelB)).toBe(10);
   });
 });

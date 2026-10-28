@@ -1,11 +1,17 @@
 import type { Request, Response } from "express";
 import {
   createProduct,
-  getProducts,
-  getProductById,
   updateProduct,
   softDeleteProduct,
 } from "../services/product.service.js";
+import {
+  InventoryServiceError,
+  getAdminProductsWithInventory,
+  getHostelCatalog,
+  getHostelProduct,
+  getProductInventory,
+  updateProductInventory,
+} from "../services/product-inventory.service.js";
 
 // Validates product data and creates a new product.
 export const createProductController = async (
@@ -19,7 +25,6 @@ export const createProductController = async (
       description,
       price,
       unit,
-      stock,
     } = req.body;
 
     if (
@@ -43,13 +48,6 @@ export const createProductController = async (
       return;
     }
 
-    if (!Number.isInteger(stock) || stock < 0) {
-      res.status(400).json({
-        message: "Stock must be an integer greater than or equal to 0.",
-      });
-      return;
-    }
-
     if (
       description !== undefined &&
       description !== null &&
@@ -67,7 +65,6 @@ export const createProductController = async (
       description: description?.trim(),
       price,
       unit: unit.trim(),
-      stock,
     });
 
     res.status(201).json(product);
@@ -80,55 +77,127 @@ export const createProductController = async (
   }
 };
 
-// Returns all active products visible to customers.
+const getHostelIdQuery = (req: Request): string | null => {
+  const { hostelId } = req.query;
+  return typeof hostelId === "string" && hostelId.trim() ? hostelId.trim() : null;
+};
+
+const sendInventoryError = (
+  error: unknown,
+  res: Response,
+  fallback: string
+): void => {
+  if (error instanceof InventoryServiceError) {
+    res.status(error.statusCode).json({ message: error.message });
+    return;
+  }
+
+  console.error(fallback, error);
+  res.status(500).json({ message: fallback });
+};
+
+// Returns the products available to customers at the selected hostel.
 export const getAllProducts = async (
-  _req: Request,
+  req: Request,
   res: Response
 ): Promise<void> => {
+  const hostelId = getHostelIdQuery(req);
+
+  if (!hostelId) {
+    res.status(400).json({ message: "Select a hostel first." });
+    return;
+  }
+
   try {
-    const products = await getProducts();
-
-    res.status(200).json(products);
+    res.status(200).json(await getHostelCatalog(hostelId));
   } catch (error) {
-    console.error("Get products error:", error);
-
-    res.status(500).json({
-      message: "Failed to get products.",
-    });
+    sendInventoryError(error, res, "Failed to get products.");
   }
 };
 
-// Returns one active product by ID.
+// Returns one product if it is available at the selected hostel.
 export const getSingleProduct = async (
   req: Request,
   res: Response
 ): Promise<void> => {
+  const { id } = req.params;
+  const hostelId = getHostelIdQuery(req);
+
+  if (typeof id !== "string" || !id.trim()) {
+    res.status(400).json({
+      message: "Product ID is required.",
+    });
+    return;
+  }
+
+  if (!hostelId) {
+    res.status(400).json({ message: "Select a hostel first." });
+    return;
+  }
+
   try {
-    const { id } = req.params;
-
-    if (typeof id !== "string") {
-      res.status(400).json({
-        message: "Product ID is required.",
-      });
-      return;
-    }
-
-    const product = await getProductById(id);
+    const product = await getHostelProduct(hostelId, id);
 
     if (!product) {
       res.status(404).json({
-        message: "Product not found.",
+        message: "Product not found at this hostel.",
       });
       return;
     }
 
     res.status(200).json(product);
   } catch (error) {
-    console.error("Get product error:", error);
+    sendInventoryError(error, res, "Failed to get product.");
+  }
+};
 
-    res.status(500).json({
-      message: "Failed to get product.",
-    });
+// Admin-only product list with per-hostel inventory.
+export const getAdminProductsController = async (
+  _req: Request,
+  res: Response
+): Promise<void> => {
+  try {
+    res.status(200).json(await getAdminProductsWithInventory());
+  } catch (error) {
+    sendInventoryError(error, res, "Failed to get products.");
+  }
+};
+
+// Admin-only inventory of one product across every hostel.
+export const getProductInventoryController = async (
+  req: Request,
+  res: Response
+): Promise<void> => {
+  const { id } = req.params;
+
+  if (typeof id !== "string" || !id.trim()) {
+    res.status(400).json({ message: "Product ID is required." });
+    return;
+  }
+
+  try {
+    res.status(200).json(await getProductInventory(id));
+  } catch (error) {
+    sendInventoryError(error, res, "Failed to get product inventory.");
+  }
+};
+
+// Admin-only bulk save of one product's hostel inventory.
+export const updateProductInventoryController = async (
+  req: Request,
+  res: Response
+): Promise<void> => {
+  const { id } = req.params;
+
+  if (typeof id !== "string" || !id.trim()) {
+    res.status(400).json({ message: "Product ID is required." });
+    return;
+  }
+
+  try {
+    res.status(200).json(await updateProductInventory(id, req.body?.entries));
+  } catch (error) {
+    sendInventoryError(error, res, "Failed to save product inventory.");
   }
 };
 
@@ -153,7 +222,6 @@ export const updateProductController = async (
       description,
       price,
       unit,
-      stock,
     } = req.body;
 
     if (
@@ -177,13 +245,6 @@ export const updateProductController = async (
       return;
     }
 
-    if (!Number.isInteger(stock) || stock < 0) {
-      res.status(400).json({
-        message: "Stock must be an integer greater than or equal to 0.",
-      });
-      return;
-    }
-
     if (
       description !== undefined &&
       description !== null &&
@@ -201,7 +262,6 @@ export const updateProductController = async (
       description: description?.trim(),
       price,
       unit: unit.trim(),
-      stock,
     });
 
     if (!updatedProduct) {
