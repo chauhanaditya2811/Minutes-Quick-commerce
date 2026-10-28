@@ -1,7 +1,10 @@
-# Build and deploy only the Minutes backend to Azure App Service.
+# Build, test, migrate, and deploy the Minutes backend to Azure App Service.
 name: Build and deploy Minutes API to Azure
 
 on:
+  pull_request:
+    branches:
+      - 'feature/manual-stock-orders'
   push:
     branches:
       - 'feature/manual-stock-orders'
@@ -13,6 +16,23 @@ permissions:
 jobs:
   build:
     runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: minutes_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres -d minutes_test"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    env:
+      DATABASE_URL: postgresql://postgres:postgres@localhost:5432/minutes_test?schema=public
+      TEST_DATABASE_URL: postgresql://postgres:postgres@localhost:5432/minutes_test?schema=public
     steps:
       - name: Check out repository
         uses: actions/checkout@v4
@@ -31,13 +51,20 @@ jobs:
       - name: Generate Prisma Client
         run: npx prisma generate
         working-directory: backend
-        env:
-          # Prisma config requires DATABASE_URL, but generation does not connect to the database.
-          DATABASE_URL: postgresql://postgres:postgres@127.0.0.1:5432/minutes?schema=public
+
+      - name: Apply migrations to isolated CI database
+        run: npx prisma migrate deploy
+        working-directory: backend
 
       - name: Build TypeScript backend
         run: npm run build
         working-directory: backend
+
+      - name: Run backend tests against isolated PostgreSQL
+        run: npm test
+        working-directory: backend
+        env:
+          NODE_ENV: test
 
       - name: Prepare a self-contained production package
         run: |
@@ -59,11 +86,42 @@ jobs:
   deploy:
     runs-on: ubuntu-latest
     needs: build
+    # Pull requests and manual runs never change production resources.
+    if: github.event_name == 'push' && github.ref == 'refs/heads/feature/manual-stock-orders'
     permissions:
       id-token: write
       contents: read
 
     steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '24.x'
+          cache: npm
+          cache-dependency-path: backend/package-lock.json
+
+      - name: Install backend dependencies
+        run: npm ci
+        working-directory: backend
+
+      - name: Verify production database secret is configured
+        run: |
+          if [ -z "$DATABASE_URL" ]; then
+            echo "::error::Add the PRODUCTION_DATABASE_URL repository secret before deploying."
+            exit 1
+          fi
+        env:
+          DATABASE_URL: ${{ secrets.PRODUCTION_DATABASE_URL }}
+
+      - name: Apply production database migrations
+        run: npx prisma migrate deploy
+        working-directory: backend
+        env:
+          DATABASE_URL: ${{ secrets.PRODUCTION_DATABASE_URL }}
+
       - name: Download backend package
         uses: actions/download-artifact@v4
         with:
