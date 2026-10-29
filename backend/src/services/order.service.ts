@@ -536,6 +536,35 @@ export const createGuestOrder = async (input: GuestOrderInput) => {
   }
 };
 
+// What a customer may see about their own order on the confirmation screen.
+const orderDetailSelection = {
+  id: true,
+  orderNumber: true,
+  orderStatus: true,
+  paymentStatus: true,
+  subtotal: true,
+  deliveryFee: true,
+  total: true,
+  createdAt: true,
+  confirmedAt: true,
+  deliveredAt: true,
+  customerName: true,
+  customerPhone: true,
+  customerHostel: true,
+  customerFloor: true,
+  customerRoom: true,
+  items: {
+    select: {
+      productName: true,
+      price: true,
+      unit: true,
+      quantity: true,
+      subtotal: true,
+      product: { select: { imageUrl: true } },
+    },
+  },
+} as const;
+
 const maskPhone = (phone: string) => (phone.length > 4 ? `${"•".repeat(phone.length - 4)}${phone.slice(-4)}` : phone);
 
 /**
@@ -547,25 +576,18 @@ export const getGuestOrder = async (orderId: string, rawToken: unknown) => {
 
   const order = await prisma.order.findFirst({
     where: { id: orderId, userId: null, guestAccessTokenHash: hashGuestToken(rawToken) },
-    select: {
-      id: true,
-      orderNumber: true,
-      orderStatus: true,
-      paymentStatus: true,
-      subtotal: true,
-      deliveryFee: true,
-      total: true,
-      createdAt: true,
-      deliveredAt: true,
-      customerName: true,
-      customerPhone: true,
-      customerHostel: true,
-      customerFloor: true,
-      customerRoom: true,
-      items: {
-        select: { productName: true, price: true, unit: true, quantity: true, subtotal: true },
-      },
-    },
+    select: orderDetailSelection,
+  });
+  if (!order) throw new CheckoutError("Order not found.", 404);
+
+  return { ...order, customerPhone: maskPhone(order.customerPhone) };
+};
+
+/** A signed-in customer's own order for the confirmation screen; anyone else's is "not found". */
+export const getCustomerOrder = async (firebaseUid: string, orderId: string) => {
+  const order = await prisma.order.findFirst({
+    where: { id: orderId, user: { firebaseUid } },
+    select: orderDetailSelection,
   });
   if (!order) throw new CheckoutError("Order not found.", 404);
 
@@ -705,9 +727,11 @@ export interface VerifiedPayment {
  * racing the webhook) waits on the row lock, sees it already confirmed, and changes nothing.
  */
 export const finalizePaidOrder = async (tx: Prisma.TransactionClient, payment: VerifiedPayment) => {
+  // Only the caller that wins this conditional update records confirmedAt, so the
+  // delivery countdown starts once and is never reset by repeated confirmations.
   const updated = await tx.order.updateMany({
     where: { id: payment.orderId, orderStatus: "PENDING_PAYMENT" },
-    data: { paymentStatus: "SUCCESS", orderStatus: "CONFIRMED" },
+    data: { paymentStatus: "SUCCESS", orderStatus: "CONFIRMED", confirmedAt: new Date() },
   });
   const order = await tx.order.findUnique({ where: { id: payment.orderId }, include: { items: true } });
   if (!order) throw new CheckoutError("Order not found.", 404);

@@ -583,7 +583,7 @@ describe("checkout validation service", () => {
       expect(result.newlyConfirmed).toBe(true);
       expect(mocks.orderUpdateMany).toHaveBeenCalledWith({
         where: { id: "order-1", orderStatus: "PENDING_PAYMENT" },
-        data: { paymentStatus: "SUCCESS", orderStatus: "CONFIRMED" },
+        data: { paymentStatus: "SUCCESS", orderStatus: "CONFIRMED", confirmedAt: expect.any(Date) },
       });
       expect(mocks.consumeHolds).toHaveBeenCalledWith(expect.anything(), {
         id: "order-1",

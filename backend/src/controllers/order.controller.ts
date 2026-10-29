@@ -5,6 +5,7 @@ import {
   type CheckoutInput,
   CheckoutError,
   createOrder,
+  getCustomerOrder,
   getCustomerOrders,
   validateCheckout,
 } from "../services/order.service.js";
@@ -100,6 +101,31 @@ export const createOrderController = async (
       message: "Order created. Payment is pending.",
       order,
     });
+  } catch (error) {
+    sendCheckoutError(error, res);
+  }
+};
+
+// The signed-in customer's own order, for the confirmation screen after a refresh.
+export const getMyOrderController = async (
+  req: AuthenticatedRequest,
+  res: Response
+): Promise<void> => {
+  if (!req.firebaseUser) {
+    res.status(401).json({ message: "Unauthorized." });
+    return;
+  }
+
+  const { orderId } = req.params;
+  if (typeof orderId !== "string" || !orderId.trim()) {
+    res.status(404).json({ message: "Order not found." });
+    return;
+  }
+
+  try {
+    const order = await getCustomerOrder(req.firebaseUser.uid, orderId.trim());
+    // serverTime lets the client correct for a wrong device clock in the delivery countdown.
+    res.status(200).json({ order, serverTime: new Date().toISOString() });
   } catch (error) {
     sendCheckoutError(error, res);
   }

@@ -6,6 +6,21 @@ import {
 
 const MAX_POSTGRES_INTEGER = 2_147_483_647;
 
+/**
+ * Normalises a store phone number to E.164 for a tel: link. Accepts Indian numbers written as
+ * 98765 43210, 098765-43210, 91 98765 43210 or +91 98765 43210 (also landlines with STD code),
+ * and any other number already in international +<country><number> form.
+ */
+export const normalizeStorePhone = (value: unknown): string | null | undefined => {
+  if (typeof value !== "string") return undefined;
+  const compact = value.replace(/[\s().-]/g, "");
+  if (/^\+[1-9]\d{7,14}$/.test(compact)) return compact;
+  if (/^[1-9]\d{9}$/.test(compact)) return `+91${compact}`;
+  if (/^0[1-9]\d{9}$/.test(compact)) return `+91${compact.slice(1)}`;
+  if (/^91[1-9]\d{9}$/.test(compact)) return `+${compact}`;
+  return undefined;
+};
+
 // Public endpoint: returns the settings required by the storefront.
 export const getPublicSettingsController = async (
   _req: Request,
@@ -59,7 +74,7 @@ export const updateAdminSettingsController = async (
       return;
     }
 
-    const { storeOpen, deliveryFee, minimumOrder, supportEmail } = req.body;
+    const { storeOpen, deliveryFee, minimumOrder, supportEmail, storePhone } = req.body;
 
     // Require all four fields to avoid accidental partial updates.
     if (
@@ -95,11 +110,29 @@ export const updateAdminSettingsController = async (
       return;
     }
 
+    // storePhone is optional so older admin pages that omit it never clear the saved number.
+    let normalizedStorePhone: string | null | undefined;
+
+    if (storePhone === undefined) {
+      normalizedStorePhone = undefined;
+    } else if (storePhone === null || storePhone === "") {
+      normalizedStorePhone = null;
+    } else {
+      normalizedStorePhone = normalizeStorePhone(storePhone);
+      if (!normalizedStorePhone) {
+        res.status(400).json({
+          message: "storePhone must be a valid phone number, e.g. 98765 43210 or +91 98765 43210.",
+        });
+        return;
+      }
+    }
+
     const settings = await updateStoreSettings({
       storeOpen,
       deliveryFee,
       minimumOrder,
       supportEmail: normalizedSupportEmail,
+      ...(normalizedStorePhone === undefined ? {} : { storePhone: normalizedStorePhone }),
     });
 
     res.status(200).json(settings);

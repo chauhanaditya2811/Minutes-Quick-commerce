@@ -9,6 +9,7 @@ const settingsSelect = {
   deliveryFee: true,
   minimumOrder: true,
   supportEmail: true,
+  storePhone: true,
 } as const;
 
 // Data accepted by the settings update operation after controller validation.
@@ -17,6 +18,8 @@ export interface UpdateStoreSettingsInput {
   deliveryFee: number;
   minimumOrder: number;
   supportEmail: string | null;
+  /** E.164 store phone; undefined leaves the saved number unchanged. */
+  storePhone?: string | null;
 }
 
 // Retrieves the existing settings or creates the default configuration.
@@ -31,6 +34,7 @@ export const getOrCreateStoreSettings = async () => {
       deliveryFee: 0,
       minimumOrder: 0,
       supportEmail: null,
+      storePhone: null,
     },
     update: {},
     select: settingsSelect,

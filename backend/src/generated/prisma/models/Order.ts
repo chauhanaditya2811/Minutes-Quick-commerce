@@ -61,6 +61,7 @@ export type OrderMinAggregateOutputType = {
   customerFloor: number | null
   customerRoom: string | null
   createdAt: Date | null
+  confirmedAt: Date | null
   deliveredAt: Date | null
 }
 
@@ -85,6 +86,7 @@ export type OrderMaxAggregateOutputType = {
   customerFloor: number | null
   customerRoom: string | null
   createdAt: Date | null
+  confirmedAt: Date | null
   deliveredAt: Date | null
 }
 
@@ -109,6 +111,7 @@ export type OrderCountAggregateOutputType = {
   customerFloor: number
   customerRoom: number
   createdAt: number
+  confirmedAt: number
   deliveredAt: number
   _all: number
 }
@@ -149,6 +152,7 @@ export type OrderMinAggregateInputType = {
   customerFloor?: true
   customerRoom?: true
   createdAt?: true
+  confirmedAt?: true
   deliveredAt?: true
 }
 
@@ -173,6 +177,7 @@ export type OrderMaxAggregateInputType = {
   customerFloor?: true
   customerRoom?: true
   createdAt?: true
+  confirmedAt?: true
   deliveredAt?: true
 }
 
@@ -197,6 +202,7 @@ export type OrderCountAggregateInputType = {
   customerFloor?: true
   customerRoom?: true
   createdAt?: true
+  confirmedAt?: true
   deliveredAt?: true
   _all?: true
 }
@@ -308,6 +314,7 @@ export type OrderGroupByOutputType = {
   customerFloor: number
   customerRoom: string
   createdAt: Date
+  confirmedAt: Date | null
   deliveredAt: Date | null
   _count: OrderCountAggregateOutputType | null
   _avg: OrderAvgAggregateOutputType | null
@@ -355,6 +362,7 @@ export type OrderWhereInput = {
   customerFloor?: Prisma.IntFilter<"Order"> | number
   customerRoom?: Prisma.StringFilter<"Order"> | string
   createdAt?: Prisma.DateTimeFilter<"Order"> | Date | string
+  confirmedAt?: Prisma.DateTimeNullableFilter<"Order"> | Date | string | null
   deliveredAt?: Prisma.DateTimeNullableFilter<"Order"> | Date | string | null
   user?: Prisma.XOR<Prisma.UserNullableScalarRelationFilter, Prisma.UserWhereInput> | null
   hostel?: Prisma.XOR<Prisma.HostelNullableScalarRelationFilter, Prisma.HostelWhereInput> | null
@@ -385,6 +393,7 @@ export type OrderOrderByWithRelationInput = {
   customerFloor?: Prisma.SortOrder
   customerRoom?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
+  confirmedAt?: Prisma.SortOrderInput | Prisma.SortOrder
   deliveredAt?: Prisma.SortOrderInput | Prisma.SortOrder
   user?: Prisma.UserOrderByWithRelationInput
   hostel?: Prisma.HostelOrderByWithRelationInput
@@ -418,6 +427,7 @@ export type OrderWhereUniqueInput = Prisma.AtLeast<{
   customerFloor?: Prisma.IntFilter<"Order"> | number
   customerRoom?: Prisma.StringFilter<"Order"> | string
   createdAt?: Prisma.DateTimeFilter<"Order"> | Date | string
+  confirmedAt?: Prisma.DateTimeNullableFilter<"Order"> | Date | string | null
   deliveredAt?: Prisma.DateTimeNullableFilter<"Order"> | Date | string | null
   user?: Prisma.XOR<Prisma.UserNullableScalarRelationFilter, Prisma.UserWhereInput> | null
   hostel?: Prisma.XOR<Prisma.HostelNullableScalarRelationFilter, Prisma.HostelWhereInput> | null
@@ -448,6 +458,7 @@ export type OrderOrderByWithAggregationInput = {
   customerFloor?: Prisma.SortOrder
   customerRoom?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
+  confirmedAt?: Prisma.SortOrderInput | Prisma.SortOrder
   deliveredAt?: Prisma.SortOrderInput | Prisma.SortOrder
   _count?: Prisma.OrderCountOrderByAggregateInput
   _avg?: Prisma.OrderAvgOrderByAggregateInput
@@ -480,6 +491,7 @@ export type OrderScalarWhereWithAggregatesInput = {
   customerFloor?: Prisma.IntWithAggregatesFilter<"Order"> | number
   customerRoom?: Prisma.StringWithAggregatesFilter<"Order"> | string
   createdAt?: Prisma.DateTimeWithAggregatesFilter<"Order"> | Date | string
+  confirmedAt?: Prisma.DateTimeNullableWithAggregatesFilter<"Order"> | Date | string | null
   deliveredAt?: Prisma.DateTimeNullableWithAggregatesFilter<"Order"> | Date | string | null
 }
 
@@ -502,6 +514,7 @@ export type OrderCreateInput = {
   customerFloor: number
   customerRoom: string
   createdAt?: Date | string
+  confirmedAt?: Date | string | null
   deliveredAt?: Date | string | null
   user?: Prisma.UserCreateNestedOneWithoutOrdersInput
   hostel?: Prisma.HostelCreateNestedOneWithoutOrdersInput
@@ -532,6 +545,7 @@ export type OrderUncheckedCreateInput = {
   customerFloor: number
   customerRoom: string
   createdAt?: Date | string
+  confirmedAt?: Date | string | null
   deliveredAt?: Date | string | null
   items?: Prisma.OrderItemUncheckedCreateNestedManyWithoutOrderInput
   payment?: Prisma.PaymentUncheckedCreateNestedOneWithoutOrderInput
@@ -558,6 +572,7 @@ export type OrderUpdateInput = {
   customerFloor?: Prisma.IntFieldUpdateOperationsInput | number
   customerRoom?: Prisma.StringFieldUpdateOperationsInput | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  confirmedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   deliveredAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   user?: Prisma.UserUpdateOneWithoutOrdersNestedInput
   hostel?: Prisma.HostelUpdateOneWithoutOrdersNestedInput
@@ -588,6 +603,7 @@ export type OrderUncheckedUpdateInput = {
   customerFloor?: Prisma.IntFieldUpdateOperationsInput | number
   customerRoom?: Prisma.StringFieldUpdateOperationsInput | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  confirmedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   deliveredAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   items?: Prisma.OrderItemUncheckedUpdateManyWithoutOrderNestedInput
   payment?: Prisma.PaymentUncheckedUpdateOneWithoutOrderNestedInput
@@ -616,6 +632,7 @@ export type OrderCreateManyInput = {
   customerFloor: number
   customerRoom: string
   createdAt?: Date | string
+  confirmedAt?: Date | string | null
   deliveredAt?: Date | string | null
 }
 
@@ -638,6 +655,7 @@ export type OrderUpdateManyMutationInput = {
   customerFloor?: Prisma.IntFieldUpdateOperationsInput | number
   customerRoom?: Prisma.StringFieldUpdateOperationsInput | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  confirmedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   deliveredAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
 }
 
@@ -662,6 +680,7 @@ export type OrderUncheckedUpdateManyInput = {
   customerFloor?: Prisma.IntFieldUpdateOperationsInput | number
   customerRoom?: Prisma.StringFieldUpdateOperationsInput | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  confirmedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   deliveredAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
 }
 
@@ -696,6 +715,7 @@ export type OrderCountOrderByAggregateInput = {
   customerFloor?: Prisma.SortOrder
   customerRoom?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
+  confirmedAt?: Prisma.SortOrder
   deliveredAt?: Prisma.SortOrder
 }
 
@@ -727,6 +747,7 @@ export type OrderMaxOrderByAggregateInput = {
   customerFloor?: Prisma.SortOrder
   customerRoom?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
+  confirmedAt?: Prisma.SortOrder
   deliveredAt?: Prisma.SortOrder
 }
 
@@ -751,6 +772,7 @@ export type OrderMinOrderByAggregateInput = {
   customerFloor?: Prisma.SortOrder
   customerRoom?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
+  confirmedAt?: Prisma.SortOrder
   deliveredAt?: Prisma.SortOrder
 }
 
@@ -946,6 +968,7 @@ export type OrderCreateWithoutUserInput = {
   customerFloor: number
   customerRoom: string
   createdAt?: Date | string
+  confirmedAt?: Date | string | null
   deliveredAt?: Date | string | null
   hostel?: Prisma.HostelCreateNestedOneWithoutOrdersInput
   items?: Prisma.OrderItemCreateNestedManyWithoutOrderInput
@@ -974,6 +997,7 @@ export type OrderUncheckedCreateWithoutUserInput = {
   customerFloor: number
   customerRoom: string
   createdAt?: Date | string
+  confirmedAt?: Date | string | null
   deliveredAt?: Date | string | null
   items?: Prisma.OrderItemUncheckedCreateNestedManyWithoutOrderInput
   payment?: Prisma.PaymentUncheckedCreateNestedOneWithoutOrderInput
@@ -1031,6 +1055,7 @@ export type OrderScalarWhereInput = {
   customerFloor?: Prisma.IntFilter<"Order"> | number
   customerRoom?: Prisma.StringFilter<"Order"> | string
   createdAt?: Prisma.DateTimeFilter<"Order"> | Date | string
+  confirmedAt?: Prisma.DateTimeNullableFilter<"Order"> | Date | string | null
   deliveredAt?: Prisma.DateTimeNullableFilter<"Order"> | Date | string | null
 }
 
@@ -1053,6 +1078,7 @@ export type OrderCreateWithoutHostelInput = {
   customerFloor: number
   customerRoom: string
   createdAt?: Date | string
+  confirmedAt?: Date | string | null
   deliveredAt?: Date | string | null
   user?: Prisma.UserCreateNestedOneWithoutOrdersInput
   items?: Prisma.OrderItemCreateNestedManyWithoutOrderInput
@@ -1081,6 +1107,7 @@ export type OrderUncheckedCreateWithoutHostelInput = {
   customerFloor: number
   customerRoom: string
   createdAt?: Date | string
+  confirmedAt?: Date | string | null
   deliveredAt?: Date | string | null
   items?: Prisma.OrderItemUncheckedCreateNestedManyWithoutOrderInput
   payment?: Prisma.PaymentUncheckedCreateNestedOneWithoutOrderInput
@@ -1133,6 +1160,7 @@ export type OrderCreateWithoutItemsInput = {
   customerFloor: number
   customerRoom: string
   createdAt?: Date | string
+  confirmedAt?: Date | string | null
   deliveredAt?: Date | string | null
   user?: Prisma.UserCreateNestedOneWithoutOrdersInput
   hostel?: Prisma.HostelCreateNestedOneWithoutOrdersInput
@@ -1162,6 +1190,7 @@ export type OrderUncheckedCreateWithoutItemsInput = {
   customerFloor: number
   customerRoom: string
   createdAt?: Date | string
+  confirmedAt?: Date | string | null
   deliveredAt?: Date | string | null
   payment?: Prisma.PaymentUncheckedCreateNestedOneWithoutOrderInput
   paymentAttempts?: Prisma.PaymentAttemptUncheckedCreateNestedManyWithoutOrderInput
@@ -1203,6 +1232,7 @@ export type OrderUpdateWithoutItemsInput = {
   customerFloor?: Prisma.IntFieldUpdateOperationsInput | number
   customerRoom?: Prisma.StringFieldUpdateOperationsInput | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  confirmedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   deliveredAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   user?: Prisma.UserUpdateOneWithoutOrdersNestedInput
   hostel?: Prisma.HostelUpdateOneWithoutOrdersNestedInput
@@ -1232,6 +1262,7 @@ export type OrderUncheckedUpdateWithoutItemsInput = {
   customerFloor?: Prisma.IntFieldUpdateOperationsInput | number
   customerRoom?: Prisma.StringFieldUpdateOperationsInput | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  confirmedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   deliveredAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   payment?: Prisma.PaymentUncheckedUpdateOneWithoutOrderNestedInput
   paymentAttempts?: Prisma.PaymentAttemptUncheckedUpdateManyWithoutOrderNestedInput
@@ -1257,6 +1288,7 @@ export type OrderCreateWithoutPaymentInput = {
   customerFloor: number
   customerRoom: string
   createdAt?: Date | string
+  confirmedAt?: Date | string | null
   deliveredAt?: Date | string | null
   user?: Prisma.UserCreateNestedOneWithoutOrdersInput
   hostel?: Prisma.HostelCreateNestedOneWithoutOrdersInput
@@ -1286,6 +1318,7 @@ export type OrderUncheckedCreateWithoutPaymentInput = {
   customerFloor: number
   customerRoom: string
   createdAt?: Date | string
+  confirmedAt?: Date | string | null
   deliveredAt?: Date | string | null
   items?: Prisma.OrderItemUncheckedCreateNestedManyWithoutOrderInput
   paymentAttempts?: Prisma.PaymentAttemptUncheckedCreateNestedManyWithoutOrderInput
@@ -1327,6 +1360,7 @@ export type OrderUpdateWithoutPaymentInput = {
   customerFloor?: Prisma.IntFieldUpdateOperationsInput | number
   customerRoom?: Prisma.StringFieldUpdateOperationsInput | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  confirmedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   deliveredAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   user?: Prisma.UserUpdateOneWithoutOrdersNestedInput
   hostel?: Prisma.HostelUpdateOneWithoutOrdersNestedInput
@@ -1356,6 +1390,7 @@ export type OrderUncheckedUpdateWithoutPaymentInput = {
   customerFloor?: Prisma.IntFieldUpdateOperationsInput | number
   customerRoom?: Prisma.StringFieldUpdateOperationsInput | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  confirmedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   deliveredAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   items?: Prisma.OrderItemUncheckedUpdateManyWithoutOrderNestedInput
   paymentAttempts?: Prisma.PaymentAttemptUncheckedUpdateManyWithoutOrderNestedInput
@@ -1381,6 +1416,7 @@ export type OrderCreateWithoutPaymentAttemptsInput = {
   customerFloor: number
   customerRoom: string
   createdAt?: Date | string
+  confirmedAt?: Date | string | null
   deliveredAt?: Date | string | null
   user?: Prisma.UserCreateNestedOneWithoutOrdersInput
   hostel?: Prisma.HostelCreateNestedOneWithoutOrdersInput
@@ -1410,6 +1446,7 @@ export type OrderUncheckedCreateWithoutPaymentAttemptsInput = {
   customerFloor: number
   customerRoom: string
   createdAt?: Date | string
+  confirmedAt?: Date | string | null
   deliveredAt?: Date | string | null
   items?: Prisma.OrderItemUncheckedCreateNestedManyWithoutOrderInput
   payment?: Prisma.PaymentUncheckedCreateNestedOneWithoutOrderInput
@@ -1451,6 +1488,7 @@ export type OrderUpdateWithoutPaymentAttemptsInput = {
   customerFloor?: Prisma.IntFieldUpdateOperationsInput | number
   customerRoom?: Prisma.StringFieldUpdateOperationsInput | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  confirmedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   deliveredAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   user?: Prisma.UserUpdateOneWithoutOrdersNestedInput
   hostel?: Prisma.HostelUpdateOneWithoutOrdersNestedInput
@@ -1480,6 +1518,7 @@ export type OrderUncheckedUpdateWithoutPaymentAttemptsInput = {
   customerFloor?: Prisma.IntFieldUpdateOperationsInput | number
   customerRoom?: Prisma.StringFieldUpdateOperationsInput | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  confirmedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   deliveredAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   items?: Prisma.OrderItemUncheckedUpdateManyWithoutOrderNestedInput
   payment?: Prisma.PaymentUncheckedUpdateOneWithoutOrderNestedInput
@@ -1505,6 +1544,7 @@ export type OrderCreateWithoutReservationsInput = {
   customerFloor: number
   customerRoom: string
   createdAt?: Date | string
+  confirmedAt?: Date | string | null
   deliveredAt?: Date | string | null
   user?: Prisma.UserCreateNestedOneWithoutOrdersInput
   hostel?: Prisma.HostelCreateNestedOneWithoutOrdersInput
@@ -1534,6 +1574,7 @@ export type OrderUncheckedCreateWithoutReservationsInput = {
   customerFloor: number
   customerRoom: string
   createdAt?: Date | string
+  confirmedAt?: Date | string | null
   deliveredAt?: Date | string | null
   items?: Prisma.OrderItemUncheckedCreateNestedManyWithoutOrderInput
   payment?: Prisma.PaymentUncheckedCreateNestedOneWithoutOrderInput
@@ -1575,6 +1616,7 @@ export type OrderUpdateWithoutReservationsInput = {
   customerFloor?: Prisma.IntFieldUpdateOperationsInput | number
   customerRoom?: Prisma.StringFieldUpdateOperationsInput | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  confirmedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   deliveredAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   user?: Prisma.UserUpdateOneWithoutOrdersNestedInput
   hostel?: Prisma.HostelUpdateOneWithoutOrdersNestedInput
@@ -1604,6 +1646,7 @@ export type OrderUncheckedUpdateWithoutReservationsInput = {
   customerFloor?: Prisma.IntFieldUpdateOperationsInput | number
   customerRoom?: Prisma.StringFieldUpdateOperationsInput | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  confirmedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   deliveredAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   items?: Prisma.OrderItemUncheckedUpdateManyWithoutOrderNestedInput
   payment?: Prisma.PaymentUncheckedUpdateOneWithoutOrderNestedInput
@@ -1630,6 +1673,7 @@ export type OrderCreateManyUserInput = {
   customerFloor: number
   customerRoom: string
   createdAt?: Date | string
+  confirmedAt?: Date | string | null
   deliveredAt?: Date | string | null
 }
 
@@ -1652,6 +1696,7 @@ export type OrderUpdateWithoutUserInput = {
   customerFloor?: Prisma.IntFieldUpdateOperationsInput | number
   customerRoom?: Prisma.StringFieldUpdateOperationsInput | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  confirmedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   deliveredAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   hostel?: Prisma.HostelUpdateOneWithoutOrdersNestedInput
   items?: Prisma.OrderItemUpdateManyWithoutOrderNestedInput
@@ -1680,6 +1725,7 @@ export type OrderUncheckedUpdateWithoutUserInput = {
   customerFloor?: Prisma.IntFieldUpdateOperationsInput | number
   customerRoom?: Prisma.StringFieldUpdateOperationsInput | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  confirmedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   deliveredAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   items?: Prisma.OrderItemUncheckedUpdateManyWithoutOrderNestedInput
   payment?: Prisma.PaymentUncheckedUpdateOneWithoutOrderNestedInput
@@ -1707,6 +1753,7 @@ export type OrderUncheckedUpdateManyWithoutUserInput = {
   customerFloor?: Prisma.IntFieldUpdateOperationsInput | number
   customerRoom?: Prisma.StringFieldUpdateOperationsInput | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  confirmedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   deliveredAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
 }
 
@@ -1730,6 +1777,7 @@ export type OrderCreateManyHostelInput = {
   customerFloor: number
   customerRoom: string
   createdAt?: Date | string
+  confirmedAt?: Date | string | null
   deliveredAt?: Date | string | null
 }
 
@@ -1752,6 +1800,7 @@ export type OrderUpdateWithoutHostelInput = {
   customerFloor?: Prisma.IntFieldUpdateOperationsInput | number
   customerRoom?: Prisma.StringFieldUpdateOperationsInput | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  confirmedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   deliveredAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   user?: Prisma.UserUpdateOneWithoutOrdersNestedInput
   items?: Prisma.OrderItemUpdateManyWithoutOrderNestedInput
@@ -1780,6 +1829,7 @@ export type OrderUncheckedUpdateWithoutHostelInput = {
   customerFloor?: Prisma.IntFieldUpdateOperationsInput | number
   customerRoom?: Prisma.StringFieldUpdateOperationsInput | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  confirmedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   deliveredAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   items?: Prisma.OrderItemUncheckedUpdateManyWithoutOrderNestedInput
   payment?: Prisma.PaymentUncheckedUpdateOneWithoutOrderNestedInput
@@ -1807,6 +1857,7 @@ export type OrderUncheckedUpdateManyWithoutHostelInput = {
   customerFloor?: Prisma.IntFieldUpdateOperationsInput | number
   customerRoom?: Prisma.StringFieldUpdateOperationsInput | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  confirmedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   deliveredAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
 }
 
@@ -1880,6 +1931,7 @@ export type OrderSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = 
   customerFloor?: boolean
   customerRoom?: boolean
   createdAt?: boolean
+  confirmedAt?: boolean
   deliveredAt?: boolean
   user?: boolean | Prisma.Order$userArgs<ExtArgs>
   hostel?: boolean | Prisma.Order$hostelArgs<ExtArgs>
@@ -1911,6 +1963,7 @@ export type OrderSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Extensi
   customerFloor?: boolean
   customerRoom?: boolean
   createdAt?: boolean
+  confirmedAt?: boolean
   deliveredAt?: boolean
   user?: boolean | Prisma.Order$userArgs<ExtArgs>
   hostel?: boolean | Prisma.Order$hostelArgs<ExtArgs>
@@ -1937,6 +1990,7 @@ export type OrderSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensi
   customerFloor?: boolean
   customerRoom?: boolean
   createdAt?: boolean
+  confirmedAt?: boolean
   deliveredAt?: boolean
   user?: boolean | Prisma.Order$userArgs<ExtArgs>
   hostel?: boolean | Prisma.Order$hostelArgs<ExtArgs>
@@ -1963,10 +2017,11 @@ export type OrderSelectScalar = {
   customerFloor?: boolean
   customerRoom?: boolean
   createdAt?: boolean
+  confirmedAt?: boolean
   deliveredAt?: boolean
 }
 
-export type OrderOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "orderNumber" | "userId" | "guestAccessTokenHash" | "hostelId" | "subtotal" | "deliveryFee" | "total" | "paymentStatus" | "orderStatus" | "isFiveMinute" | "inventoryShortfall" | "customerName" | "customerEmail" | "customerImage" | "customerPhone" | "customerHostel" | "customerFloor" | "customerRoom" | "createdAt" | "deliveredAt", ExtArgs["result"]["order"]>
+export type OrderOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "orderNumber" | "userId" | "guestAccessTokenHash" | "hostelId" | "subtotal" | "deliveryFee" | "total" | "paymentStatus" | "orderStatus" | "isFiveMinute" | "inventoryShortfall" | "customerName" | "customerEmail" | "customerImage" | "customerPhone" | "customerHostel" | "customerFloor" | "customerRoom" | "createdAt" | "confirmedAt" | "deliveredAt", ExtArgs["result"]["order"]>
 export type OrderInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   user?: boolean | Prisma.Order$userArgs<ExtArgs>
   hostel?: boolean | Prisma.Order$hostelArgs<ExtArgs>
@@ -2016,6 +2071,7 @@ export type $OrderPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs 
     customerFloor: number
     customerRoom: string
     createdAt: Date
+    confirmedAt: Date | null
     deliveredAt: Date | null
   }, ExtArgs["result"]["order"]>
   composites: {}
@@ -2466,6 +2522,7 @@ export interface OrderFieldRefs {
   readonly customerFloor: Prisma.FieldRef<"Order", 'Int'>
   readonly customerRoom: Prisma.FieldRef<"Order", 'String'>
   readonly createdAt: Prisma.FieldRef<"Order", 'DateTime'>
+  readonly confirmedAt: Prisma.FieldRef<"Order", 'DateTime'>
   readonly deliveredAt: Prisma.FieldRef<"Order", 'DateTime'>
 }
     

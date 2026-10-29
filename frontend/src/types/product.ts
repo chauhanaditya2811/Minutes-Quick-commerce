@@ -17,6 +17,8 @@ export interface StoreSettings {
   deliveryFee: number;
   minimumOrder: number;
   supportEmail: string | null;
+  /** E.164 store phone (e.g. +919876543210) for the "Call Store" button; null if not set. */
+  storePhone: string | null;
 }
 
 /** Body for POST/PUT /api/admin/products. Stock is managed per hostel. */

@@ -14,8 +14,8 @@ import type {
   AdminOrder,
   CustomerOrder,
   PaymentInitResponse,
-  GuestOrder,
   GuestOrderRequest,
+  OrderDetailResponse,
   GuestPlacedOrder,
   GuestValidateRequest,
   ValidateOrderResponse,
@@ -157,6 +157,8 @@ export const api = {
     request<UserProfile>('/api/users/me', { method: 'PUT', body: input, auth: true }),
 
   // Orders & payment
+  getMyOrder: (orderId: string) =>
+    request<OrderDetailResponse>(`/api/orders/${encodeURIComponent(orderId)}`, { auth: true }),
   getMyOrders: async () =>
     envelopeValue<CustomerOrder[]>(await request<unknown>('/api/orders/my', { auth: true }), 'orders'),
   validateOrder: (body: OrderRequest) =>
@@ -191,11 +193,8 @@ export const api = {
     request<ValidateOrderResponse>('/api/guest/checkout/validate', { method: 'POST', body }),
   createGuestOrder: async (body: GuestOrderRequest) =>
     envelopeValue<GuestPlacedOrder>(await request<unknown>('/api/guest/orders', { method: 'POST', body }), 'order'),
-  getGuestOrder: async (orderId: string, token: string) =>
-    envelopeValue<GuestOrder>(
-      await request<unknown>(`/api/guest/orders/${encodeURIComponent(orderId)}`, { headers: guestHeaders(token) }),
-      'order',
-    ),
+  getGuestOrder: (orderId: string, token: string) =>
+    request<OrderDetailResponse>(`/api/guest/orders/${encodeURIComponent(orderId)}`, { headers: guestHeaders(token) }),
   initGuestPayment: async (orderId: string, token: string) =>
     envelopeValue<PaymentInitResponse>(
       await request<unknown>(`/api/guest/orders/${encodeURIComponent(orderId)}/payment`, {
