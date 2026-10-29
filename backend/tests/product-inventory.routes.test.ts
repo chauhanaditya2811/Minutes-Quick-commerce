@@ -12,6 +12,7 @@ const mocks = vi.hoisted(() => ({
   inventoryUpsert: vi.fn(),
   transaction: vi.fn(),
   reservationGroupBy: vi.fn(),
+  orderItemGroupBy: vi.fn(),
   verifyIdToken: vi.fn(),
 }));
 
@@ -25,6 +26,7 @@ vi.mock("../src/config/database.js", () => ({
       upsert: mocks.inventoryUpsert,
     },
     inventoryReservation: { groupBy: mocks.reservationGroupBy },
+    orderItem: { groupBy: mocks.orderItemGroupBy },
     $transaction: mocks.transaction,
   },
 }));
@@ -59,6 +61,7 @@ describe("hostel-scoped product routes", () => {
   beforeEach(() => {
     vi.resetAllMocks();
     mocks.reservationGroupBy.mockResolvedValue([]);
+    mocks.orderItemGroupBy.mockResolvedValue([]);
     mocks.verifyIdToken.mockImplementation(async (token: string) =>
       token === "admin"
         ? { uid: "a", email: "admin@example.test" }
@@ -96,12 +99,12 @@ describe("hostel-scoped product routes", () => {
 
   it("returns the hostel catalogue with hostel stock", async () => {
     mocks.inventoryFindMany.mockResolvedValue([
-      { quantity: 12, product: { id: "product-1", name: "Maggi", price: 15 } },
+      { quantity: 12, product: { id: "product-1", name: "Maggi", price: 15, createdAt: new Date("2026-01-01T00:00:00Z") } },
     ]);
     const response = await fetch(`${baseUrl}/api/products?hostelId=hostel-a`);
     expect(response.status).toBe(200);
     await expect(response.json()).resolves.toEqual([
-      { id: "product-1", name: "Maggi", price: 15, stock: 12, hostelId: "hostel-a" },
+      { id: "product-1", name: "Maggi", price: 15, createdAt: "2026-01-01T00:00:00.000Z", stock: 12, hostelId: "hostel-a", popular: false },
     ]);
   });
 
