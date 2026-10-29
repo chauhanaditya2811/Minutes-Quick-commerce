@@ -59,7 +59,7 @@ describe("secure guest checkout (minutes_test)", () => {
   const guestCart = (overrides: Record<string, unknown> = {}) => ({
     hostelId: hostelA,
     items: [{ productId: maggi, quantity: 2 }],
-    customer: { name: "Guest Student", phone: "9876543210", floor: 2, room: "204" },
+    customer: { name: "Guest Student", phone: "9876543210", floor: "A/2", room: "204" },
     checkoutToken: newToken(),
     ...overrides,
   });
@@ -154,7 +154,7 @@ describe("secure guest checkout (minutes_test)", () => {
     const validated = await call("POST", "/api/guest/checkout/validate", guestCart());
     expect(validated.status).toBe(200);
     expect(validated.body.checkout).toMatchObject({ subtotal: 40, deliveryFee: 5, total: 45 });
-    expect(validated.body.checkout.customer).toEqual({ name: "Guest Student", phone: "9876543210", hostel: expect.any(String), floor: 2, room: "204" });
+    expect(validated.body.checkout.customer).toEqual({ name: "Guest Student", phone: "9876543210", hostel: expect.any(String), floor: "A/2", room: "204" });
 
     const placed = await placeGuestOrder();
     expect(placed.status).toBe(201);
@@ -163,7 +163,7 @@ describe("secure guest checkout (minutes_test)", () => {
     expect(placed.body.order).not.toHaveProperty("userId");
 
     const stored = await prisma.order.findUniqueOrThrow({ where: { id: placed.body.order.id } });
-    expect(stored).toMatchObject({ userId: null, customerEmail: null, guestAccessTokenHash: hash(placed.token), customerPhone: "9876543210", customerRoom: "204", customerFloor: 2, hostelId: hostelA });
+    expect(stored).toMatchObject({ userId: null, customerEmail: null, guestAccessTokenHash: hash(placed.token), customerPhone: "9876543210", customerRoom: "204", customerFloor: "A/2", hostelId: hostelA });
     expect(await fx.stock(maggi, hostelA)).toBe(8);
     expect(await fx.stock(maggi, hostelB)).toBe(10);
     expect(await prisma.inventoryReservation.findFirst({ where: { orderId: placed.body.order.id } })).toMatchObject({ userId: null, status: "ACTIVE", hostelId: hostelA });
@@ -247,6 +247,10 @@ describe("secure guest checkout (minutes_test)", () => {
     ["a short phone", { customer: { name: "Guest", phone: "98765", floor: 2, room: "204" } }],
     ["a negative floor", { customer: { name: "Guest", phone: "9876543210", floor: -1, room: "204" } }],
     ["a fractional floor", { customer: { name: "Guest", phone: "9876543210", floor: 2.5, room: "204" } }],
+    ["an empty block/floor", { customer: { name: "Guest", phone: "9876543210", floor: "  ", room: "204" } }],
+    ["a block/floor with symbols", { customer: { name: "Guest", phone: "9876543210", floor: "A#2", room: "204" } }],
+    ["a block/floor ending in a slash", { customer: { name: "Guest", phone: "9876543210", floor: "A/", room: "204" } }],
+    ["an overlong block/floor", { customer: { name: "Guest", phone: "9876543210", floor: "ABCDEFGHIJK", room: "204" } }],
     ["an empty room", { customer: { name: "Guest", phone: "9876543210", floor: 2, room: " " } }],
     ["an overlong room", { customer: { name: "Guest", phone: "9876543210", floor: 2, room: "x".repeat(21) } }],
     ["a weak checkout token", { checkoutToken: "short" }],
@@ -257,6 +261,17 @@ describe("secure guest checkout (minutes_test)", () => {
     expect(placed.status).toBe(400);
     expect(await prisma.order.count({ where: { hostelId: hostelA } })).toBe(before);
     expect(await fx.stock(maggi, hostelA)).toBe(10);
+  });
+
+  it.each([
+    ["b / 3", "B/3"],
+    ["c-1", "C-1"],
+    // Older app versions still send floor as a number.
+    [2, "2"],
+  ])("stores block/floor %j as %j", async (floor, stored) => {
+    const placed = await placeGuestOrder({ customer: { name: "Guest", phone: "9876543210", floor, room: "204" } });
+    expect(placed.status).toBe(201);
+    expect(await prisma.order.findUniqueOrThrow({ where: { id: placed.body.order.id } })).toMatchObject({ customerFloor: stored });
   });
 
   it("ignores client-supplied prices, fees and totals", async () => {
@@ -350,7 +365,7 @@ describe("secure guest checkout (minutes_test)", () => {
       customerName: "Guest Student",
       customerEmail: null,
       customerPhone: "9876543210",
-      customerFloor: 2,
+      customerFloor: "A/2",
       customerRoom: "204",
       total: 45,
       deliveryFee: 5,
@@ -427,7 +442,7 @@ describe("secure guest checkout (minutes_test)", () => {
 
   it("returns a signed-in customer's own order with confirmedAt, and nobody else's", async () => {
     const owner = await prisma.user.create({
-      data: { firebaseUid: "customer-x", email: `owner-${randomUUID()}@example.test`, name: "Owner", phone: "9876543210", hostelId: hostelA, floor: 1, room: "11" },
+      data: { firebaseUid: "customer-x", email: `owner-${randomUUID()}@example.test`, name: "Owner", phone: "9876543210", hostelId: hostelA, floor: "1", room: "11" },
     });
     fx.ids.users.push(owner.id);
     const mine = await createOrder("customer-x", { hostelId: hostelA, items: [{ productId: maggi, quantity: 1 }] });
@@ -460,7 +475,7 @@ describe("secure guest checkout (minutes_test)", () => {
           orderNumber: `MIN-NOOWNER-${randomUUID()}`,
           subtotal: 1, deliveryFee: 0, total: 1,
           paymentStatus: "PENDING", orderStatus: "PENDING_PAYMENT",
-          customerName: "Nobody", customerPhone: "9876543210", customerHostel: "X", customerFloor: 1, customerRoom: "1",
+          customerName: "Nobody", customerPhone: "9876543210", customerHostel: "X", customerFloor: "1", customerRoom: "1",
         },
       })
     ).rejects.toThrow();

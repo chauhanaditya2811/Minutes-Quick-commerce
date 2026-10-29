@@ -20,18 +20,8 @@ export type UserModel = runtime.Types.Result.DefaultSelection<Prisma.$UserPayloa
 
 export type AggregateUser = {
   _count: UserCountAggregateOutputType | null
-  _avg: UserAvgAggregateOutputType | null
-  _sum: UserSumAggregateOutputType | null
   _min: UserMinAggregateOutputType | null
   _max: UserMaxAggregateOutputType | null
-}
-
-export type UserAvgAggregateOutputType = {
-  floor: number | null
-}
-
-export type UserSumAggregateOutputType = {
-  floor: number | null
 }
 
 export type UserMinAggregateOutputType = {
@@ -42,7 +32,7 @@ export type UserMinAggregateOutputType = {
   profileImage: string | null
   phone: string | null
   hostelId: string | null
-  floor: number | null
+  floor: string | null
   room: string | null
   createdAt: Date | null
   updatedAt: Date | null
@@ -56,7 +46,7 @@ export type UserMaxAggregateOutputType = {
   profileImage: string | null
   phone: string | null
   hostelId: string | null
-  floor: number | null
+  floor: string | null
   room: string | null
   createdAt: Date | null
   updatedAt: Date | null
@@ -77,14 +67,6 @@ export type UserCountAggregateOutputType = {
   _all: number
 }
 
-
-export type UserAvgAggregateInputType = {
-  floor?: true
-}
-
-export type UserSumAggregateInputType = {
-  floor?: true
-}
 
 export type UserMinAggregateInputType = {
   id?: true
@@ -167,18 +149,6 @@ export type UserAggregateArgs<ExtArgs extends runtime.Types.Extensions.InternalA
   /**
    * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
    * 
-   * Select which fields to average
-  **/
-  _avg?: UserAvgAggregateInputType
-  /**
-   * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
-   * 
-   * Select which fields to sum
-  **/
-  _sum?: UserSumAggregateInputType
-  /**
-   * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
-   * 
    * Select which fields to find the minimum value
   **/
   _min?: UserMinAggregateInputType
@@ -209,8 +179,6 @@ export type UserGroupByArgs<ExtArgs extends runtime.Types.Extensions.InternalArg
   take?: number
   skip?: number
   _count?: UserCountAggregateInputType | true
-  _avg?: UserAvgAggregateInputType
-  _sum?: UserSumAggregateInputType
   _min?: UserMinAggregateInputType
   _max?: UserMaxAggregateInputType
 }
@@ -223,13 +191,11 @@ export type UserGroupByOutputType = {
   profileImage: string | null
   phone: string | null
   hostelId: string | null
-  floor: number | null
+  floor: string | null
   room: string | null
   createdAt: Date
   updatedAt: Date
   _count: UserCountAggregateOutputType | null
-  _avg: UserAvgAggregateOutputType | null
-  _sum: UserSumAggregateOutputType | null
   _min: UserMinAggregateOutputType | null
   _max: UserMaxAggregateOutputType | null
 }
@@ -260,7 +226,7 @@ export type UserWhereInput = {
   profileImage?: Prisma.StringNullableFilter<"User"> | string | null
   phone?: Prisma.StringNullableFilter<"User"> | string | null
   hostelId?: Prisma.StringNullableFilter<"User"> | string | null
-  floor?: Prisma.IntNullableFilter<"User"> | number | null
+  floor?: Prisma.StringNullableFilter<"User"> | string | null
   room?: Prisma.StringNullableFilter<"User"> | string | null
   createdAt?: Prisma.DateTimeFilter<"User"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"User"> | Date | string
@@ -297,7 +263,7 @@ export type UserWhereUniqueInput = Prisma.AtLeast<{
   profileImage?: Prisma.StringNullableFilter<"User"> | string | null
   phone?: Prisma.StringNullableFilter<"User"> | string | null
   hostelId?: Prisma.StringNullableFilter<"User"> | string | null
-  floor?: Prisma.IntNullableFilter<"User"> | number | null
+  floor?: Prisma.StringNullableFilter<"User"> | string | null
   room?: Prisma.StringNullableFilter<"User"> | string | null
   createdAt?: Prisma.DateTimeFilter<"User"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"User"> | Date | string
@@ -319,10 +285,8 @@ export type UserOrderByWithAggregationInput = {
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
   _count?: Prisma.UserCountOrderByAggregateInput
-  _avg?: Prisma.UserAvgOrderByAggregateInput
   _max?: Prisma.UserMaxOrderByAggregateInput
   _min?: Prisma.UserMinOrderByAggregateInput
-  _sum?: Prisma.UserSumOrderByAggregateInput
 }
 
 export type UserScalarWhereWithAggregatesInput = {
@@ -336,7 +300,7 @@ export type UserScalarWhereWithAggregatesInput = {
   profileImage?: Prisma.StringNullableWithAggregatesFilter<"User"> | string | null
   phone?: Prisma.StringNullableWithAggregatesFilter<"User"> | string | null
   hostelId?: Prisma.StringNullableWithAggregatesFilter<"User"> | string | null
-  floor?: Prisma.IntNullableWithAggregatesFilter<"User"> | number | null
+  floor?: Prisma.StringNullableWithAggregatesFilter<"User"> | string | null
   room?: Prisma.StringNullableWithAggregatesFilter<"User"> | string | null
   createdAt?: Prisma.DateTimeWithAggregatesFilter<"User"> | Date | string
   updatedAt?: Prisma.DateTimeWithAggregatesFilter<"User"> | Date | string
@@ -349,7 +313,7 @@ export type UserCreateInput = {
   name?: string | null
   profileImage?: string | null
   phone?: string | null
-  floor?: number | null
+  floor?: string | null
   room?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
@@ -366,7 +330,7 @@ export type UserUncheckedCreateInput = {
   profileImage?: string | null
   phone?: string | null
   hostelId?: string | null
-  floor?: number | null
+  floor?: string | null
   room?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
@@ -381,7 +345,7 @@ export type UserUpdateInput = {
   name?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   profileImage?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   phone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  floor?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  floor?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   room?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -398,7 +362,7 @@ export type UserUncheckedUpdateInput = {
   profileImage?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   phone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   hostelId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  floor?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  floor?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   room?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -414,7 +378,7 @@ export type UserCreateManyInput = {
   profileImage?: string | null
   phone?: string | null
   hostelId?: string | null
-  floor?: number | null
+  floor?: string | null
   room?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
@@ -427,7 +391,7 @@ export type UserUpdateManyMutationInput = {
   name?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   profileImage?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   phone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  floor?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  floor?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   room?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -441,7 +405,7 @@ export type UserUncheckedUpdateManyInput = {
   profileImage?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   phone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   hostelId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  floor?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  floor?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   room?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -459,10 +423,6 @@ export type UserCountOrderByAggregateInput = {
   room?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
-}
-
-export type UserAvgOrderByAggregateInput = {
-  floor?: Prisma.SortOrder
 }
 
 export type UserMaxOrderByAggregateInput = {
@@ -493,10 +453,6 @@ export type UserMinOrderByAggregateInput = {
   updatedAt?: Prisma.SortOrder
 }
 
-export type UserSumOrderByAggregateInput = {
-  floor?: Prisma.SortOrder
-}
-
 export type UserListRelationFilter = {
   every?: Prisma.UserWhereInput
   some?: Prisma.UserWhereInput
@@ -518,14 +474,6 @@ export type StringFieldUpdateOperationsInput = {
 
 export type NullableStringFieldUpdateOperationsInput = {
   set?: string | null
-}
-
-export type NullableIntFieldUpdateOperationsInput = {
-  set?: number | null
-  increment?: number
-  decrement?: number
-  multiply?: number
-  divide?: number
 }
 
 export type DateTimeFieldUpdateOperationsInput = {
@@ -613,7 +561,7 @@ export type UserCreateWithoutHostelInput = {
   name?: string | null
   profileImage?: string | null
   phone?: string | null
-  floor?: number | null
+  floor?: string | null
   room?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
@@ -628,7 +576,7 @@ export type UserUncheckedCreateWithoutHostelInput = {
   name?: string | null
   profileImage?: string | null
   phone?: string | null
-  floor?: number | null
+  floor?: string | null
   room?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
@@ -673,7 +621,7 @@ export type UserScalarWhereInput = {
   profileImage?: Prisma.StringNullableFilter<"User"> | string | null
   phone?: Prisma.StringNullableFilter<"User"> | string | null
   hostelId?: Prisma.StringNullableFilter<"User"> | string | null
-  floor?: Prisma.IntNullableFilter<"User"> | number | null
+  floor?: Prisma.StringNullableFilter<"User"> | string | null
   room?: Prisma.StringNullableFilter<"User"> | string | null
   createdAt?: Prisma.DateTimeFilter<"User"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"User"> | Date | string
@@ -686,7 +634,7 @@ export type UserCreateWithoutOrdersInput = {
   name?: string | null
   profileImage?: string | null
   phone?: string | null
-  floor?: number | null
+  floor?: string | null
   room?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
@@ -702,7 +650,7 @@ export type UserUncheckedCreateWithoutOrdersInput = {
   profileImage?: string | null
   phone?: string | null
   hostelId?: string | null
-  floor?: number | null
+  floor?: string | null
   room?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
@@ -732,7 +680,7 @@ export type UserUpdateWithoutOrdersInput = {
   name?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   profileImage?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   phone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  floor?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  floor?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   room?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -748,7 +696,7 @@ export type UserUncheckedUpdateWithoutOrdersInput = {
   profileImage?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   phone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   hostelId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  floor?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  floor?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   room?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -762,7 +710,7 @@ export type UserCreateWithoutReservationsInput = {
   name?: string | null
   profileImage?: string | null
   phone?: string | null
-  floor?: number | null
+  floor?: string | null
   room?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
@@ -778,7 +726,7 @@ export type UserUncheckedCreateWithoutReservationsInput = {
   profileImage?: string | null
   phone?: string | null
   hostelId?: string | null
-  floor?: number | null
+  floor?: string | null
   room?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
@@ -808,7 +756,7 @@ export type UserUpdateWithoutReservationsInput = {
   name?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   profileImage?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   phone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  floor?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  floor?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   room?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -824,7 +772,7 @@ export type UserUncheckedUpdateWithoutReservationsInput = {
   profileImage?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   phone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   hostelId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  floor?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  floor?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   room?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -838,7 +786,7 @@ export type UserCreateManyHostelInput = {
   name?: string | null
   profileImage?: string | null
   phone?: string | null
-  floor?: number | null
+  floor?: string | null
   room?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
@@ -851,7 +799,7 @@ export type UserUpdateWithoutHostelInput = {
   name?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   profileImage?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   phone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  floor?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  floor?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   room?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -866,7 +814,7 @@ export type UserUncheckedUpdateWithoutHostelInput = {
   name?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   profileImage?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   phone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  floor?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  floor?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   room?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -881,7 +829,7 @@ export type UserUncheckedUpdateManyWithoutHostelInput = {
   name?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   profileImage?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   phone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  floor?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  floor?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   room?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -1018,7 +966,7 @@ export type $UserPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs =
     profileImage: string | null
     phone: string | null
     hostelId: string | null
-    floor: number | null
+    floor: string | null
     room: string | null
     createdAt: Date
     updatedAt: Date
@@ -1455,7 +1403,7 @@ export interface UserFieldRefs {
   readonly profileImage: Prisma.FieldRef<"User", 'String'>
   readonly phone: Prisma.FieldRef<"User", 'String'>
   readonly hostelId: Prisma.FieldRef<"User", 'String'>
-  readonly floor: Prisma.FieldRef<"User", 'Int'>
+  readonly floor: Prisma.FieldRef<"User", 'String'>
   readonly room: Prisma.FieldRef<"User", 'String'>
   readonly createdAt: Prisma.FieldRef<"User", 'DateTime'>
   readonly updatedAt: Prisma.FieldRef<"User", 'DateTime'>

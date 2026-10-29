@@ -45,7 +45,7 @@ All calls go through `src/services/api.ts`. Protected calls send `Authorization:
 | --- | --- | --- |
 | Home, product details | `GET /api/products`, `GET /api/products/:id` | Wired |
 | Store banner, fees | `GET /api/settings` | Wired |
-| Account, checkout details | `GET/PUT /api/users/me` | Wired; `floor` is an integer |
+| Account, checkout details | `GET/PUT /api/users/me` | Wired; `floor` is block/floor text, e.g. `A/2` |
 | Checkout validation | `POST /api/orders/validate` | Wired; reads the `{ checkout }` response |
 | Create order | `POST /api/orders` | Wired; reads and maps the `{ order }` response |
 | Customer order history | `GET /api/orders/my` | Wired; requires Firebase authentication and scopes results to the signed-in customer |

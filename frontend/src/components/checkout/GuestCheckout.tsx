@@ -16,6 +16,7 @@ import {
   type PendingGuestCheckout,
 } from '../../services/guestCheckout';
 import type { GuestCustomerInput, ValidateOrderResponse } from '../../types/order';
+import { BLOCK_FLOOR_MAX_LENGTH, BLOCK_FLOOR_MESSAGE, deliveryAddress, parseBlockFloor } from '../../utils/blockFloor';
 import { formatINR } from '../../utils/format';
 import OrderSummaryPanel from './OrderSummary';
 import Field from '../ui/Field';
@@ -32,12 +33,12 @@ function parseDetails(form: DetailsForm): { customer: GuestCustomerInput | null;
   const name = form.name.trim().replace(/\s+/g, ' ');
   const phone = form.phone.replace(/\s+/g, '');
   const room = form.room.trim();
-  const floor = Number(form.floor);
+  const floor = parseBlockFloor(form.floor);
   if (name.length < 2 || name.length > 80) errors.name = 'Enter your full name (2 to 80 characters).';
   if (!PHONE_PATTERN.test(phone)) errors.phone = 'Enter a 10-digit mobile number starting with 6, 7, 8 or 9.';
-  if (form.floor.trim() === '' || !Number.isSafeInteger(floor) || floor < 0 || floor > 200) errors.floor = 'Enter a floor from 0 to 200.';
+  if (floor === null) errors.floor = BLOCK_FLOOR_MESSAGE;
   if (!room || room.length > 20) errors.room = 'Enter your room number (up to 20 characters).';
-  return Object.keys(errors).length ? { customer: null, errors } : { customer: { name, phone, floor, room }, errors };
+  return floor === null || Object.keys(errors).length ? { customer: null, errors } : { customer: { name, phone, floor, room }, errors };
 }
 
 /** Checkout without an account: delivery details, a server-priced review, then Cashfree. */
@@ -205,7 +206,7 @@ export default function GuestCheckout() {
                 </div>
               </div>
               <div className="form__row">
-                <Field label="Floor" type="number" min={0} max={200} step={1} inputMode="numeric" placeholder="e.g. 2" value={form.floor} onChange={set('floor')} aria-invalid={!!errors.floor} hint={errors.floor && <span className="field__error">{errors.floor}</span>} />
+                <Field label="Block/Floor" autoCapitalize="characters" autoComplete="off" maxLength={BLOCK_FLOOR_MAX_LENGTH} placeholder="e.g. A/2" value={form.floor} onChange={set('floor')} aria-invalid={!!errors.floor} hint={errors.floor && <span className="field__error">{errors.floor}</span>} />
                 <Field label="Room" placeholder="e.g. 214" maxLength={20} value={form.room} onChange={set('room')} aria-invalid={!!errors.room} hint={errors.room && <span className="field__error">{errors.room}</span>} />
               </div>
               {message && <Notice tone={message.tone}>{message.text}</Notice>}
@@ -219,7 +220,7 @@ export default function GuestCheckout() {
                 <div>
                   <span className="muted small">Delivering to</span>
                   <strong>{review.customer.name}</strong>
-                  <span>{review.customer.hostel}, Floor {review.customer.floor}, Room {review.customer.room}</span>
+                  <span>{deliveryAddress(review.customer.hostel, review.customer.floor, review.customer.room)}</span>
                   <span className="muted small">{review.customer.phone}</span>
                 </div>
                 <button type="button" className="btn btn--outline btn--sm guest-review__edit" onClick={() => setReview(null)} disabled={paying}>Edit</button>

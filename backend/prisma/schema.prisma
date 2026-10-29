@@ -16,7 +16,7 @@ model User {
   phone        String?
   hostelId     String?
   hostel       Hostel? @relation(fields: [hostelId], references: [id], onDelete: Restrict)
-  floor        Int?
+  floor        String? // block and floor, e.g. "A/2"
   room         String?
 
   orders       Order[]
@@ -121,7 +121,7 @@ model Order {
   customerImage  String?
   customerPhone  String
   customerHostel String
-  customerFloor  Int
+  customerFloor  String
   customerRoom   String
 
   items           OrderItem[]

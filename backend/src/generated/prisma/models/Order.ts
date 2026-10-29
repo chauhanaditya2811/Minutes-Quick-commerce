@@ -30,14 +30,12 @@ export type OrderAvgAggregateOutputType = {
   subtotal: number | null
   deliveryFee: number | null
   total: number | null
-  customerFloor: number | null
 }
 
 export type OrderSumAggregateOutputType = {
   subtotal: number | null
   deliveryFee: number | null
   total: number | null
-  customerFloor: number | null
 }
 
 export type OrderMinAggregateOutputType = {
@@ -58,7 +56,7 @@ export type OrderMinAggregateOutputType = {
   customerImage: string | null
   customerPhone: string | null
   customerHostel: string | null
-  customerFloor: number | null
+  customerFloor: string | null
   customerRoom: string | null
   createdAt: Date | null
   confirmedAt: Date | null
@@ -83,7 +81,7 @@ export type OrderMaxAggregateOutputType = {
   customerImage: string | null
   customerPhone: string | null
   customerHostel: string | null
-  customerFloor: number | null
+  customerFloor: string | null
   customerRoom: string | null
   createdAt: Date | null
   confirmedAt: Date | null
@@ -121,14 +119,12 @@ export type OrderAvgAggregateInputType = {
   subtotal?: true
   deliveryFee?: true
   total?: true
-  customerFloor?: true
 }
 
 export type OrderSumAggregateInputType = {
   subtotal?: true
   deliveryFee?: true
   total?: true
-  customerFloor?: true
 }
 
 export type OrderMinAggregateInputType = {
@@ -311,7 +307,7 @@ export type OrderGroupByOutputType = {
   customerImage: string | null
   customerPhone: string
   customerHostel: string
-  customerFloor: number
+  customerFloor: string
   customerRoom: string
   createdAt: Date
   confirmedAt: Date | null
@@ -359,7 +355,7 @@ export type OrderWhereInput = {
   customerImage?: Prisma.StringNullableFilter<"Order"> | string | null
   customerPhone?: Prisma.StringFilter<"Order"> | string
   customerHostel?: Prisma.StringFilter<"Order"> | string
-  customerFloor?: Prisma.IntFilter<"Order"> | number
+  customerFloor?: Prisma.StringFilter<"Order"> | string
   customerRoom?: Prisma.StringFilter<"Order"> | string
   createdAt?: Prisma.DateTimeFilter<"Order"> | Date | string
   confirmedAt?: Prisma.DateTimeNullableFilter<"Order"> | Date | string | null
@@ -424,7 +420,7 @@ export type OrderWhereUniqueInput = Prisma.AtLeast<{
   customerImage?: Prisma.StringNullableFilter<"Order"> | string | null
   customerPhone?: Prisma.StringFilter<"Order"> | string
   customerHostel?: Prisma.StringFilter<"Order"> | string
-  customerFloor?: Prisma.IntFilter<"Order"> | number
+  customerFloor?: Prisma.StringFilter<"Order"> | string
   customerRoom?: Prisma.StringFilter<"Order"> | string
   createdAt?: Prisma.DateTimeFilter<"Order"> | Date | string
   confirmedAt?: Prisma.DateTimeNullableFilter<"Order"> | Date | string | null
@@ -488,7 +484,7 @@ export type OrderScalarWhereWithAggregatesInput = {
   customerImage?: Prisma.StringNullableWithAggregatesFilter<"Order"> | string | null
   customerPhone?: Prisma.StringWithAggregatesFilter<"Order"> | string
   customerHostel?: Prisma.StringWithAggregatesFilter<"Order"> | string
-  customerFloor?: Prisma.IntWithAggregatesFilter<"Order"> | number
+  customerFloor?: Prisma.StringWithAggregatesFilter<"Order"> | string
   customerRoom?: Prisma.StringWithAggregatesFilter<"Order"> | string
   createdAt?: Prisma.DateTimeWithAggregatesFilter<"Order"> | Date | string
   confirmedAt?: Prisma.DateTimeNullableWithAggregatesFilter<"Order"> | Date | string | null
@@ -511,7 +507,7 @@ export type OrderCreateInput = {
   customerImage?: string | null
   customerPhone: string
   customerHostel: string
-  customerFloor: number
+  customerFloor: string
   customerRoom: string
   createdAt?: Date | string
   confirmedAt?: Date | string | null
@@ -542,7 +538,7 @@ export type OrderUncheckedCreateInput = {
   customerImage?: string | null
   customerPhone: string
   customerHostel: string
-  customerFloor: number
+  customerFloor: string
   customerRoom: string
   createdAt?: Date | string
   confirmedAt?: Date | string | null
@@ -569,7 +565,7 @@ export type OrderUpdateInput = {
   customerImage?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   customerPhone?: Prisma.StringFieldUpdateOperationsInput | string
   customerHostel?: Prisma.StringFieldUpdateOperationsInput | string
-  customerFloor?: Prisma.IntFieldUpdateOperationsInput | number
+  customerFloor?: Prisma.StringFieldUpdateOperationsInput | string
   customerRoom?: Prisma.StringFieldUpdateOperationsInput | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   confirmedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -600,7 +596,7 @@ export type OrderUncheckedUpdateInput = {
   customerImage?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   customerPhone?: Prisma.StringFieldUpdateOperationsInput | string
   customerHostel?: Prisma.StringFieldUpdateOperationsInput | string
-  customerFloor?: Prisma.IntFieldUpdateOperationsInput | number
+  customerFloor?: Prisma.StringFieldUpdateOperationsInput | string
   customerRoom?: Prisma.StringFieldUpdateOperationsInput | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   confirmedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -629,7 +625,7 @@ export type OrderCreateManyInput = {
   customerImage?: string | null
   customerPhone: string
   customerHostel: string
-  customerFloor: number
+  customerFloor: string
   customerRoom: string
   createdAt?: Date | string
   confirmedAt?: Date | string | null
@@ -652,7 +648,7 @@ export type OrderUpdateManyMutationInput = {
   customerImage?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   customerPhone?: Prisma.StringFieldUpdateOperationsInput | string
   customerHostel?: Prisma.StringFieldUpdateOperationsInput | string
-  customerFloor?: Prisma.IntFieldUpdateOperationsInput | number
+  customerFloor?: Prisma.StringFieldUpdateOperationsInput | string
   customerRoom?: Prisma.StringFieldUpdateOperationsInput | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   confirmedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -677,7 +673,7 @@ export type OrderUncheckedUpdateManyInput = {
   customerImage?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   customerPhone?: Prisma.StringFieldUpdateOperationsInput | string
   customerHostel?: Prisma.StringFieldUpdateOperationsInput | string
-  customerFloor?: Prisma.IntFieldUpdateOperationsInput | number
+  customerFloor?: Prisma.StringFieldUpdateOperationsInput | string
   customerRoom?: Prisma.StringFieldUpdateOperationsInput | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   confirmedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -723,7 +719,6 @@ export type OrderAvgOrderByAggregateInput = {
   subtotal?: Prisma.SortOrder
   deliveryFee?: Prisma.SortOrder
   total?: Prisma.SortOrder
-  customerFloor?: Prisma.SortOrder
 }
 
 export type OrderMaxOrderByAggregateInput = {
@@ -780,7 +775,6 @@ export type OrderSumOrderByAggregateInput = {
   subtotal?: Prisma.SortOrder
   deliveryFee?: Prisma.SortOrder
   total?: Prisma.SortOrder
-  customerFloor?: Prisma.SortOrder
 }
 
 export type OrderScalarRelationFilter = {
@@ -965,7 +959,7 @@ export type OrderCreateWithoutUserInput = {
   customerImage?: string | null
   customerPhone: string
   customerHostel: string
-  customerFloor: number
+  customerFloor: string
   customerRoom: string
   createdAt?: Date | string
   confirmedAt?: Date | string | null
@@ -994,7 +988,7 @@ export type OrderUncheckedCreateWithoutUserInput = {
   customerImage?: string | null
   customerPhone: string
   customerHostel: string
-  customerFloor: number
+  customerFloor: string
   customerRoom: string
   createdAt?: Date | string
   confirmedAt?: Date | string | null
@@ -1052,7 +1046,7 @@ export type OrderScalarWhereInput = {
   customerImage?: Prisma.StringNullableFilter<"Order"> | string | null
   customerPhone?: Prisma.StringFilter<"Order"> | string
   customerHostel?: Prisma.StringFilter<"Order"> | string
-  customerFloor?: Prisma.IntFilter<"Order"> | number
+  customerFloor?: Prisma.StringFilter<"Order"> | string
   customerRoom?: Prisma.StringFilter<"Order"> | string
   createdAt?: Prisma.DateTimeFilter<"Order"> | Date | string
   confirmedAt?: Prisma.DateTimeNullableFilter<"Order"> | Date | string | null
@@ -1075,7 +1069,7 @@ export type OrderCreateWithoutHostelInput = {
   customerImage?: string | null
   customerPhone: string
   customerHostel: string
-  customerFloor: number
+  customerFloor: string
   customerRoom: string
   createdAt?: Date | string
   confirmedAt?: Date | string | null
@@ -1104,7 +1098,7 @@ export type OrderUncheckedCreateWithoutHostelInput = {
   customerImage?: string | null
   customerPhone: string
   customerHostel: string
-  customerFloor: number
+  customerFloor: string
   customerRoom: string
   createdAt?: Date | string
   confirmedAt?: Date | string | null
@@ -1157,7 +1151,7 @@ export type OrderCreateWithoutItemsInput = {
   customerImage?: string | null
   customerPhone: string
   customerHostel: string
-  customerFloor: number
+  customerFloor: string
   customerRoom: string
   createdAt?: Date | string
   confirmedAt?: Date | string | null
@@ -1187,7 +1181,7 @@ export type OrderUncheckedCreateWithoutItemsInput = {
   customerImage?: string | null
   customerPhone: string
   customerHostel: string
-  customerFloor: number
+  customerFloor: string
   customerRoom: string
   createdAt?: Date | string
   confirmedAt?: Date | string | null
@@ -1229,7 +1223,7 @@ export type OrderUpdateWithoutItemsInput = {
   customerImage?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   customerPhone?: Prisma.StringFieldUpdateOperationsInput | string
   customerHostel?: Prisma.StringFieldUpdateOperationsInput | string
-  customerFloor?: Prisma.IntFieldUpdateOperationsInput | number
+  customerFloor?: Prisma.StringFieldUpdateOperationsInput | string
   customerRoom?: Prisma.StringFieldUpdateOperationsInput | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   confirmedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -1259,7 +1253,7 @@ export type OrderUncheckedUpdateWithoutItemsInput = {
   customerImage?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   customerPhone?: Prisma.StringFieldUpdateOperationsInput | string
   customerHostel?: Prisma.StringFieldUpdateOperationsInput | string
-  customerFloor?: Prisma.IntFieldUpdateOperationsInput | number
+  customerFloor?: Prisma.StringFieldUpdateOperationsInput | string
   customerRoom?: Prisma.StringFieldUpdateOperationsInput | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   confirmedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -1285,7 +1279,7 @@ export type OrderCreateWithoutPaymentInput = {
   customerImage?: string | null
   customerPhone: string
   customerHostel: string
-  customerFloor: number
+  customerFloor: string
   customerRoom: string
   createdAt?: Date | string
   confirmedAt?: Date | string | null
@@ -1315,7 +1309,7 @@ export type OrderUncheckedCreateWithoutPaymentInput = {
   customerImage?: string | null
   customerPhone: string
   customerHostel: string
-  customerFloor: number
+  customerFloor: string
   customerRoom: string
   createdAt?: Date | string
   confirmedAt?: Date | string | null
@@ -1357,7 +1351,7 @@ export type OrderUpdateWithoutPaymentInput = {
   customerImage?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   customerPhone?: Prisma.StringFieldUpdateOperationsInput | string
   customerHostel?: Prisma.StringFieldUpdateOperationsInput | string
-  customerFloor?: Prisma.IntFieldUpdateOperationsInput | number
+  customerFloor?: Prisma.StringFieldUpdateOperationsInput | string
   customerRoom?: Prisma.StringFieldUpdateOperationsInput | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   confirmedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -1387,7 +1381,7 @@ export type OrderUncheckedUpdateWithoutPaymentInput = {
   customerImage?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   customerPhone?: Prisma.StringFieldUpdateOperationsInput | string
   customerHostel?: Prisma.StringFieldUpdateOperationsInput | string
-  customerFloor?: Prisma.IntFieldUpdateOperationsInput | number
+  customerFloor?: Prisma.StringFieldUpdateOperationsInput | string
   customerRoom?: Prisma.StringFieldUpdateOperationsInput | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   confirmedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -1413,7 +1407,7 @@ export type OrderCreateWithoutPaymentAttemptsInput = {
   customerImage?: string | null
   customerPhone: string
   customerHostel: string
-  customerFloor: number
+  customerFloor: string
   customerRoom: string
   createdAt?: Date | string
   confirmedAt?: Date | string | null
@@ -1443,7 +1437,7 @@ export type OrderUncheckedCreateWithoutPaymentAttemptsInput = {
   customerImage?: string | null
   customerPhone: string
   customerHostel: string
-  customerFloor: number
+  customerFloor: string
   customerRoom: string
   createdAt?: Date | string
   confirmedAt?: Date | string | null
@@ -1485,7 +1479,7 @@ export type OrderUpdateWithoutPaymentAttemptsInput = {
   customerImage?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   customerPhone?: Prisma.StringFieldUpdateOperationsInput | string
   customerHostel?: Prisma.StringFieldUpdateOperationsInput | string
-  customerFloor?: Prisma.IntFieldUpdateOperationsInput | number
+  customerFloor?: Prisma.StringFieldUpdateOperationsInput | string
   customerRoom?: Prisma.StringFieldUpdateOperationsInput | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   confirmedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -1515,7 +1509,7 @@ export type OrderUncheckedUpdateWithoutPaymentAttemptsInput = {
   customerImage?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   customerPhone?: Prisma.StringFieldUpdateOperationsInput | string
   customerHostel?: Prisma.StringFieldUpdateOperationsInput | string
-  customerFloor?: Prisma.IntFieldUpdateOperationsInput | number
+  customerFloor?: Prisma.StringFieldUpdateOperationsInput | string
   customerRoom?: Prisma.StringFieldUpdateOperationsInput | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   confirmedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -1541,7 +1535,7 @@ export type OrderCreateWithoutReservationsInput = {
   customerImage?: string | null
   customerPhone: string
   customerHostel: string
-  customerFloor: number
+  customerFloor: string
   customerRoom: string
   createdAt?: Date | string
   confirmedAt?: Date | string | null
@@ -1571,7 +1565,7 @@ export type OrderUncheckedCreateWithoutReservationsInput = {
   customerImage?: string | null
   customerPhone: string
   customerHostel: string
-  customerFloor: number
+  customerFloor: string
   customerRoom: string
   createdAt?: Date | string
   confirmedAt?: Date | string | null
@@ -1613,7 +1607,7 @@ export type OrderUpdateWithoutReservationsInput = {
   customerImage?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   customerPhone?: Prisma.StringFieldUpdateOperationsInput | string
   customerHostel?: Prisma.StringFieldUpdateOperationsInput | string
-  customerFloor?: Prisma.IntFieldUpdateOperationsInput | number
+  customerFloor?: Prisma.StringFieldUpdateOperationsInput | string
   customerRoom?: Prisma.StringFieldUpdateOperationsInput | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   confirmedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -1643,7 +1637,7 @@ export type OrderUncheckedUpdateWithoutReservationsInput = {
   customerImage?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   customerPhone?: Prisma.StringFieldUpdateOperationsInput | string
   customerHostel?: Prisma.StringFieldUpdateOperationsInput | string
-  customerFloor?: Prisma.IntFieldUpdateOperationsInput | number
+  customerFloor?: Prisma.StringFieldUpdateOperationsInput | string
   customerRoom?: Prisma.StringFieldUpdateOperationsInput | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   confirmedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -1670,7 +1664,7 @@ export type OrderCreateManyUserInput = {
   customerImage?: string | null
   customerPhone: string
   customerHostel: string
-  customerFloor: number
+  customerFloor: string
   customerRoom: string
   createdAt?: Date | string
   confirmedAt?: Date | string | null
@@ -1693,7 +1687,7 @@ export type OrderUpdateWithoutUserInput = {
   customerImage?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   customerPhone?: Prisma.StringFieldUpdateOperationsInput | string
   customerHostel?: Prisma.StringFieldUpdateOperationsInput | string
-  customerFloor?: Prisma.IntFieldUpdateOperationsInput | number
+  customerFloor?: Prisma.StringFieldUpdateOperationsInput | string
   customerRoom?: Prisma.StringFieldUpdateOperationsInput | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   confirmedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -1722,7 +1716,7 @@ export type OrderUncheckedUpdateWithoutUserInput = {
   customerImage?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   customerPhone?: Prisma.StringFieldUpdateOperationsInput | string
   customerHostel?: Prisma.StringFieldUpdateOperationsInput | string
-  customerFloor?: Prisma.IntFieldUpdateOperationsInput | number
+  customerFloor?: Prisma.StringFieldUpdateOperationsInput | string
   customerRoom?: Prisma.StringFieldUpdateOperationsInput | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   confirmedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -1750,7 +1744,7 @@ export type OrderUncheckedUpdateManyWithoutUserInput = {
   customerImage?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   customerPhone?: Prisma.StringFieldUpdateOperationsInput | string
   customerHostel?: Prisma.StringFieldUpdateOperationsInput | string
-  customerFloor?: Prisma.IntFieldUpdateOperationsInput | number
+  customerFloor?: Prisma.StringFieldUpdateOperationsInput | string
   customerRoom?: Prisma.StringFieldUpdateOperationsInput | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   confirmedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -1774,7 +1768,7 @@ export type OrderCreateManyHostelInput = {
   customerImage?: string | null
   customerPhone: string
   customerHostel: string
-  customerFloor: number
+  customerFloor: string
   customerRoom: string
   createdAt?: Date | string
   confirmedAt?: Date | string | null
@@ -1797,7 +1791,7 @@ export type OrderUpdateWithoutHostelInput = {
   customerImage?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   customerPhone?: Prisma.StringFieldUpdateOperationsInput | string
   customerHostel?: Prisma.StringFieldUpdateOperationsInput | string
-  customerFloor?: Prisma.IntFieldUpdateOperationsInput | number
+  customerFloor?: Prisma.StringFieldUpdateOperationsInput | string
   customerRoom?: Prisma.StringFieldUpdateOperationsInput | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   confirmedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -1826,7 +1820,7 @@ export type OrderUncheckedUpdateWithoutHostelInput = {
   customerImage?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   customerPhone?: Prisma.StringFieldUpdateOperationsInput | string
   customerHostel?: Prisma.StringFieldUpdateOperationsInput | string
-  customerFloor?: Prisma.IntFieldUpdateOperationsInput | number
+  customerFloor?: Prisma.StringFieldUpdateOperationsInput | string
   customerRoom?: Prisma.StringFieldUpdateOperationsInput | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   confirmedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -1854,7 +1848,7 @@ export type OrderUncheckedUpdateManyWithoutHostelInput = {
   customerImage?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   customerPhone?: Prisma.StringFieldUpdateOperationsInput | string
   customerHostel?: Prisma.StringFieldUpdateOperationsInput | string
-  customerFloor?: Prisma.IntFieldUpdateOperationsInput | number
+  customerFloor?: Prisma.StringFieldUpdateOperationsInput | string
   customerRoom?: Prisma.StringFieldUpdateOperationsInput | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   confirmedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -2068,7 +2062,7 @@ export type $OrderPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs 
     customerImage: string | null
     customerPhone: string
     customerHostel: string
-    customerFloor: number
+    customerFloor: string
     customerRoom: string
     createdAt: Date
     confirmedAt: Date | null
@@ -2519,7 +2513,7 @@ export interface OrderFieldRefs {
   readonly customerImage: Prisma.FieldRef<"Order", 'String'>
   readonly customerPhone: Prisma.FieldRef<"Order", 'String'>
   readonly customerHostel: Prisma.FieldRef<"Order", 'String'>
-  readonly customerFloor: Prisma.FieldRef<"Order", 'Int'>
+  readonly customerFloor: Prisma.FieldRef<"Order", 'String'>
   readonly customerRoom: Prisma.FieldRef<"Order", 'String'>
   readonly createdAt: Prisma.FieldRef<"Order", 'DateTime'>
   readonly confirmedAt: Prisma.FieldRef<"Order", 'DateTime'>

@@ -4,6 +4,7 @@ import { useCart } from '../../context/CartContext';
 import { ApiError, api } from '../../services/api';
 import { findGuestOrder, loadPendingCheckout, rememberGuestOrder, savePendingCheckout } from '../../services/guestCheckout';
 import type { GuestOrder, OrderStatus } from '../../types/order';
+import { deliveryAddress } from '../../utils/blockFloor';
 import { formatDate, formatINR } from '../../utils/format';
 import EmptyState from '../../components/ui/EmptyState';
 import OrderSuccess from '../../components/orders/OrderSuccess';
@@ -206,7 +207,7 @@ export default function GuestOrderPage() {
         <h2 className="guest-order__section">Delivery</h2>
         <p className="guest-order__address">
           <strong>{order.customerName}</strong> · {order.customerPhone}<br />
-          {order.customerHostel}, Floor {order.customerFloor}, Room {order.customerRoom}
+          {deliveryAddress(order.customerHostel, order.customerFloor, order.customerRoom)}
         </p>
 
         <h2 className="guest-order__section">Items</h2>
