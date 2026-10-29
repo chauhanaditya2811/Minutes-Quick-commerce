@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { api } from '../../services/api';
 import type { AdminOrder } from '../../types/order';
+import { deliveryAddress } from '../../utils/blockFloor';
 import { formatDate, formatINR } from '../../utils/format';
 import Loading from '../Loading';
 import Notice from '../ui/Notice';
@@ -91,7 +92,7 @@ export default function OrdersShell() {
                     )}
                     <small className="admin-order__subline"><a href={`tel:${order.customerPhone}`}>{order.customerPhone}</a></small>
                   </td>
-                  <td data-label="Delivery address">{order.customerHostel}, Floor {order.customerFloor}, Room {order.customerRoom}</td>
+                  <td data-label="Delivery address">{deliveryAddress(order.customerHostel, order.customerFloor, order.customerRoom)}</td>
                   <td data-label="Items">
                     <ul className="admin-order__items">
                       {order.items.map((item, index) => (

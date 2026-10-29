@@ -41,7 +41,8 @@ export interface UpdateUserProfile {
   name: string;
   phone: string;
   hostelId: string;
-  floor: number;
+  /** Block and floor, e.g. "A/2". */
+  floor: string;
   room: string;
 }
 

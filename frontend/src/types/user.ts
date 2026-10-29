@@ -7,7 +7,8 @@ export interface UserProfile {
   phone: string | null;
   hostelId: string | null;
   hostel: string | null;
-  floor: number | null;
+  /** Block and floor, e.g. "A/2". */
+  floor: string | null;
   room: string | null;
   profileImage: string | null;
 }
@@ -17,7 +18,7 @@ export interface UpdateProfileInput {
   name: string;
   phone: string;
   hostelId: string;
-  floor: number;
+  floor: string;
   room: string;
 }
 
@@ -27,9 +28,7 @@ export function isProfileComplete(p: UserProfile | null): boolean {
       p.name?.trim() &&
       /^[6-9]\d{9}$/.test(p.phone ?? '') &&
       p.hostelId?.trim() &&
-      Number.isInteger(p.floor) &&
-      p.floor !== null &&
-      p.floor >= 0 &&
+      p.floor?.trim() &&
       p.room?.trim(),
   );
 }

@@ -32,7 +32,7 @@ export interface ValidateOrderResponse {
       image: string | null;
       phone: string;
       hostel: string;
-      floor: number;
+      floor: string;
       room: string;
     };
     items: CheckoutItem[];
@@ -82,7 +82,7 @@ export interface AdminOrder {
   customerEmail: string | null;
   customerPhone: string;
   customerHostel: string;
-  customerFloor: number;
+  customerFloor: string;
   customerRoom: string;
   subtotal: number;
   deliveryFee: number;
@@ -135,7 +135,8 @@ export interface VerifyPaymentResponse {
 export interface GuestCustomerInput {
   name: string;
   phone: string;
-  floor: number;
+  /** Block and floor, e.g. "A/2". */
+  floor: string;
   room: string;
 }
 
@@ -187,7 +188,7 @@ export interface GuestOrder {
   customerName: string;
   customerPhone: string;
   customerHostel: string;
-  customerFloor: number;
+  customerFloor: string;
   customerRoom: string;
   items: {
     productName: string;

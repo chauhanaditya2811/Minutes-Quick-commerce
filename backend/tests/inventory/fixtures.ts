@@ -46,7 +46,7 @@ export const createInventoryFixture = async () => {
         name: "Inventory Test",
         phone: "9876543210",
         hostelId,
-        floor: 1,
+        floor: "1",
         room: "101",
       },
     });
@@ -80,7 +80,7 @@ export const createInventoryFixture = async () => {
         customerEmail: "inv@example.test",
         customerPhone: "9876543210",
         customerHostel: "Test",
-        customerFloor: 1,
+        customerFloor: "1",
         customerRoom: "101",
         items: {
           create: items.map((item) => ({
