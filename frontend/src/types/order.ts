@@ -8,6 +8,7 @@ export interface OrderItemInput {
 
 /** Body for POST /api/orders/validate and POST /api/orders. */
 export interface OrderRequest {
+  hostelId: string; // store hostel; must match the profile's delivery hostel
   items: OrderItemInput[];
 }
 
@@ -75,8 +76,10 @@ export interface CustomerOrder {
 export interface AdminOrder {
   id: string;
   orderNumber: string;
+  /** null for guest orders placed without an account. */
+  userId: string | null;
   customerName: string;
-  customerEmail: string;
+  customerEmail: string | null;
   customerPhone: string;
   customerHostel: string;
   customerFloor: number;
@@ -88,6 +91,10 @@ export interface AdminOrder {
   orderStatus: OrderStatus;
   createdAt: string;
   deliveredAt: string | null;
+  /** A late payment found less stock than ordered at the hostel; needs manual follow-up. */
+  inventoryShortfall?: boolean;
+  /** Cashfree references for reconciliation, once a payment was started. */
+  payment?: { cashfreeOrderId: string | null; cashfreePaymentId: string | null } | null;
   items: {
     productName: string;
     price: number;
@@ -97,21 +104,22 @@ export interface AdminOrder {
   }[];
 }
 
-/** POST /api/orders/:orderId/payment — enough to open Razorpay Checkout. */
+/** POST /api/orders/:orderId/payment — enough to open Cashfree Checkout. */
 export interface PaymentInitResponse {
   orderId: string;
   paymentAttemptId: string;
-  razorpayOrderId: string;
-  amount: number; // as returned by the backend (Razorpay expects paise)
+  cashfreeOrderId: string;
+  paymentSessionId: string;
+  amount: number;
   currency: string;
-  keyId: string; // public Razorpay Key ID
+  clientId: string;
+  /** When the stock held for this order is released if payment hasn't completed. */
+  holdExpiresAt?: string | null;
 }
 
 /** Body for POST /api/orders/:orderId/payment/verify. */
 export interface VerifyPaymentRequest {
-  razorpay_order_id: string;
-  razorpay_payment_id: string;
-  razorpay_signature: string;
+  cashfree_order_id: string;
 }
 
 /** The `payment` payload returned after server-side payment verification. */
@@ -119,8 +127,62 @@ export interface VerifyPaymentResponse {
   orderId: string;
   orderNumber: string;
   paymentAttemptId: string;
-  razorpayOrderId: string;
-  razorpayPaymentId: string;
   paymentStatus: 'SUCCESS';
   orderStatus: 'CONFIRMED' | 'DELIVERED';
+}
+
+/** Delivery details a guest enters at checkout (no account, no email). */
+export interface GuestCustomerInput {
+  name: string;
+  phone: string;
+  floor: number;
+  room: string;
+}
+
+/** Body for POST /api/guest/checkout/validate. Only IDs and quantities are sent; prices come from the server. */
+export interface GuestValidateRequest {
+  hostelId: string;
+  items: OrderItemInput[];
+  customer: GuestCustomerInput;
+}
+
+/** Body for POST /api/guest/orders. */
+export interface GuestOrderRequest extends GuestValidateRequest {
+  /** 256-bit random secret from this browser: owns the order and makes retries idempotent. */
+  checkoutToken: string;
+  /** The guest's earlier unpaid order to release, when the cart or details changed. */
+  replacesOrder?: { orderId: string; checkoutToken: string };
+}
+
+/** The order returned by POST /api/guest/orders. */
+export interface GuestPlacedOrder {
+  id: string;
+  orderNumber: string;
+  orderStatus: OrderStatus;
+  paymentStatus: PaymentStatus;
+  subtotal: number;
+  deliveryFee: number;
+  total: number;
+  createdAt: string;
+  holdExpiresAt: string | null;
+  items: { productId: string; productName: string; price: number; unit: string; quantity: number; subtotal: number }[];
+}
+
+/** GET /api/guest/orders/:orderId — the guest's own order (phone masked). */
+export interface GuestOrder {
+  id: string;
+  orderNumber: string;
+  orderStatus: OrderStatus;
+  paymentStatus: PaymentStatus;
+  subtotal: number;
+  deliveryFee: number;
+  total: number;
+  createdAt: string;
+  deliveredAt: string | null;
+  customerName: string;
+  customerPhone: string;
+  customerHostel: string;
+  customerFloor: number;
+  customerRoom: string;
+  items: { productName: string; price: number; unit: string; quantity: number; subtotal: number }[];
 }

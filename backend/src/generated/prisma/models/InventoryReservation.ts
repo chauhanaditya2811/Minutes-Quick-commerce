@@ -39,6 +39,7 @@ export type InventoryReservationMinAggregateOutputType = {
   productId: string | null
   userId: string | null
   orderId: string | null
+  hostelId: string | null
   quantity: number | null
   status: $Enums.ReservationStatus | null
   expiresAt: Date | null
@@ -51,6 +52,7 @@ export type InventoryReservationMaxAggregateOutputType = {
   productId: string | null
   userId: string | null
   orderId: string | null
+  hostelId: string | null
   quantity: number | null
   status: $Enums.ReservationStatus | null
   expiresAt: Date | null
@@ -63,6 +65,7 @@ export type InventoryReservationCountAggregateOutputType = {
   productId: number
   userId: number
   orderId: number
+  hostelId: number
   quantity: number
   status: number
   expiresAt: number
@@ -85,6 +88,7 @@ export type InventoryReservationMinAggregateInputType = {
   productId?: true
   userId?: true
   orderId?: true
+  hostelId?: true
   quantity?: true
   status?: true
   expiresAt?: true
@@ -97,6 +101,7 @@ export type InventoryReservationMaxAggregateInputType = {
   productId?: true
   userId?: true
   orderId?: true
+  hostelId?: true
   quantity?: true
   status?: true
   expiresAt?: true
@@ -109,6 +114,7 @@ export type InventoryReservationCountAggregateInputType = {
   productId?: true
   userId?: true
   orderId?: true
+  hostelId?: true
   quantity?: true
   status?: true
   expiresAt?: true
@@ -206,8 +212,9 @@ export type InventoryReservationGroupByArgs<ExtArgs extends runtime.Types.Extens
 export type InventoryReservationGroupByOutputType = {
   id: string
   productId: string
-  userId: string
+  userId: string | null
   orderId: string | null
+  hostelId: string | null
   quantity: number
   status: $Enums.ReservationStatus
   expiresAt: Date
@@ -241,23 +248,26 @@ export type InventoryReservationWhereInput = {
   NOT?: Prisma.InventoryReservationWhereInput | Prisma.InventoryReservationWhereInput[]
   id?: Prisma.StringFilter<"InventoryReservation"> | string
   productId?: Prisma.StringFilter<"InventoryReservation"> | string
-  userId?: Prisma.StringFilter<"InventoryReservation"> | string
+  userId?: Prisma.StringNullableFilter<"InventoryReservation"> | string | null
   orderId?: Prisma.StringNullableFilter<"InventoryReservation"> | string | null
+  hostelId?: Prisma.StringNullableFilter<"InventoryReservation"> | string | null
   quantity?: Prisma.IntFilter<"InventoryReservation"> | number
   status?: Prisma.EnumReservationStatusFilter<"InventoryReservation"> | $Enums.ReservationStatus
   expiresAt?: Prisma.DateTimeFilter<"InventoryReservation"> | Date | string
   createdAt?: Prisma.DateTimeFilter<"InventoryReservation"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"InventoryReservation"> | Date | string
   product?: Prisma.XOR<Prisma.ProductScalarRelationFilter, Prisma.ProductWhereInput>
-  user?: Prisma.XOR<Prisma.UserScalarRelationFilter, Prisma.UserWhereInput>
+  user?: Prisma.XOR<Prisma.UserNullableScalarRelationFilter, Prisma.UserWhereInput> | null
   order?: Prisma.XOR<Prisma.OrderNullableScalarRelationFilter, Prisma.OrderWhereInput> | null
+  hostel?: Prisma.XOR<Prisma.HostelNullableScalarRelationFilter, Prisma.HostelWhereInput> | null
 }
 
 export type InventoryReservationOrderByWithRelationInput = {
   id?: Prisma.SortOrder
   productId?: Prisma.SortOrder
-  userId?: Prisma.SortOrder
+  userId?: Prisma.SortOrderInput | Prisma.SortOrder
   orderId?: Prisma.SortOrderInput | Prisma.SortOrder
+  hostelId?: Prisma.SortOrderInput | Prisma.SortOrder
   quantity?: Prisma.SortOrder
   status?: Prisma.SortOrder
   expiresAt?: Prisma.SortOrder
@@ -266,6 +276,7 @@ export type InventoryReservationOrderByWithRelationInput = {
   product?: Prisma.ProductOrderByWithRelationInput
   user?: Prisma.UserOrderByWithRelationInput
   order?: Prisma.OrderOrderByWithRelationInput
+  hostel?: Prisma.HostelOrderByWithRelationInput
 }
 
 export type InventoryReservationWhereUniqueInput = Prisma.AtLeast<{
@@ -274,23 +285,26 @@ export type InventoryReservationWhereUniqueInput = Prisma.AtLeast<{
   OR?: Prisma.InventoryReservationWhereInput[]
   NOT?: Prisma.InventoryReservationWhereInput | Prisma.InventoryReservationWhereInput[]
   productId?: Prisma.StringFilter<"InventoryReservation"> | string
-  userId?: Prisma.StringFilter<"InventoryReservation"> | string
+  userId?: Prisma.StringNullableFilter<"InventoryReservation"> | string | null
   orderId?: Prisma.StringNullableFilter<"InventoryReservation"> | string | null
+  hostelId?: Prisma.StringNullableFilter<"InventoryReservation"> | string | null
   quantity?: Prisma.IntFilter<"InventoryReservation"> | number
   status?: Prisma.EnumReservationStatusFilter<"InventoryReservation"> | $Enums.ReservationStatus
   expiresAt?: Prisma.DateTimeFilter<"InventoryReservation"> | Date | string
   createdAt?: Prisma.DateTimeFilter<"InventoryReservation"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"InventoryReservation"> | Date | string
   product?: Prisma.XOR<Prisma.ProductScalarRelationFilter, Prisma.ProductWhereInput>
-  user?: Prisma.XOR<Prisma.UserScalarRelationFilter, Prisma.UserWhereInput>
+  user?: Prisma.XOR<Prisma.UserNullableScalarRelationFilter, Prisma.UserWhereInput> | null
   order?: Prisma.XOR<Prisma.OrderNullableScalarRelationFilter, Prisma.OrderWhereInput> | null
+  hostel?: Prisma.XOR<Prisma.HostelNullableScalarRelationFilter, Prisma.HostelWhereInput> | null
 }, "id">
 
 export type InventoryReservationOrderByWithAggregationInput = {
   id?: Prisma.SortOrder
   productId?: Prisma.SortOrder
-  userId?: Prisma.SortOrder
+  userId?: Prisma.SortOrderInput | Prisma.SortOrder
   orderId?: Prisma.SortOrderInput | Prisma.SortOrder
+  hostelId?: Prisma.SortOrderInput | Prisma.SortOrder
   quantity?: Prisma.SortOrder
   status?: Prisma.SortOrder
   expiresAt?: Prisma.SortOrder
@@ -309,8 +323,9 @@ export type InventoryReservationScalarWhereWithAggregatesInput = {
   NOT?: Prisma.InventoryReservationScalarWhereWithAggregatesInput | Prisma.InventoryReservationScalarWhereWithAggregatesInput[]
   id?: Prisma.StringWithAggregatesFilter<"InventoryReservation"> | string
   productId?: Prisma.StringWithAggregatesFilter<"InventoryReservation"> | string
-  userId?: Prisma.StringWithAggregatesFilter<"InventoryReservation"> | string
+  userId?: Prisma.StringNullableWithAggregatesFilter<"InventoryReservation"> | string | null
   orderId?: Prisma.StringNullableWithAggregatesFilter<"InventoryReservation"> | string | null
+  hostelId?: Prisma.StringNullableWithAggregatesFilter<"InventoryReservation"> | string | null
   quantity?: Prisma.IntWithAggregatesFilter<"InventoryReservation"> | number
   status?: Prisma.EnumReservationStatusWithAggregatesFilter<"InventoryReservation"> | $Enums.ReservationStatus
   expiresAt?: Prisma.DateTimeWithAggregatesFilter<"InventoryReservation"> | Date | string
@@ -326,15 +341,17 @@ export type InventoryReservationCreateInput = {
   createdAt?: Date | string
   updatedAt?: Date | string
   product: Prisma.ProductCreateNestedOneWithoutReservationsInput
-  user: Prisma.UserCreateNestedOneWithoutReservationsInput
+  user?: Prisma.UserCreateNestedOneWithoutReservationsInput
   order?: Prisma.OrderCreateNestedOneWithoutReservationsInput
+  hostel?: Prisma.HostelCreateNestedOneWithoutReservationsInput
 }
 
 export type InventoryReservationUncheckedCreateInput = {
   id?: string
   productId: string
-  userId: string
+  userId?: string | null
   orderId?: string | null
+  hostelId?: string | null
   quantity: number
   status?: $Enums.ReservationStatus
   expiresAt: Date | string
@@ -350,15 +367,17 @@ export type InventoryReservationUpdateInput = {
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   product?: Prisma.ProductUpdateOneRequiredWithoutReservationsNestedInput
-  user?: Prisma.UserUpdateOneRequiredWithoutReservationsNestedInput
+  user?: Prisma.UserUpdateOneWithoutReservationsNestedInput
   order?: Prisma.OrderUpdateOneWithoutReservationsNestedInput
+  hostel?: Prisma.HostelUpdateOneWithoutReservationsNestedInput
 }
 
 export type InventoryReservationUncheckedUpdateInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   productId?: Prisma.StringFieldUpdateOperationsInput | string
-  userId?: Prisma.StringFieldUpdateOperationsInput | string
+  userId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   orderId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  hostelId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   quantity?: Prisma.IntFieldUpdateOperationsInput | number
   status?: Prisma.EnumReservationStatusFieldUpdateOperationsInput | $Enums.ReservationStatus
   expiresAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -369,8 +388,9 @@ export type InventoryReservationUncheckedUpdateInput = {
 export type InventoryReservationCreateManyInput = {
   id?: string
   productId: string
-  userId: string
+  userId?: string | null
   orderId?: string | null
+  hostelId?: string | null
   quantity: number
   status?: $Enums.ReservationStatus
   expiresAt: Date | string
@@ -390,8 +410,9 @@ export type InventoryReservationUpdateManyMutationInput = {
 export type InventoryReservationUncheckedUpdateManyInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   productId?: Prisma.StringFieldUpdateOperationsInput | string
-  userId?: Prisma.StringFieldUpdateOperationsInput | string
+  userId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   orderId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  hostelId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   quantity?: Prisma.IntFieldUpdateOperationsInput | number
   status?: Prisma.EnumReservationStatusFieldUpdateOperationsInput | $Enums.ReservationStatus
   expiresAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -414,6 +435,7 @@ export type InventoryReservationCountOrderByAggregateInput = {
   productId?: Prisma.SortOrder
   userId?: Prisma.SortOrder
   orderId?: Prisma.SortOrder
+  hostelId?: Prisma.SortOrder
   quantity?: Prisma.SortOrder
   status?: Prisma.SortOrder
   expiresAt?: Prisma.SortOrder
@@ -430,6 +452,7 @@ export type InventoryReservationMaxOrderByAggregateInput = {
   productId?: Prisma.SortOrder
   userId?: Prisma.SortOrder
   orderId?: Prisma.SortOrder
+  hostelId?: Prisma.SortOrder
   quantity?: Prisma.SortOrder
   status?: Prisma.SortOrder
   expiresAt?: Prisma.SortOrder
@@ -442,6 +465,7 @@ export type InventoryReservationMinOrderByAggregateInput = {
   productId?: Prisma.SortOrder
   userId?: Prisma.SortOrder
   orderId?: Prisma.SortOrder
+  hostelId?: Prisma.SortOrder
   quantity?: Prisma.SortOrder
   status?: Prisma.SortOrder
   expiresAt?: Prisma.SortOrder
@@ -492,6 +516,48 @@ export type InventoryReservationUncheckedUpdateManyWithoutUserNestedInput = {
   connect?: Prisma.InventoryReservationWhereUniqueInput | Prisma.InventoryReservationWhereUniqueInput[]
   update?: Prisma.InventoryReservationUpdateWithWhereUniqueWithoutUserInput | Prisma.InventoryReservationUpdateWithWhereUniqueWithoutUserInput[]
   updateMany?: Prisma.InventoryReservationUpdateManyWithWhereWithoutUserInput | Prisma.InventoryReservationUpdateManyWithWhereWithoutUserInput[]
+  deleteMany?: Prisma.InventoryReservationScalarWhereInput | Prisma.InventoryReservationScalarWhereInput[]
+}
+
+export type InventoryReservationCreateNestedManyWithoutHostelInput = {
+  create?: Prisma.XOR<Prisma.InventoryReservationCreateWithoutHostelInput, Prisma.InventoryReservationUncheckedCreateWithoutHostelInput> | Prisma.InventoryReservationCreateWithoutHostelInput[] | Prisma.InventoryReservationUncheckedCreateWithoutHostelInput[]
+  connectOrCreate?: Prisma.InventoryReservationCreateOrConnectWithoutHostelInput | Prisma.InventoryReservationCreateOrConnectWithoutHostelInput[]
+  createMany?: Prisma.InventoryReservationCreateManyHostelInputEnvelope
+  connect?: Prisma.InventoryReservationWhereUniqueInput | Prisma.InventoryReservationWhereUniqueInput[]
+}
+
+export type InventoryReservationUncheckedCreateNestedManyWithoutHostelInput = {
+  create?: Prisma.XOR<Prisma.InventoryReservationCreateWithoutHostelInput, Prisma.InventoryReservationUncheckedCreateWithoutHostelInput> | Prisma.InventoryReservationCreateWithoutHostelInput[] | Prisma.InventoryReservationUncheckedCreateWithoutHostelInput[]
+  connectOrCreate?: Prisma.InventoryReservationCreateOrConnectWithoutHostelInput | Prisma.InventoryReservationCreateOrConnectWithoutHostelInput[]
+  createMany?: Prisma.InventoryReservationCreateManyHostelInputEnvelope
+  connect?: Prisma.InventoryReservationWhereUniqueInput | Prisma.InventoryReservationWhereUniqueInput[]
+}
+
+export type InventoryReservationUpdateManyWithoutHostelNestedInput = {
+  create?: Prisma.XOR<Prisma.InventoryReservationCreateWithoutHostelInput, Prisma.InventoryReservationUncheckedCreateWithoutHostelInput> | Prisma.InventoryReservationCreateWithoutHostelInput[] | Prisma.InventoryReservationUncheckedCreateWithoutHostelInput[]
+  connectOrCreate?: Prisma.InventoryReservationCreateOrConnectWithoutHostelInput | Prisma.InventoryReservationCreateOrConnectWithoutHostelInput[]
+  upsert?: Prisma.InventoryReservationUpsertWithWhereUniqueWithoutHostelInput | Prisma.InventoryReservationUpsertWithWhereUniqueWithoutHostelInput[]
+  createMany?: Prisma.InventoryReservationCreateManyHostelInputEnvelope
+  set?: Prisma.InventoryReservationWhereUniqueInput | Prisma.InventoryReservationWhereUniqueInput[]
+  disconnect?: Prisma.InventoryReservationWhereUniqueInput | Prisma.InventoryReservationWhereUniqueInput[]
+  delete?: Prisma.InventoryReservationWhereUniqueInput | Prisma.InventoryReservationWhereUniqueInput[]
+  connect?: Prisma.InventoryReservationWhereUniqueInput | Prisma.InventoryReservationWhereUniqueInput[]
+  update?: Prisma.InventoryReservationUpdateWithWhereUniqueWithoutHostelInput | Prisma.InventoryReservationUpdateWithWhereUniqueWithoutHostelInput[]
+  updateMany?: Prisma.InventoryReservationUpdateManyWithWhereWithoutHostelInput | Prisma.InventoryReservationUpdateManyWithWhereWithoutHostelInput[]
+  deleteMany?: Prisma.InventoryReservationScalarWhereInput | Prisma.InventoryReservationScalarWhereInput[]
+}
+
+export type InventoryReservationUncheckedUpdateManyWithoutHostelNestedInput = {
+  create?: Prisma.XOR<Prisma.InventoryReservationCreateWithoutHostelInput, Prisma.InventoryReservationUncheckedCreateWithoutHostelInput> | Prisma.InventoryReservationCreateWithoutHostelInput[] | Prisma.InventoryReservationUncheckedCreateWithoutHostelInput[]
+  connectOrCreate?: Prisma.InventoryReservationCreateOrConnectWithoutHostelInput | Prisma.InventoryReservationCreateOrConnectWithoutHostelInput[]
+  upsert?: Prisma.InventoryReservationUpsertWithWhereUniqueWithoutHostelInput | Prisma.InventoryReservationUpsertWithWhereUniqueWithoutHostelInput[]
+  createMany?: Prisma.InventoryReservationCreateManyHostelInputEnvelope
+  set?: Prisma.InventoryReservationWhereUniqueInput | Prisma.InventoryReservationWhereUniqueInput[]
+  disconnect?: Prisma.InventoryReservationWhereUniqueInput | Prisma.InventoryReservationWhereUniqueInput[]
+  delete?: Prisma.InventoryReservationWhereUniqueInput | Prisma.InventoryReservationWhereUniqueInput[]
+  connect?: Prisma.InventoryReservationWhereUniqueInput | Prisma.InventoryReservationWhereUniqueInput[]
+  update?: Prisma.InventoryReservationUpdateWithWhereUniqueWithoutHostelInput | Prisma.InventoryReservationUpdateWithWhereUniqueWithoutHostelInput[]
+  updateMany?: Prisma.InventoryReservationUpdateManyWithWhereWithoutHostelInput | Prisma.InventoryReservationUpdateManyWithWhereWithoutHostelInput[]
   deleteMany?: Prisma.InventoryReservationScalarWhereInput | Prisma.InventoryReservationScalarWhereInput[]
 }
 
@@ -592,12 +658,14 @@ export type InventoryReservationCreateWithoutUserInput = {
   updatedAt?: Date | string
   product: Prisma.ProductCreateNestedOneWithoutReservationsInput
   order?: Prisma.OrderCreateNestedOneWithoutReservationsInput
+  hostel?: Prisma.HostelCreateNestedOneWithoutReservationsInput
 }
 
 export type InventoryReservationUncheckedCreateWithoutUserInput = {
   id?: string
   productId: string
   orderId?: string | null
+  hostelId?: string | null
   quantity: number
   status?: $Enums.ReservationStatus
   expiresAt: Date | string
@@ -637,13 +705,64 @@ export type InventoryReservationScalarWhereInput = {
   NOT?: Prisma.InventoryReservationScalarWhereInput | Prisma.InventoryReservationScalarWhereInput[]
   id?: Prisma.StringFilter<"InventoryReservation"> | string
   productId?: Prisma.StringFilter<"InventoryReservation"> | string
-  userId?: Prisma.StringFilter<"InventoryReservation"> | string
+  userId?: Prisma.StringNullableFilter<"InventoryReservation"> | string | null
   orderId?: Prisma.StringNullableFilter<"InventoryReservation"> | string | null
+  hostelId?: Prisma.StringNullableFilter<"InventoryReservation"> | string | null
   quantity?: Prisma.IntFilter<"InventoryReservation"> | number
   status?: Prisma.EnumReservationStatusFilter<"InventoryReservation"> | $Enums.ReservationStatus
   expiresAt?: Prisma.DateTimeFilter<"InventoryReservation"> | Date | string
   createdAt?: Prisma.DateTimeFilter<"InventoryReservation"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"InventoryReservation"> | Date | string
+}
+
+export type InventoryReservationCreateWithoutHostelInput = {
+  id?: string
+  quantity: number
+  status?: $Enums.ReservationStatus
+  expiresAt: Date | string
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  product: Prisma.ProductCreateNestedOneWithoutReservationsInput
+  user?: Prisma.UserCreateNestedOneWithoutReservationsInput
+  order?: Prisma.OrderCreateNestedOneWithoutReservationsInput
+}
+
+export type InventoryReservationUncheckedCreateWithoutHostelInput = {
+  id?: string
+  productId: string
+  userId?: string | null
+  orderId?: string | null
+  quantity: number
+  status?: $Enums.ReservationStatus
+  expiresAt: Date | string
+  createdAt?: Date | string
+  updatedAt?: Date | string
+}
+
+export type InventoryReservationCreateOrConnectWithoutHostelInput = {
+  where: Prisma.InventoryReservationWhereUniqueInput
+  create: Prisma.XOR<Prisma.InventoryReservationCreateWithoutHostelInput, Prisma.InventoryReservationUncheckedCreateWithoutHostelInput>
+}
+
+export type InventoryReservationCreateManyHostelInputEnvelope = {
+  data: Prisma.InventoryReservationCreateManyHostelInput | Prisma.InventoryReservationCreateManyHostelInput[]
+  skipDuplicates?: boolean
+}
+
+export type InventoryReservationUpsertWithWhereUniqueWithoutHostelInput = {
+  where: Prisma.InventoryReservationWhereUniqueInput
+  update: Prisma.XOR<Prisma.InventoryReservationUpdateWithoutHostelInput, Prisma.InventoryReservationUncheckedUpdateWithoutHostelInput>
+  create: Prisma.XOR<Prisma.InventoryReservationCreateWithoutHostelInput, Prisma.InventoryReservationUncheckedCreateWithoutHostelInput>
+}
+
+export type InventoryReservationUpdateWithWhereUniqueWithoutHostelInput = {
+  where: Prisma.InventoryReservationWhereUniqueInput
+  data: Prisma.XOR<Prisma.InventoryReservationUpdateWithoutHostelInput, Prisma.InventoryReservationUncheckedUpdateWithoutHostelInput>
+}
+
+export type InventoryReservationUpdateManyWithWhereWithoutHostelInput = {
+  where: Prisma.InventoryReservationScalarWhereInput
+  data: Prisma.XOR<Prisma.InventoryReservationUpdateManyMutationInput, Prisma.InventoryReservationUncheckedUpdateManyWithoutHostelInput>
 }
 
 export type InventoryReservationCreateWithoutProductInput = {
@@ -653,14 +772,16 @@ export type InventoryReservationCreateWithoutProductInput = {
   expiresAt: Date | string
   createdAt?: Date | string
   updatedAt?: Date | string
-  user: Prisma.UserCreateNestedOneWithoutReservationsInput
+  user?: Prisma.UserCreateNestedOneWithoutReservationsInput
   order?: Prisma.OrderCreateNestedOneWithoutReservationsInput
+  hostel?: Prisma.HostelCreateNestedOneWithoutReservationsInput
 }
 
 export type InventoryReservationUncheckedCreateWithoutProductInput = {
   id?: string
-  userId: string
+  userId?: string | null
   orderId?: string | null
+  hostelId?: string | null
   quantity: number
   status?: $Enums.ReservationStatus
   expiresAt: Date | string
@@ -702,13 +823,15 @@ export type InventoryReservationCreateWithoutOrderInput = {
   createdAt?: Date | string
   updatedAt?: Date | string
   product: Prisma.ProductCreateNestedOneWithoutReservationsInput
-  user: Prisma.UserCreateNestedOneWithoutReservationsInput
+  user?: Prisma.UserCreateNestedOneWithoutReservationsInput
+  hostel?: Prisma.HostelCreateNestedOneWithoutReservationsInput
 }
 
 export type InventoryReservationUncheckedCreateWithoutOrderInput = {
   id?: string
   productId: string
-  userId: string
+  userId?: string | null
+  hostelId?: string | null
   quantity: number
   status?: $Enums.ReservationStatus
   expiresAt: Date | string
@@ -746,6 +869,7 @@ export type InventoryReservationCreateManyUserInput = {
   id?: string
   productId: string
   orderId?: string | null
+  hostelId?: string | null
   quantity: number
   status?: $Enums.ReservationStatus
   expiresAt: Date | string
@@ -762,12 +886,14 @@ export type InventoryReservationUpdateWithoutUserInput = {
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   product?: Prisma.ProductUpdateOneRequiredWithoutReservationsNestedInput
   order?: Prisma.OrderUpdateOneWithoutReservationsNestedInput
+  hostel?: Prisma.HostelUpdateOneWithoutReservationsNestedInput
 }
 
 export type InventoryReservationUncheckedUpdateWithoutUserInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   productId?: Prisma.StringFieldUpdateOperationsInput | string
   orderId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  hostelId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   quantity?: Prisma.IntFieldUpdateOperationsInput | number
   status?: Prisma.EnumReservationStatusFieldUpdateOperationsInput | $Enums.ReservationStatus
   expiresAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -779,6 +905,55 @@ export type InventoryReservationUncheckedUpdateManyWithoutUserInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   productId?: Prisma.StringFieldUpdateOperationsInput | string
   orderId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  hostelId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  quantity?: Prisma.IntFieldUpdateOperationsInput | number
+  status?: Prisma.EnumReservationStatusFieldUpdateOperationsInput | $Enums.ReservationStatus
+  expiresAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+}
+
+export type InventoryReservationCreateManyHostelInput = {
+  id?: string
+  productId: string
+  userId?: string | null
+  orderId?: string | null
+  quantity: number
+  status?: $Enums.ReservationStatus
+  expiresAt: Date | string
+  createdAt?: Date | string
+  updatedAt?: Date | string
+}
+
+export type InventoryReservationUpdateWithoutHostelInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  quantity?: Prisma.IntFieldUpdateOperationsInput | number
+  status?: Prisma.EnumReservationStatusFieldUpdateOperationsInput | $Enums.ReservationStatus
+  expiresAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  product?: Prisma.ProductUpdateOneRequiredWithoutReservationsNestedInput
+  user?: Prisma.UserUpdateOneWithoutReservationsNestedInput
+  order?: Prisma.OrderUpdateOneWithoutReservationsNestedInput
+}
+
+export type InventoryReservationUncheckedUpdateWithoutHostelInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  productId?: Prisma.StringFieldUpdateOperationsInput | string
+  userId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  orderId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  quantity?: Prisma.IntFieldUpdateOperationsInput | number
+  status?: Prisma.EnumReservationStatusFieldUpdateOperationsInput | $Enums.ReservationStatus
+  expiresAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+}
+
+export type InventoryReservationUncheckedUpdateManyWithoutHostelInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  productId?: Prisma.StringFieldUpdateOperationsInput | string
+  userId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  orderId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   quantity?: Prisma.IntFieldUpdateOperationsInput | number
   status?: Prisma.EnumReservationStatusFieldUpdateOperationsInput | $Enums.ReservationStatus
   expiresAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -788,8 +963,9 @@ export type InventoryReservationUncheckedUpdateManyWithoutUserInput = {
 
 export type InventoryReservationCreateManyProductInput = {
   id?: string
-  userId: string
+  userId?: string | null
   orderId?: string | null
+  hostelId?: string | null
   quantity: number
   status?: $Enums.ReservationStatus
   expiresAt: Date | string
@@ -804,14 +980,16 @@ export type InventoryReservationUpdateWithoutProductInput = {
   expiresAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  user?: Prisma.UserUpdateOneRequiredWithoutReservationsNestedInput
+  user?: Prisma.UserUpdateOneWithoutReservationsNestedInput
   order?: Prisma.OrderUpdateOneWithoutReservationsNestedInput
+  hostel?: Prisma.HostelUpdateOneWithoutReservationsNestedInput
 }
 
 export type InventoryReservationUncheckedUpdateWithoutProductInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
-  userId?: Prisma.StringFieldUpdateOperationsInput | string
+  userId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   orderId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  hostelId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   quantity?: Prisma.IntFieldUpdateOperationsInput | number
   status?: Prisma.EnumReservationStatusFieldUpdateOperationsInput | $Enums.ReservationStatus
   expiresAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -821,8 +999,9 @@ export type InventoryReservationUncheckedUpdateWithoutProductInput = {
 
 export type InventoryReservationUncheckedUpdateManyWithoutProductInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
-  userId?: Prisma.StringFieldUpdateOperationsInput | string
+  userId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   orderId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  hostelId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   quantity?: Prisma.IntFieldUpdateOperationsInput | number
   status?: Prisma.EnumReservationStatusFieldUpdateOperationsInput | $Enums.ReservationStatus
   expiresAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -833,7 +1012,8 @@ export type InventoryReservationUncheckedUpdateManyWithoutProductInput = {
 export type InventoryReservationCreateManyOrderInput = {
   id?: string
   productId: string
-  userId: string
+  userId?: string | null
+  hostelId?: string | null
   quantity: number
   status?: $Enums.ReservationStatus
   expiresAt: Date | string
@@ -849,13 +1029,15 @@ export type InventoryReservationUpdateWithoutOrderInput = {
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   product?: Prisma.ProductUpdateOneRequiredWithoutReservationsNestedInput
-  user?: Prisma.UserUpdateOneRequiredWithoutReservationsNestedInput
+  user?: Prisma.UserUpdateOneWithoutReservationsNestedInput
+  hostel?: Prisma.HostelUpdateOneWithoutReservationsNestedInput
 }
 
 export type InventoryReservationUncheckedUpdateWithoutOrderInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   productId?: Prisma.StringFieldUpdateOperationsInput | string
-  userId?: Prisma.StringFieldUpdateOperationsInput | string
+  userId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  hostelId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   quantity?: Prisma.IntFieldUpdateOperationsInput | number
   status?: Prisma.EnumReservationStatusFieldUpdateOperationsInput | $Enums.ReservationStatus
   expiresAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -866,7 +1048,8 @@ export type InventoryReservationUncheckedUpdateWithoutOrderInput = {
 export type InventoryReservationUncheckedUpdateManyWithoutOrderInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   productId?: Prisma.StringFieldUpdateOperationsInput | string
-  userId?: Prisma.StringFieldUpdateOperationsInput | string
+  userId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  hostelId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   quantity?: Prisma.IntFieldUpdateOperationsInput | number
   status?: Prisma.EnumReservationStatusFieldUpdateOperationsInput | $Enums.ReservationStatus
   expiresAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -881,14 +1064,16 @@ export type InventoryReservationSelect<ExtArgs extends runtime.Types.Extensions.
   productId?: boolean
   userId?: boolean
   orderId?: boolean
+  hostelId?: boolean
   quantity?: boolean
   status?: boolean
   expiresAt?: boolean
   createdAt?: boolean
   updatedAt?: boolean
   product?: boolean | Prisma.ProductDefaultArgs<ExtArgs>
-  user?: boolean | Prisma.UserDefaultArgs<ExtArgs>
+  user?: boolean | Prisma.InventoryReservation$userArgs<ExtArgs>
   order?: boolean | Prisma.InventoryReservation$orderArgs<ExtArgs>
+  hostel?: boolean | Prisma.InventoryReservation$hostelArgs<ExtArgs>
 }, ExtArgs["result"]["inventoryReservation"]>
 
 export type InventoryReservationSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
@@ -896,14 +1081,16 @@ export type InventoryReservationSelectCreateManyAndReturn<ExtArgs extends runtim
   productId?: boolean
   userId?: boolean
   orderId?: boolean
+  hostelId?: boolean
   quantity?: boolean
   status?: boolean
   expiresAt?: boolean
   createdAt?: boolean
   updatedAt?: boolean
   product?: boolean | Prisma.ProductDefaultArgs<ExtArgs>
-  user?: boolean | Prisma.UserDefaultArgs<ExtArgs>
+  user?: boolean | Prisma.InventoryReservation$userArgs<ExtArgs>
   order?: boolean | Prisma.InventoryReservation$orderArgs<ExtArgs>
+  hostel?: boolean | Prisma.InventoryReservation$hostelArgs<ExtArgs>
 }, ExtArgs["result"]["inventoryReservation"]>
 
 export type InventoryReservationSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
@@ -911,14 +1098,16 @@ export type InventoryReservationSelectUpdateManyAndReturn<ExtArgs extends runtim
   productId?: boolean
   userId?: boolean
   orderId?: boolean
+  hostelId?: boolean
   quantity?: boolean
   status?: boolean
   expiresAt?: boolean
   createdAt?: boolean
   updatedAt?: boolean
   product?: boolean | Prisma.ProductDefaultArgs<ExtArgs>
-  user?: boolean | Prisma.UserDefaultArgs<ExtArgs>
+  user?: boolean | Prisma.InventoryReservation$userArgs<ExtArgs>
   order?: boolean | Prisma.InventoryReservation$orderArgs<ExtArgs>
+  hostel?: boolean | Prisma.InventoryReservation$hostelArgs<ExtArgs>
 }, ExtArgs["result"]["inventoryReservation"]>
 
 export type InventoryReservationSelectScalar = {
@@ -926,6 +1115,7 @@ export type InventoryReservationSelectScalar = {
   productId?: boolean
   userId?: boolean
   orderId?: boolean
+  hostelId?: boolean
   quantity?: boolean
   status?: boolean
   expiresAt?: boolean
@@ -933,35 +1123,40 @@ export type InventoryReservationSelectScalar = {
   updatedAt?: boolean
 }
 
-export type InventoryReservationOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "productId" | "userId" | "orderId" | "quantity" | "status" | "expiresAt" | "createdAt" | "updatedAt", ExtArgs["result"]["inventoryReservation"]>
+export type InventoryReservationOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "productId" | "userId" | "orderId" | "hostelId" | "quantity" | "status" | "expiresAt" | "createdAt" | "updatedAt", ExtArgs["result"]["inventoryReservation"]>
 export type InventoryReservationInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   product?: boolean | Prisma.ProductDefaultArgs<ExtArgs>
-  user?: boolean | Prisma.UserDefaultArgs<ExtArgs>
+  user?: boolean | Prisma.InventoryReservation$userArgs<ExtArgs>
   order?: boolean | Prisma.InventoryReservation$orderArgs<ExtArgs>
+  hostel?: boolean | Prisma.InventoryReservation$hostelArgs<ExtArgs>
 }
 export type InventoryReservationIncludeCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   product?: boolean | Prisma.ProductDefaultArgs<ExtArgs>
-  user?: boolean | Prisma.UserDefaultArgs<ExtArgs>
+  user?: boolean | Prisma.InventoryReservation$userArgs<ExtArgs>
   order?: boolean | Prisma.InventoryReservation$orderArgs<ExtArgs>
+  hostel?: boolean | Prisma.InventoryReservation$hostelArgs<ExtArgs>
 }
 export type InventoryReservationIncludeUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   product?: boolean | Prisma.ProductDefaultArgs<ExtArgs>
-  user?: boolean | Prisma.UserDefaultArgs<ExtArgs>
+  user?: boolean | Prisma.InventoryReservation$userArgs<ExtArgs>
   order?: boolean | Prisma.InventoryReservation$orderArgs<ExtArgs>
+  hostel?: boolean | Prisma.InventoryReservation$hostelArgs<ExtArgs>
 }
 
 export type $InventoryReservationPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   name: "InventoryReservation"
   objects: {
     product: Prisma.$ProductPayload<ExtArgs>
-    user: Prisma.$UserPayload<ExtArgs>
+    user: Prisma.$UserPayload<ExtArgs> | null
     order: Prisma.$OrderPayload<ExtArgs> | null
+    hostel: Prisma.$HostelPayload<ExtArgs> | null
   }
   scalars: runtime.Types.Extensions.GetPayloadResult<{
     id: string
     productId: string
-    userId: string
+    userId: string | null
     orderId: string | null
+    hostelId: string | null
     quantity: number
     status: $Enums.ReservationStatus
     expiresAt: Date
@@ -1362,8 +1557,9 @@ readonly fields: InventoryReservationFieldRefs;
 export interface Prisma__InventoryReservationClient<T, Null = never, ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
   readonly [Symbol.toStringTag]: "PrismaPromise"
   product<T extends Prisma.ProductDefaultArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.ProductDefaultArgs<ExtArgs>>): Prisma.Prisma__ProductClient<runtime.Types.Result.GetResult<Prisma.$ProductPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
-  user<T extends Prisma.UserDefaultArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.UserDefaultArgs<ExtArgs>>): Prisma.Prisma__UserClient<runtime.Types.Result.GetResult<Prisma.$UserPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
+  user<T extends Prisma.InventoryReservation$userArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.InventoryReservation$userArgs<ExtArgs>>): Prisma.Prisma__UserClient<runtime.Types.Result.GetResult<Prisma.$UserPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
   order<T extends Prisma.InventoryReservation$orderArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.InventoryReservation$orderArgs<ExtArgs>>): Prisma.Prisma__OrderClient<runtime.Types.Result.GetResult<Prisma.$OrderPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+  hostel<T extends Prisma.InventoryReservation$hostelArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.InventoryReservation$hostelArgs<ExtArgs>>): Prisma.Prisma__HostelClient<runtime.Types.Result.GetResult<Prisma.$HostelPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
   /**
    * Attaches callbacks for the resolution and/or rejection of the Promise.
    * @param onfulfilled The callback to execute when the Promise is resolved.
@@ -1397,6 +1593,7 @@ export interface InventoryReservationFieldRefs {
   readonly productId: Prisma.FieldRef<"InventoryReservation", 'String'>
   readonly userId: Prisma.FieldRef<"InventoryReservation", 'String'>
   readonly orderId: Prisma.FieldRef<"InventoryReservation", 'String'>
+  readonly hostelId: Prisma.FieldRef<"InventoryReservation", 'String'>
   readonly quantity: Prisma.FieldRef<"InventoryReservation", 'Int'>
   readonly status: Prisma.FieldRef<"InventoryReservation", 'ReservationStatus'>
   readonly expiresAt: Prisma.FieldRef<"InventoryReservation", 'DateTime'>
@@ -1803,6 +2000,25 @@ export type InventoryReservationDeleteManyArgs<ExtArgs extends runtime.Types.Ext
 }
 
 /**
+ * InventoryReservation.user
+ */
+export type InventoryReservation$userArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the User
+   */
+  select?: Prisma.UserSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the User
+   */
+  omit?: Prisma.UserOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.UserInclude<ExtArgs> | null
+  where?: Prisma.UserWhereInput
+}
+
+/**
  * InventoryReservation.order
  */
 export type InventoryReservation$orderArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
@@ -1819,6 +2035,25 @@ export type InventoryReservation$orderArgs<ExtArgs extends runtime.Types.Extensi
    */
   include?: Prisma.OrderInclude<ExtArgs> | null
   where?: Prisma.OrderWhereInput
+}
+
+/**
+ * InventoryReservation.hostel
+ */
+export type InventoryReservation$hostelArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the Hostel
+   */
+  select?: Prisma.HostelSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the Hostel
+   */
+  omit?: Prisma.HostelOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.HostelInclude<ExtArgs> | null
+  where?: Prisma.HostelWhereInput
 }
 
 /**

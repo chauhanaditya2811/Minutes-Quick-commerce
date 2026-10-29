@@ -2,19 +2,20 @@
 import type { Response } from "express";
 import type { AuthenticatedRequest } from "../middleware/auth.middleware.js";
 import {
+  type CheckoutInput,
   CheckoutError,
   createOrder,
   getCustomerOrders,
   validateCheckout,
 } from "../services/order.service.js";
 
-const getItems = (body: unknown): unknown =>
-  typeof body === "object" &&
-  body !== null &&
-  !Array.isArray(body) &&
-  "items" in body
-    ? body.items
-    : undefined;
+const getCheckoutInput = (body: unknown): CheckoutInput =>
+  typeof body === "object" && body !== null && !Array.isArray(body)
+    ? {
+        hostelId: "hostelId" in body ? body.hostelId : undefined,
+        items: "items" in body ? body.items : undefined,
+      }
+    : { hostelId: undefined, items: undefined };
 
 const sendCheckoutError = (error: unknown, res: Response): void => {
   if (error instanceof CheckoutError) {
@@ -55,9 +56,9 @@ export const validateCheckoutController = async (
       return;
     }
 
-    const items = getItems(req.body);
+    const input = getCheckoutInput(req.body);
 
-    if (!Array.isArray(items)) {
+    if (!Array.isArray(input.items)) {
       res.status(400).json({
         message: "Provide an items array.",
       });
@@ -66,7 +67,7 @@ export const validateCheckoutController = async (
 
     const checkout = await validateCheckout(
       req.firebaseUser.uid,
-      items
+      input
     );
 
     res.status(200).json({
@@ -88,13 +89,13 @@ export const createOrderController = async (
   }
 
   try {
-    const items = getItems(req.body);
-    if (!Array.isArray(items)) {
+    const input = getCheckoutInput(req.body);
+    if (!Array.isArray(input.items)) {
       res.status(400).json({ message: "Provide an items array." });
       return;
     }
 
-    const order = await createOrder(req.firebaseUser.uid, req.body);
+    const order = await createOrder(req.firebaseUser.uid, input);
     res.status(201).json({
       message: "Order created. Payment is pending.",
       order,

@@ -1,753 +1,291 @@
-
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { createHmac } from "node:crypto";
+
 const mocks = vi.hoisted(() => ({
-  orderFindFirst: vi.fn(),
-  orderFindUnique: vi.fn(),
-  orderUpdateMany: vi.fn(),
-  paymentAttemptFindFirst: vi.fn(),
-  paymentAttemptFindUnique: vi.fn(),
-  paymentAttemptCreate: vi.fn(),
-  paymentAttemptUpdate: vi.fn(),
-  paymentAttemptUpdateMany: vi.fn(),
+  findFirst: vi.fn(),
+  findUnique: vi.fn(),
+  orderUpdate: vi.fn(),
+  attemptCreate: vi.fn(),
+  attemptUpdate: vi.fn(),
   paymentUpsert: vi.fn(),
   transaction: vi.fn(),
-  razorpayOrdersAll: vi.fn(),
-  razorpayOrdersCreate: vi.fn(),
-  razorpayPaymentsFetch: vi.fn(),
-  getRazorpayClient: vi.fn(),
-  getRazorpayKeyId: vi.fn(),
-  getRazorpayKeySecret: vi.fn(),
+  fetch: vi.fn(),
+  notifyOwner: vi.fn(),
+  notifyStockShortfall: vi.fn(),
+  extendHold: vi.fn(),
+  finalize: vi.fn(),
 }));
 
-// Mock Prisma so the tests never access the real database.
 vi.mock("../src/config/database.js", () => ({
   prisma: {
-    order: {
-      findFirst: mocks.orderFindFirst,
-      findUnique: mocks.orderFindUnique,
-      updateMany: mocks.orderUpdateMany,
-    },
-    paymentAttempt: {
-      findFirst: mocks.paymentAttemptFindFirst,
-      findUnique: mocks.paymentAttemptFindUnique,
-      create: mocks.paymentAttemptCreate,
-      update: mocks.paymentAttemptUpdate,
-      updateMany: mocks.paymentAttemptUpdateMany,
-    },
-    payment: {
-      upsert: mocks.paymentUpsert,
-    },
+    order: { findFirst: mocks.findFirst, findUnique: mocks.findUnique, update: mocks.orderUpdate },
+    paymentAttempt: { create: mocks.attemptCreate, update: mocks.attemptUpdate, findFirst: mocks.findFirst },
+    payment: { upsert: mocks.paymentUpsert },
     $transaction: mocks.transaction,
   },
 }));
-
-// Mock Razorpay so no real gateway requests or payments occur.
-vi.mock("../src/config/razorpay.js", () => ({
-  getRazorpayClient: mocks.getRazorpayClient,
-  getRazorpayKeyId: mocks.getRazorpayKeyId,
-  getRazorpayKeySecret: mocks.getRazorpayKeySecret,
+vi.mock("../src/services/telegram.service.js", () => ({
+  notifyOwner: mocks.notifyOwner,
+  notifyStockShortfall: mocks.notifyStockShortfall,
+}));
+// Stock holds and order finalisation are covered against a real database in tests/inventory.
+vi.mock("../src/services/inventory.service.js", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("../src/services/inventory.service.js")>()),
+  extendOrClaimReservations: mocks.extendHold,
+}));
+vi.mock("../src/services/order.service.js", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("../src/services/order.service.js")>()),
+  finalizePaidOrder: mocks.finalize,
 }));
 
 import {
-  createRazorpayOrderForCustomer,
-  verifyRazorpayPaymentForCustomer,
+  createCashfreeOrderForCustomer,
+  verifyCashfreePaymentForCustomer,
 } from "../src/services/payment.service.js";
 
-const attempt = {
+const tx = {
+  order: { findFirst: mocks.findFirst, findUnique: mocks.findUnique, update: mocks.orderUpdate },
+  paymentAttempt: { create: mocks.attemptCreate, update: mocks.attemptUpdate },
+  payment: { upsert: mocks.paymentUpsert },
+};
+
+const baseOrder = {
+  id: "order-1",
+  userId: "user-1",
+  orderNumber: "MIN-1",
+  total: 140,
+  paymentStatus: "PENDING",
+  orderStatus: "PENDING_PAYMENT",
+  customerName: "Customer",
+  customerEmail: "customer@example.com",
+  customerPhone: "9999999999",
+  hostelId: "hostel-1",
+  paymentAttempts: [],
+  items: [{ productId: "product-1", productName: "Maggi", quantity: 2 }],
+  user: { firebaseUid: "firebase-1" },
+};
+
+const holdExpiresAt = new Date("2026-10-29T10:15:00.000Z");
+
+const baseAttempt = {
   id: "attempt-1",
   orderId: "order-1",
   amount: 140,
   status: "PENDING",
-  razorpayOrderId: null as string | null,
-  createdAt: new Date(),
+  provider: "CASHFREE",
+  cashfreeOrderId: null,
 };
 
-const order = {
-  id: "order-1",
-  orderNumber: "MIN-TEST123",
-  total: 140,
-  paymentStatus: "PENDING",
-  orderStatus: "PENDING_PAYMENT",
-  paymentAttempts: [attempt],
-};
-
-const tx = {
-  order: {
-    findFirst: mocks.orderFindFirst,
-    findUnique: mocks.orderFindUnique,
-    updateMany: mocks.orderUpdateMany,
-  },
-  paymentAttempt: {
-    findFirst: mocks.paymentAttemptFindFirst,
-    findUnique: mocks.paymentAttemptFindUnique,
-    create: mocks.paymentAttemptCreate,
-    update: mocks.paymentAttemptUpdate,
-    updateMany: mocks.paymentAttemptUpdateMany,
-  },
-  payment: {
-    upsert: mocks.paymentUpsert,
-  },
-};
-
-describe("Razorpay order initialization", () => {
+describe("Cashfree payment service", () => {
   beforeEach(() => {
     vi.resetAllMocks();
-
-    // Simulate Prisma transactions without a real database.
-    mocks.transaction.mockImplementation(
-      async (callback) => callback(tx)
-    );
-
-    mocks.orderFindFirst.mockResolvedValue(order);
-    mocks.orderUpdateMany.mockResolvedValue({ count: 1 });
-
-    mocks.paymentAttemptCreate.mockResolvedValue({
-      ...attempt,
-      id: "attempt-2",
-    });
-
-    mocks.paymentAttemptUpdate.mockResolvedValue({
-      ...attempt,
-      status: "CREATED",
-      razorpayOrderId: "order_rzp_123",
-    });
-
+    process.env.CASHFREE_CLIENT_ID = "test-client";
+    process.env.CASHFREE_CLIENT_SECRET = "test-secret";
+    mocks.transaction.mockImplementation(async (callback) => callback(tx));
+    mocks.findFirst.mockResolvedValue({ ...baseOrder, paymentAttempts: [] });
+    mocks.attemptCreate.mockResolvedValue(baseAttempt);
+    mocks.attemptUpdate.mockResolvedValue({ ...baseAttempt, status: "CREATED", cashfreeOrderId: "MIN-attempt-1" });
     mocks.paymentUpsert.mockResolvedValue({});
-
-    mocks.getRazorpayKeyId.mockReturnValue("rzp_test_public");
-    mocks.getRazorpayKeySecret.mockReturnValue("test_secret");
-
-    mocks.getRazorpayClient.mockReturnValue({
-      orders: {
-        all: mocks.razorpayOrdersAll,
-        create: mocks.razorpayOrdersCreate,
-      },
-      payments: {
-        fetch: mocks.razorpayPaymentsFetch,
-      },
-    });
-
-    mocks.paymentAttemptFindFirst.mockResolvedValue({
-      ...attempt,
-      razorpayOrderId: "order_rzp_123",
-      order: {
-        ...order,
-        user: { firebaseUid: "firebase-user-1" },
-      },
-    });
-
-    mocks.orderFindUnique.mockResolvedValue({
-      id: "order-1",
-      orderNumber: "MIN-TEST123",
-      orderStatus: "PENDING_PAYMENT",
-      paymentStatus: "PENDING",
-    });
-
-    mocks.paymentAttemptFindUnique.mockResolvedValue({
-      id: "attempt-1",
-      status: "CREATED",
-      razorpayOrderId: "order_rzp_123",
-      razorpayPaymentId: null,
-    });
-
-    mocks.paymentAttemptUpdateMany.mockResolvedValue({ count: 1 });
-
-    mocks.razorpayPaymentsFetch.mockResolvedValue({
-      id: "pay_123",
-      order_id: "order_rzp_123",
-      amount: 14000,
-      currency: "INR",
-      method: "upi",
-      status: "captured",
-      captured: true,
-    });
-
-    // By default, no gateway order exists for this receipt.
-    mocks.razorpayOrdersAll.mockResolvedValue({
-      items: [],
-    });
-
-    mocks.razorpayOrdersCreate.mockResolvedValue({
-      id: "order_rzp_123",
-      amount: 14000,
-      currency: "INR",
-      receipt: "MIN-attempt-1",
+    mocks.fetch.mockResolvedValue(new Response(JSON.stringify({
+      order_id: "MIN-attempt-1",
+      payment_session_id: "session-1",
+      order_amount: 140,
+      order_currency: "INR",
+    }), { status: 200, headers: { "content-type": "application/json" } }));
+    vi.stubGlobal("fetch", mocks.fetch);
+    mocks.extendHold.mockResolvedValue(holdExpiresAt);
+    mocks.finalize.mockResolvedValue({
+      order: { ...baseOrder, paymentStatus: "SUCCESS", orderStatus: "CONFIRMED" },
+      newlyConfirmed: true,
+      shortfall: false,
     });
   });
 
-  it("creates a gateway order using the database amount in paise", async () => {
-    const result = await createRazorpayOrderForCustomer(
-      "firebase-user-1",
-      "order-1"
+  it("creates a Cashfree order using the server amount", async () => {
+    mocks.fetch
+      .mockResolvedValueOnce(new Response("not found", { status: 404 }))
+      .mockResolvedValueOnce(new Response(JSON.stringify({
+        order_id: "MIN-attempt-1",
+        payment_session_id: "session-1",
+        order_amount: 140,
+        order_currency: "INR",
+      }), { status: 200, headers: { "content-type": "application/json" } }));
+
+    const result = await createCashfreeOrderForCustomer("firebase-1", "order-1");
+    expect(result.paymentSessionId).toBe("session-1");
+    expect(mocks.fetch).toHaveBeenCalledWith(
+      "https://sandbox.cashfree.com/pg/orders/MIN-attempt-1",
+      expect.objectContaining({ method: "GET" }),
     );
-
-    expect(mocks.orderFindFirst).toHaveBeenCalledWith(
-      expect.objectContaining({
-        where: {
-          id: "order-1",
-          user: { firebaseUid: "firebase-user-1" },
-        },
-      })
+    expect(mocks.fetch).toHaveBeenCalledWith(
+      "https://sandbox.cashfree.com/pg/orders",
+      expect.objectContaining({ method: "POST" }),
     );
-
-    expect(mocks.razorpayOrdersAll).toHaveBeenCalledWith({
-      receipt: "MIN-attempt-1",
-      count: 1,
+    const body = JSON.parse(mocks.fetch.mock.calls[1][1].body);
+    expect(body.order_amount).toBe(140);
+    expect(body.order_expiry_time).toMatch(/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\+05:30$/);
+    expect(result.holdExpiresAt).toEqual(holdExpiresAt);
+    expect(mocks.extendHold).toHaveBeenCalledWith(tx, {
+      id: "order-1",
+      userId: "user-1",
+      hostelId: "hostel-1",
+      items: [{ productId: "product-1", productName: "Maggi", quantity: 2 }],
     });
+  });
 
-    // ₹140 must be sent to Razorpay as 14,000 paise.
-    expect(mocks.razorpayOrdersCreate).toHaveBeenCalledWith({
-      amount: 14000,
-      currency: "INR",
-      receipt: "MIN-attempt-1",
-      partial_payment: false,
-      notes: {
-        minutesOrderId: "order-1",
-        paymentAttemptId: "attempt-1",
-        orderNumber: "MIN-TEST123",
-      },
+  it("refuses to start payment when the order's stock can no longer be held", async () => {
+    const { InventoryReservationError } = await import("../src/services/inventory.service.js");
+    mocks.extendHold.mockRejectedValue(new InventoryReservationError("Maggi is no longer available in the quantity you selected."));
+    await expect(createCashfreeOrderForCustomer("firebase-1", "order-1"))
+      .rejects.toMatchObject({ statusCode: 409 });
+    expect(mocks.fetch).not.toHaveBeenCalled();
+    expect(mocks.attemptCreate).not.toHaveBeenCalled();
+  });
+
+  it("starts a fresh attempt when the earlier Cashfree order has expired", async () => {
+    mocks.findFirst.mockResolvedValue({
+      ...baseOrder,
+      paymentAttempts: [{ ...baseAttempt, cashfreeOrderId: "MIN-old", status: "CREATED" }],
     });
+    mocks.fetch
+      .mockResolvedValueOnce(new Response(JSON.stringify({
+        order_id: "MIN-old", payment_session_id: "old", order_amount: 140, order_currency: "INR", order_status: "EXPIRED",
+      }), { status: 200 }))
+      .mockResolvedValueOnce(new Response("not found", { status: 404 }))
+      .mockResolvedValueOnce(new Response(JSON.stringify({
+        order_id: "MIN-attempt-1", payment_session_id: "session-new", order_amount: 140, order_currency: "INR",
+      }), { status: 200 }));
+    const result = await createCashfreeOrderForCustomer("firebase-1", "order-1");
+    expect(mocks.attemptCreate).toHaveBeenCalledOnce();
+    expect(result.paymentSessionId).toBe("session-new");
+  });
 
-    expect(mocks.paymentAttemptUpdate).toHaveBeenCalled();
-    expect(mocks.paymentUpsert).toHaveBeenCalled();
+  it("does not create an additional payment attempt when a pending Cashfree attempt can be reused", async () => {
+    mocks.findFirst.mockResolvedValue({
+      ...baseOrder,
+      paymentAttempts: [{ ...baseAttempt, cashfreeOrderId: "MIN-existing", status: "PENDING" }],
+    });
+    mocks.fetch.mockResolvedValue(new Response(JSON.stringify({
+      order_id: "MIN-existing", payment_session_id: "session-existing",
+      order_amount: 140, order_currency: "INR", order_status: "ACTIVE",
+    }), { status: 200 }));
+    await createCashfreeOrderForCustomer("firebase-1", "order-1");
+    expect(mocks.attemptCreate).not.toHaveBeenCalled();
+  });
 
-    expect(result).toEqual({
+  it("returns a controlled error when Cashfree credentials are missing", async () => {
+    delete process.env.CASHFREE_CLIENT_ID;
+    await expect(createCashfreeOrderForCustomer("firebase-1", "order-1"))
+      .rejects.toMatchObject({ name: "CashfreeConfigError" });
+    expect(mocks.findFirst).not.toHaveBeenCalled();
+  });
+
+  it("handles Cashfree API failures without marking the order paid", async () => {
+    mocks.fetch.mockResolvedValue(new Response("unauthorized", { status: 401 }));
+    await expect(createCashfreeOrderForCustomer("firebase-1", "order-1"))
+      .rejects.toMatchObject({ statusCode: 502 });
+    expect(mocks.orderUpdate).not.toHaveBeenCalledWith(
+      expect.anything(),
+      expect.objectContaining({ data: expect.objectContaining({ paymentStatus: "SUCCESS" }) }),
+    );
+  });
+
+  it("confirms a successful Cashfree payment", async () => {
+    mocks.findFirst.mockResolvedValue({
+      ...baseAttempt,
+      cashfreeOrderId: "MIN-attempt-1",
+      order: { ...baseOrder },
+    });
+    mocks.findUnique.mockResolvedValue({ ...baseOrder });
+    mocks.fetch.mockResolvedValue(new Response(JSON.stringify([{
+      cf_payment_id: "cf-pay-1", payment_status: "SUCCESS", payment_amount: 140,
+      payment_currency: "INR", order_id: "MIN-attempt-1",
+    }]), { status: 200 }));
+    const result = await verifyCashfreePaymentForCustomer("firebase-1", "order-1", {
+      cashfree_order_id: "MIN-attempt-1",
+    });
+    expect(result).toEqual({ orderId: "order-1", orderNumber: "MIN-1", paymentStatus: "SUCCESS", orderStatus: "CONFIRMED" });
+    expect(mocks.finalize).toHaveBeenCalledWith(tx, {
       orderId: "order-1",
-      paymentAttemptId: "attempt-1",
-      razorpayOrderId: "order_rzp_123",
-      amount: 14000,
-      currency: "INR",
-      keyId: "rzp_test_public",
+      attemptId: "attempt-1",
+      cashfreeOrderId: "MIN-attempt-1",
+      cashfreePaymentId: "cf-pay-1",
+      amount: 140,
     });
+    expect(mocks.notifyOwner).toHaveBeenCalledWith("order-1", "Cashfree");
   });
 
-  it("rejects an order that does not belong to the customer", async () => {
-    mocks.orderFindFirst.mockResolvedValue(null);
-
-    await expect(
-      createRazorpayOrderForCustomer(
-        "another-firebase-user",
-        "order-1"
-      )
-    ).rejects.toMatchObject({
-      message: "Order not found.",
-      statusCode: 404,
+  it("does not notify again when the payment was already confirmed by the webhook", async () => {
+    mocks.findFirst.mockResolvedValue({ ...baseAttempt, cashfreeOrderId: "MIN-attempt-1", order: { ...baseOrder } });
+    mocks.finalize.mockResolvedValue({
+      order: { ...baseOrder, paymentStatus: "SUCCESS", orderStatus: "CONFIRMED" },
+      newlyConfirmed: false,
+      shortfall: false,
     });
-
-    expect(mocks.razorpayOrdersCreate).not.toHaveBeenCalled();
-    expect(mocks.razorpayOrdersAll).not.toHaveBeenCalled();
+    mocks.fetch.mockResolvedValue(new Response(JSON.stringify([{
+      cf_payment_id: "cf-pay-1", payment_status: "SUCCESS", payment_amount: 140,
+      payment_currency: "INR", order_id: "MIN-attempt-1",
+    }]), { status: 200 }));
+    const result = await verifyCashfreePaymentForCustomer("firebase-1", "order-1", { cashfree_order_id: "MIN-attempt-1" });
+    expect(result.orderStatus).toBe("CONFIRMED");
+    expect(mocks.notifyOwner).not.toHaveBeenCalled();
   });
 
-  it("reuses a saved Razorpay order on a retry", async () => {
-    mocks.orderFindFirst.mockResolvedValue({
-      ...order,
-      paymentAttempts: [
-        {
-          ...attempt,
-          razorpayOrderId: "order_rzp_existing",
-        },
-      ],
+  it("rejects failed or mismatched payments", async () => {
+    mocks.findFirst.mockResolvedValue({
+      ...baseAttempt,
+      cashfreeOrderId: "MIN-attempt-1",
+      order: { ...baseOrder },
     });
-
-    const result = await createRazorpayOrderForCustomer(
-      "firebase-user-1",
-      "order-1"
-    );
-
-    expect(result.razorpayOrderId).toBe("order_rzp_existing");
-    expect(mocks.razorpayOrdersCreate).not.toHaveBeenCalled();
-    expect(mocks.razorpayOrdersAll).not.toHaveBeenCalled();
-    expect(mocks.transaction).toHaveBeenCalledTimes(1);
+    mocks.fetch.mockResolvedValue(new Response(JSON.stringify([{
+      cf_payment_id: "cf-pay-1", payment_status: "FAILED", payment_amount: 139,
+      payment_currency: "INR", order_id: "MIN-attempt-1",
+    }]), { status: 200 }));
+    await expect(verifyCashfreePaymentForCustomer("firebase-1", "order-1", {
+      cashfree_order_id: "MIN-attempt-1",
+    })).rejects.toMatchObject({ statusCode: 409 });
+    expect(mocks.finalize).not.toHaveBeenCalled();
   });
 
-  it("recovers an existing gateway order by receipt without creating another", async () => {
-    mocks.razorpayOrdersAll.mockResolvedValue({
-      items: [
-        {
-          id: "order_rzp_recovered",
-          amount: 14000,
-          currency: "INR",
-          receipt: "MIN-attempt-1",
-        },
-      ],
-    });
-
-    const result = await createRazorpayOrderForCustomer(
-      "firebase-user-1",
-      "order-1"
-    );
-
-    expect(result.razorpayOrderId).toBe("order_rzp_recovered");
-    expect(mocks.razorpayOrdersCreate).not.toHaveBeenCalled();
-    expect(mocks.paymentAttemptUpdate).toHaveBeenCalledWith({
-      where: { id: "attempt-1" },
-      data: {
-        razorpayOrderId: "order_rzp_recovered",
-        status: "CREATED",
-      },
-    });
-    expect(mocks.paymentUpsert).toHaveBeenCalled();
+  it("rejects payment attempts owned by another customer", async () => {
+    // Ownership is part of the query, so another customer's attempt is simply not found.
+    mocks.findFirst.mockResolvedValue(null);
+    await expect(verifyCashfreePaymentForCustomer("firebase-1", "order-1", {
+      cashfree_order_id: "MIN-attempt-1",
+    })).rejects.toMatchObject({ statusCode: 404 });
+    expect(mocks.findFirst).toHaveBeenCalledWith(expect.objectContaining({
+      where: expect.objectContaining({ order: { user: { firebaseUid: "firebase-1" } } }),
+    }));
+    expect(mocks.fetch).not.toHaveBeenCalled();
   });
 
-  it("recovers when gateway creation fails but the order now exists", async () => {
-    mocks.razorpayOrdersAll
-      .mockResolvedValueOnce({ items: [] })
-      .mockResolvedValueOnce({
-        items: [
-          {
-            id: "order_rzp_recovered",
-            amount: 14000,
-            currency: "INR",
-            receipt: "MIN-attempt-1",
-          },
-        ],
-      });
-
-    mocks.razorpayOrdersCreate.mockRejectedValue(
-      new Error("Duplicate receipt or lost response")
-    );
-
-    const result = await createRazorpayOrderForCustomer(
-      "firebase-user-1",
-      "order-1"
-    );
-
-    expect(result.razorpayOrderId).toBe("order_rzp_recovered");
-    expect(mocks.razorpayOrdersCreate).toHaveBeenCalledOnce();
-    expect(mocks.razorpayOrdersAll).toHaveBeenCalledTimes(2);
-    expect(mocks.paymentAttemptUpdate).toHaveBeenCalled();
-    expect(mocks.paymentUpsert).toHaveBeenCalled();
+  it("scopes guest payment verification to the guest's own order token", async () => {
+    const { verifyCashfreePaymentForOwner } = await import("../src/services/payment.service.js");
+    mocks.findFirst.mockResolvedValue(null);
+    await expect(verifyCashfreePaymentForOwner({ guestTokenHash: "hash-1" }, "order-1", {
+      cashfree_order_id: "MIN-attempt-1",
+    })).rejects.toMatchObject({ statusCode: 404 });
+    expect(mocks.findFirst).toHaveBeenCalledWith(expect.objectContaining({
+      where: expect.objectContaining({ order: { userId: null, guestAccessTokenHash: "hash-1" } }),
+    }));
+    expect(mocks.fetch).not.toHaveBeenCalled();
   });
 
-  it("does not confirm an order when creation fails and recovery finds nothing", async () => {
-    mocks.razorpayOrdersCreate.mockRejectedValue(
-      new Error("Gateway unavailable")
-    );
+  it("creates a Cashfree order for a guest without an account or email", async () => {
+    const { createCashfreeOrderForOwner } = await import("../src/services/payment.service.js");
+    mocks.findFirst.mockResolvedValue({ ...baseOrder, userId: null, customerEmail: null, paymentAttempts: [] });
+    mocks.fetch
+      .mockResolvedValueOnce(new Response("not found", { status: 404 }))
+      .mockResolvedValueOnce(new Response(JSON.stringify({
+        order_id: "MIN-attempt-1", payment_session_id: "session-guest", order_amount: 140, order_currency: "INR",
+      }), { status: 200 }));
 
-    await expect(
-      createRazorpayOrderForCustomer(
-        "firebase-user-1",
-        "order-1"
-      )
-    ).rejects.toThrow("Gateway unavailable");
+    const result = await createCashfreeOrderForOwner({ guestTokenHash: "hash-1" }, "order-1");
 
-    expect(mocks.razorpayOrdersAll).toHaveBeenCalledTimes(2);
-    expect(mocks.orderUpdateMany).not.toHaveBeenCalled();
-    expect(mocks.paymentAttemptUpdate).not.toHaveBeenCalled();
-    expect(mocks.paymentUpsert).not.toHaveBeenCalled();
-  });
-});
-
-const createPaymentSignature = (
-  orderId = "order_rzp_123",
-  paymentId = "pay_123"
-) =>
-  createHmac("sha256", "test_secret")
-    .update(`${orderId}|${paymentId}`)
-    .digest("hex");
-
-describe("Razorpay payment verification", () => {
-  beforeEach(() => {
-    vi.resetAllMocks();
-
-    mocks.transaction.mockImplementation(
-      async (callback) => callback(tx)
-    );
-
-    mocks.getRazorpayKeySecret.mockReturnValue("test_secret");
-
-    mocks.getRazorpayClient.mockReturnValue({
-      orders: {
-        all: mocks.razorpayOrdersAll,
-        create: mocks.razorpayOrdersCreate,
-      },
-      payments: {
-        fetch: mocks.razorpayPaymentsFetch,
-      },
-    });
-
-    mocks.paymentAttemptFindFirst.mockResolvedValue({
-      ...attempt,
-      razorpayOrderId: "order_rzp_123",
-      order: {
-        ...order,
-        user: { firebaseUid: "firebase-user-1" },
-      },
-    });
-
-    mocks.razorpayPaymentsFetch.mockResolvedValue({
-      id: "pay_123",
-      order_id: "order_rzp_123",
-      amount: 14000,
-      currency: "INR",
-      method: "upi",
-      status: "captured",
-      captured: true,
-    });
-
-    mocks.orderFindUnique.mockResolvedValue({
-      id: "order-1",
-      orderNumber: "MIN-TEST123",
-      orderStatus: "PENDING_PAYMENT",
-      paymentStatus: "PENDING",
-    });
-
-    mocks.paymentAttemptFindUnique.mockResolvedValue({
-      id: "attempt-1",
-      status: "CREATED",
-      razorpayOrderId: "order_rzp_123",
-      razorpayPaymentId: null,
-    });
-
-    mocks.orderUpdateMany.mockResolvedValue({ count: 1 });
-    mocks.paymentAttemptUpdateMany.mockResolvedValue({ count: 1 });
-    mocks.paymentUpsert.mockResolvedValue({});
-  });
-
-  it("confirms an order after verifying a captured UPI payment", async () => {
-    const result = await verifyRazorpayPaymentForCustomer(
-      "firebase-user-1",
-      "order-1",
-      {
-        razorpay_order_id: "order_rzp_123",
-        razorpay_payment_id: "pay_123",
-        razorpay_signature: createPaymentSignature(),
-      }
-    );
-
-    expect(mocks.razorpayPaymentsFetch).toHaveBeenCalledWith("pay_123");
-
-    expect(mocks.orderUpdateMany).toHaveBeenCalledWith({
-      where: {
-        id: "order-1",
-        orderStatus: "PENDING_PAYMENT",
-        paymentStatus: {
-          in: ["PENDING", "CREATED", "FAILED"],
-        },
-      },
-      data: {
-        paymentStatus: "SUCCESS",
-        orderStatus: "CONFIRMED",
-      },
-    });
-
-    expect(mocks.paymentAttemptUpdateMany).toHaveBeenCalled();
-    expect(mocks.paymentUpsert).toHaveBeenCalled();
-
-    expect(result).toMatchObject({
-      orderId: "order-1",
-      paymentStatus: "SUCCESS",
-      orderStatus: "CONFIRMED",
-    });
-  });
-
-  it.each(["card", "netbanking", "wallet"])(
-    "confirms an order after verifying a captured %s payment",
-    async (method) => {
-      mocks.razorpayPaymentsFetch.mockResolvedValue({
-        id: "pay_123",
-        order_id: "order_rzp_123",
-        amount: 14000,
-        currency: "INR",
-        method,
-        status: "captured",
-        captured: true,
-      });
-
-      await expect(
-        verifyRazorpayPaymentForCustomer(
-          "firebase-user-1",
-          "order-1",
-          {
-            razorpay_order_id: "order_rzp_123",
-            razorpay_payment_id: "pay_123",
-            razorpay_signature: createPaymentSignature(),
-          }
-        )
-      ).resolves.toMatchObject({
-        paymentStatus: "SUCCESS",
-        orderStatus: "CONFIRMED",
-      });
-    }
-  );
-
-  it("rejects a captured payment with an unsupported method", async () => {
-    mocks.razorpayPaymentsFetch.mockResolvedValue({
-      id: "pay_123",
-      order_id: "order_rzp_123",
-      amount: 14000,
-      currency: "INR",
-      method: "emi",
-      status: "captured",
-      captured: true,
-    });
-
-    await expect(
-      verifyRazorpayPaymentForCustomer(
-        "firebase-user-1",
-        "order-1",
-        {
-          razorpay_order_id: "order_rzp_123",
-          razorpay_payment_id: "pay_123",
-          razorpay_signature: createPaymentSignature(),
-        }
-      )
-    ).rejects.toMatchObject({
-      message: "The gateway payment does not match this order.",
-      statusCode: 409,
-    });
-
-    expect(mocks.transaction).not.toHaveBeenCalled();
-  });
-
-  it("rejects an invalid signature before fetching payment details", async () => {
-    await expect(
-      verifyRazorpayPaymentForCustomer(
-        "firebase-user-1",
-        "order-1",
-        {
-          razorpay_order_id: "order_rzp_123",
-          razorpay_payment_id: "pay_123",
-          razorpay_signature: "0".repeat(64),
-        }
-      )
-    ).rejects.toMatchObject({
-      message: "Payment signature is invalid.",
-      statusCode: 400,
-    });
-
-    expect(mocks.razorpayPaymentsFetch).not.toHaveBeenCalled();
-    expect(mocks.transaction).not.toHaveBeenCalled();
-  });
-
-  it("rejects payment attempts belonging to another customer", async () => {
-    mocks.paymentAttemptFindFirst.mockResolvedValue({
-      ...attempt,
-      razorpayOrderId: "order_rzp_123",
-      order: {
-        ...order,
-        user: { firebaseUid: "another-customer" },
-      },
-    });
-
-    await expect(
-      verifyRazorpayPaymentForCustomer(
-        "firebase-user-1",
-        "order-1",
-        {
-          razorpay_order_id: "order_rzp_123",
-          razorpay_payment_id: "pay_123",
-          razorpay_signature: createPaymentSignature(),
-        }
-      )
-    ).rejects.toMatchObject({
-      message: "Payment attempt not found.",
-      statusCode: 404,
-    });
-
-    expect(mocks.razorpayPaymentsFetch).not.toHaveBeenCalled();
-  });
-
-  it("rejects a Razorpay order ID that is not linked to the customer's attempt", async () => {
-    mocks.paymentAttemptFindFirst.mockResolvedValue(null);
-
-    await expect(
-      verifyRazorpayPaymentForCustomer(
-        "firebase-user-1",
-        "order-1",
-        {
-          razorpay_order_id: "order_rzp_other",
-          razorpay_payment_id: "pay_123",
-          razorpay_signature: createPaymentSignature("order_rzp_other"),
-        }
-      )
-    ).rejects.toMatchObject({
-      message: "Payment attempt not found.",
-      statusCode: 404,
-    });
-
-    expect(mocks.razorpayPaymentsFetch).not.toHaveBeenCalled();
-  });
-
-  it("rejects a gateway payment ID that differs from the signed payment ID", async () => {
-    mocks.razorpayPaymentsFetch.mockResolvedValue({
-      id: "pay_other",
-      order_id: "order_rzp_123",
-      amount: 14000,
-      currency: "INR",
-      method: "card",
-      status: "captured",
-      captured: true,
-    });
-
-    await expect(
-      verifyRazorpayPaymentForCustomer(
-        "firebase-user-1",
-        "order-1",
-        {
-          razorpay_order_id: "order_rzp_123",
-          razorpay_payment_id: "pay_123",
-          razorpay_signature: createPaymentSignature(),
-        }
-      )
-    ).rejects.toMatchObject({
-      message: "The gateway payment does not match this order.",
-      statusCode: 409,
-    });
-  });
-
-  it("does not confirm an authorized but uncaptured payment", async () => {
-    mocks.razorpayPaymentsFetch.mockResolvedValue({
-      id: "pay_123",
-      order_id: "order_rzp_123",
-      amount: 14000,
-      currency: "INR",
-      method: "upi",
-      status: "authorized",
-      captured: false,
-    });
-
-    await expect(
-      verifyRazorpayPaymentForCustomer(
-        "firebase-user-1",
-        "order-1",
-        {
-          razorpay_order_id: "order_rzp_123",
-          razorpay_payment_id: "pay_123",
-          razorpay_signature: createPaymentSignature(),
-        }
-      )
-    ).rejects.toMatchObject({
-      message: expect.stringContaining("has not been captured"),
-      statusCode: 409,
-    });
-
-    expect(mocks.transaction).not.toHaveBeenCalled();
-  });
-
-  it("rejects a payment with an incorrect amount", async () => {
-    mocks.razorpayPaymentsFetch.mockResolvedValue({
-      id: "pay_123",
-      order_id: "order_rzp_123",
-      amount: 1000,
-      currency: "INR",
-      method: "upi",
-      status: "captured",
-      captured: true,
-    });
-
-    await expect(
-      verifyRazorpayPaymentForCustomer(
-        "firebase-user-1",
-        "order-1",
-        {
-          razorpay_order_id: "order_rzp_123",
-          razorpay_payment_id: "pay_123",
-          razorpay_signature: createPaymentSignature(),
-        }
-      )
-    ).rejects.toMatchObject({
-      message: "The gateway payment does not match this order.",
-      statusCode: 409,
-    });
-
-    expect(mocks.transaction).not.toHaveBeenCalled();
-  });
-
-  it("rejects a payment with an incorrect currency", async () => {
-    mocks.razorpayPaymentsFetch.mockResolvedValue({
-      id: "pay_123",
-      order_id: "order_rzp_123",
-      amount: 14000,
-      currency: "USD",
-      method: "card",
-      status: "captured",
-      captured: true,
-    });
-
-    await expect(
-      verifyRazorpayPaymentForCustomer(
-        "firebase-user-1",
-        "order-1",
-        {
-          razorpay_order_id: "order_rzp_123",
-          razorpay_payment_id: "pay_123",
-          razorpay_signature: createPaymentSignature(),
-        }
-      )
-    ).rejects.toMatchObject({
-      message: "The gateway payment does not match this order.",
-      statusCode: 409,
-    });
-  });
-
-  it.each([
-    ["failed", false],
-    ["pending", false],
-    ["authorized", false],
-    ["captured", false],
-  ])("does not confirm a %s or uncaptured payment", async (status, captured) => {
-    mocks.razorpayPaymentsFetch.mockResolvedValue({
-      id: "pay_123",
-      order_id: "order_rzp_123",
-      amount: 14000,
-      currency: "INR",
-      method: "wallet",
-      status,
-      captured,
-    });
-
-    await expect(
-      verifyRazorpayPaymentForCustomer(
-        "firebase-user-1",
-        "order-1",
-        {
-          razorpay_order_id: "order_rzp_123",
-          razorpay_payment_id: "pay_123",
-          razorpay_signature: createPaymentSignature(),
-        }
-      )
-    ).rejects.toMatchObject({
-      message: expect.stringContaining("has not been captured"),
-      statusCode: 409,
-    });
-
-    expect(mocks.transaction).not.toHaveBeenCalled();
-  });
-
-  it("accepts a repeated verification of the same successful payment", async () => {
-    mocks.orderFindUnique.mockResolvedValue({
-      id: "order-1",
-      orderNumber: "MIN-TEST123",
-      orderStatus: "CONFIRMED",
-      paymentStatus: "SUCCESS",
-    });
-
-    mocks.paymentAttemptFindUnique.mockResolvedValue({
-      id: "attempt-1",
-      status: "SUCCESS",
-      razorpayOrderId: "order_rzp_123",
-      razorpayPaymentId: "pay_123",
-    });
-
-    const result = await verifyRazorpayPaymentForCustomer(
-      "firebase-user-1",
-      "order-1",
-      {
-        razorpay_order_id: "order_rzp_123",
-        razorpay_payment_id: "pay_123",
-        razorpay_signature: createPaymentSignature(),
-      }
-    );
-
-    expect(result).toMatchObject({
-      paymentStatus: "SUCCESS",
-      orderStatus: "CONFIRMED",
-    });
-
-    expect(mocks.orderUpdateMany).not.toHaveBeenCalled();
-    expect(mocks.paymentAttemptUpdateMany).not.toHaveBeenCalled();
-    expect(mocks.paymentUpsert).not.toHaveBeenCalled();
+    expect(result.paymentSessionId).toBe("session-guest");
+    expect(mocks.findFirst).toHaveBeenCalledWith(expect.objectContaining({
+      where: { id: "order-1", userId: null, guestAccessTokenHash: "hash-1" },
+    }));
+    const customer = JSON.parse(mocks.fetch.mock.calls[1][1].body).customer_details;
+    expect(customer).toEqual({ customer_id: "guest_order-1", customer_name: "Customer", customer_phone: "9999999999" });
   });
 });

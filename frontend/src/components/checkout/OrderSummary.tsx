@@ -16,16 +16,20 @@ export default function OrderSummary({ deliveryFee, validated }: Props) {
     <section className="panel" aria-labelledby="summary-h">
       <h2 id="summary-h">Order summary</h2>
       <ul className="summary-list">
-        {lines.map((l) => (
-          <li key={l.product.id}>
-            <img src={l.product.imageUrl} alt="" />
-            <span className="summary-list__name">
-              {l.product.name}
-              <small>{l.quantity} × {formatINR(l.product.price)}</small>
-            </span>
-            <span>{formatINR(l.quantity * l.product.price)}</span>
-          </li>
-        ))}
+        {lines.map((l) => {
+          // Once the server has priced the cart, show its prices rather than the cart's snapshot.
+          const price = validated?.items.find((item) => item.productId === l.product.id)?.price ?? l.product.price;
+          return (
+            <li key={l.product.id}>
+              <img src={l.product.imageUrl} alt="" />
+              <span className="summary-list__name">
+                {l.product.name}
+                <small>{l.quantity} × {formatINR(price)}</small>
+              </span>
+              <span>{formatINR(l.quantity * price)}</span>
+            </li>
+          );
+        })}
       </ul>
       <dl className="totals">
         <div><dt>Items</dt><dd>{formatINR(validated?.subtotal ?? subtotal)}</dd></div>

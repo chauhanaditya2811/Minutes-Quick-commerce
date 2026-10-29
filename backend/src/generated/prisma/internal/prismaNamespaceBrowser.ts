@@ -52,14 +52,16 @@ export const AnyNull = runtime.AnyNull
 
 export const ModelName = {
   User: 'User',
+  Hostel: 'Hostel',
   Product: 'Product',
+  ProductInventory: 'ProductInventory',
   Order: 'Order',
   OrderItem: 'OrderItem',
   Payment: 'Payment',
   PaymentAttempt: 'PaymentAttempt',
   InventoryReservation: 'InventoryReservation',
   Setting: 'Setting',
-  RazorpayWebhookEvent: 'RazorpayWebhookEvent'
+  CashfreeWebhookEvent: 'CashfreeWebhookEvent'
 } as const
 
 export type ModelName = (typeof ModelName)[keyof typeof ModelName]
@@ -85,7 +87,7 @@ export const UserScalarFieldEnum = {
   name: 'name',
   profileImage: 'profileImage',
   phone: 'phone',
-  hostel: 'hostel',
+  hostelId: 'hostelId',
   floor: 'floor',
   room: 'room',
   createdAt: 'createdAt',
@@ -93,6 +95,17 @@ export const UserScalarFieldEnum = {
 } as const
 
 export type UserScalarFieldEnum = (typeof UserScalarFieldEnum)[keyof typeof UserScalarFieldEnum]
+
+
+export const HostelScalarFieldEnum = {
+  id: 'id',
+  name: 'name',
+  isActive: 'isActive',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type HostelScalarFieldEnum = (typeof HostelScalarFieldEnum)[keyof typeof HostelScalarFieldEnum]
 
 
 export const ProductScalarFieldEnum = {
@@ -111,16 +124,32 @@ export const ProductScalarFieldEnum = {
 export type ProductScalarFieldEnum = (typeof ProductScalarFieldEnum)[keyof typeof ProductScalarFieldEnum]
 
 
+export const ProductInventoryScalarFieldEnum = {
+  id: 'id',
+  productId: 'productId',
+  hostelId: 'hostelId',
+  quantity: 'quantity',
+  isAvailable: 'isAvailable',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type ProductInventoryScalarFieldEnum = (typeof ProductInventoryScalarFieldEnum)[keyof typeof ProductInventoryScalarFieldEnum]
+
+
 export const OrderScalarFieldEnum = {
   id: 'id',
   orderNumber: 'orderNumber',
   userId: 'userId',
+  guestAccessTokenHash: 'guestAccessTokenHash',
+  hostelId: 'hostelId',
   subtotal: 'subtotal',
   deliveryFee: 'deliveryFee',
   total: 'total',
   paymentStatus: 'paymentStatus',
   orderStatus: 'orderStatus',
   isFiveMinute: 'isFiveMinute',
+  inventoryShortfall: 'inventoryShortfall',
   customerName: 'customerName',
   customerEmail: 'customerEmail',
   customerImage: 'customerImage',
@@ -152,8 +181,11 @@ export type OrderItemScalarFieldEnum = (typeof OrderItemScalarFieldEnum)[keyof t
 export const PaymentScalarFieldEnum = {
   id: 'id',
   orderId: 'orderId',
+  provider: 'provider',
   razorpayOrderId: 'razorpayOrderId',
   razorpayPaymentId: 'razorpayPaymentId',
+  cashfreeOrderId: 'cashfreeOrderId',
+  cashfreePaymentId: 'cashfreePaymentId',
   status: 'status',
   amount: 'amount',
   createdAt: 'createdAt',
@@ -166,8 +198,11 @@ export type PaymentScalarFieldEnum = (typeof PaymentScalarFieldEnum)[keyof typeo
 export const PaymentAttemptScalarFieldEnum = {
   id: 'id',
   orderId: 'orderId',
+  provider: 'provider',
   razorpayOrderId: 'razorpayOrderId',
   razorpayPaymentId: 'razorpayPaymentId',
+  cashfreeOrderId: 'cashfreeOrderId',
+  cashfreePaymentId: 'cashfreePaymentId',
   amount: 'amount',
   status: 'status',
   createdAt: 'createdAt'
@@ -181,6 +216,7 @@ export const InventoryReservationScalarFieldEnum = {
   productId: 'productId',
   userId: 'userId',
   orderId: 'orderId',
+  hostelId: 'hostelId',
   quantity: 'quantity',
   status: 'status',
   expiresAt: 'expiresAt',
@@ -203,14 +239,14 @@ export const SettingScalarFieldEnum = {
 export type SettingScalarFieldEnum = (typeof SettingScalarFieldEnum)[keyof typeof SettingScalarFieldEnum]
 
 
-export const RazorpayWebhookEventScalarFieldEnum = {
+export const CashfreeWebhookEventScalarFieldEnum = {
   id: 'id',
   eventId: 'eventId',
   eventType: 'eventType',
   createdAt: 'createdAt'
 } as const
 
-export type RazorpayWebhookEventScalarFieldEnum = (typeof RazorpayWebhookEventScalarFieldEnum)[keyof typeof RazorpayWebhookEventScalarFieldEnum]
+export type CashfreeWebhookEventScalarFieldEnum = (typeof CashfreeWebhookEventScalarFieldEnum)[keyof typeof CashfreeWebhookEventScalarFieldEnum]
 
 
 export const SortOrder = {

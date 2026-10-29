@@ -32,7 +32,7 @@ src/
   hooks/        useAsync, useProducts, useStoreSettings
   pages/        home, products, cart, checkout, orders, account, auth, dashboard
   routers/      router.tsx, PrivateRoute, AdminRoute
-  services/     api.ts (all backend calls), razorpay.ts, config.ts
+  services/     api.ts (all backend calls), cashfree.ts, config.ts
   types/        product.ts, order.ts, user.ts
   data/         mockProducts.ts (preview only)
 ```
@@ -50,7 +50,7 @@ All calls go through `src/services/api.ts`. Protected calls send `Authorization:
 | Create order | `POST /api/orders` | Wired; reads and maps the `{ order }` response |
 | Customer order history | `GET /api/orders/my` | Wired; requires Firebase authentication and scopes results to the signed-in customer |
 | Admin order management | `GET /api/admin/orders`, `PATCH /api/admin/orders/:orderId/status` | Admin-only; lists the latest 100 orders and allows successful paid orders to be marked delivered |
-| Payment | `POST /api/orders/:id/payment`, `.../payment/verify` | Wired; reads `{ payment }` and submits Razorpay's snake_case verification fields |
+| Payment | `POST /api/orders/:id/payment`, `.../payment/verify` | Wired; reads `{ payment }` and submits Cashfree's order ID for server-side verification |
 | Admin products | `POST/PUT/DELETE /api/admin/products[/:id]` | Wired |
 | Admin image upload | `POST /api/admin/products/images` | Wired; multipart field `image`, response includes `{ imageUrl, publicId }` |
 | Admin settings | `GET/PUT /api/admin/settings` | Wired |
@@ -61,8 +61,8 @@ Products and settings are returned as raw objects/arrays. Checkout, order creati
 
 - The cart stores product snapshots in `localStorage` for display only. Totals shown before validation are labelled *Estimated*; the **Pay** button only enables after `/orders/validate` succeeds and shows the server's total.
 - Retrying a dismissed payment reuses the same pending order instead of creating duplicates.
-- A Razorpay "success" callback is never trusted: the order is only confirmed from the `/payment/verify` response.
-- `amount` from payment init is passed to Razorpay as returned (Razorpay expects paise; the backend converts).
+- A Cashfree checkout return is never trusted: the order is only confirmed after the backend checks Cashfree payment status.
+- Cashfree's `payment_session_id` is used only by the browser; credentials remain server-side.
 - Stock remains manually managed; the backend checks current availability during checkout validation and order creation.
 - `AdminRoute` asks the backend (`GET /api/admin/settings`) whether the user may enter. This is a UX guard; the backend stays authoritative.
 - Email/password on the login screen needs the **Email/Password** provider enabled in the Firebase console. Google sign-in needs the Google provider and your dev domain authorized.
@@ -75,4 +75,4 @@ Products and settings are returned as raw objects/arrays. Checkout, order creati
 
 ## Security
 
-No secrets live here. Only public Firebase web config and `VITE_API_BASE_URL` are read from env. The Razorpay Key ID arrives from the backend at payment time; the Key Secret and webhook secret must never be added to this project.
+No secrets live here. Only public Firebase web config, `VITE_API_BASE_URL`, and the Cashfree environment selector are read from env. Cashfree credentials and webhook secrets must never be added to this project.

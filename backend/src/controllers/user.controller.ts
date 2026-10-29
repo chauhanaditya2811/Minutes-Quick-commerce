@@ -4,6 +4,20 @@ import {
   getOrCreateUser,
   updateUserProfile,
 } from "../services/user.service.js";
+import { getHostelById } from "../services/hostel.service.js";
+
+const userResponse = (user: Awaited<ReturnType<typeof getOrCreateUser>>) => ({
+  id: user.id,
+  firebaseUid: user.firebaseUid,
+  email: user.email,
+  name: user.name,
+  profileImage: user.profileImage,
+  phone: user.phone,
+  hostelId: user.hostelId,
+  hostel: user.hostel?.name ?? null,
+  floor: user.floor,
+  room: user.room,
+});
 
 export const getCurrentUser = async (
   req: AuthenticatedRequest,
@@ -19,17 +33,7 @@ export const getCurrentUser = async (
 
     const user = await getOrCreateUser(req.firebaseUser);
 
-    res.status(200).json({
-      id: user.id,
-      firebaseUid: user.firebaseUid,
-      email: user.email,
-      name: user.name,
-      profileImage: user.profileImage,
-      phone: user.phone,
-      hostel: user.hostel,
-      floor: user.floor,
-      room: user.room,
-    });
+    res.status(200).json(userResponse(user));
   } catch (error) {
     console.error("Get current user error:", error);
 
@@ -51,13 +55,13 @@ export const updateCurrentUser = async (
       return;
     }
 
-    const { name, phone, hostel, floor, room } = req.body;
+    const { name, phone, hostelId, floor, room } = req.body;
 
     if (
       typeof name !== "string" ||
       !name.trim() ||
-      typeof hostel !== "string" ||
-      !hostel.trim() ||
+      typeof hostelId !== "string" ||
+      !hostelId.trim() ||
       typeof room !== "string" ||
       !room.trim()
     ) {
@@ -84,25 +88,21 @@ export const updateCurrentUser = async (
       return;
     }
 
+    const hostel = await getHostelById(hostelId.trim());
+    if (!hostel || !hostel.isActive) {
+      res.status(400).json({ message: "Select an active hostel." });
+      return;
+    }
+
     const user = await updateUserProfile(req.firebaseUser.uid, {
       name: name.trim(),
       phone,
-      hostel: hostel.trim(),
+      hostelId: hostel.id,
       floor,
       room: room.trim(),
     });
 
-    res.status(200).json({
-      id: user.id,
-      firebaseUid: user.firebaseUid,
-      email: user.email,
-      name: user.name,
-      profileImage: user.profileImage,
-      phone: user.phone,
-      hostel: user.hostel,
-      floor: user.floor,
-      room: user.room,
-    });
+    res.status(200).json(userResponse(user));
   } catch (error) {
     console.error("Update current user error:", error);
 

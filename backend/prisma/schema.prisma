@@ -8,78 +8,132 @@ datasource db {
 }
 
 model User {
-  id           String   @id @default(cuid())
-  firebaseUid  String   @unique
-  email        String   @unique
+  id           String  @id @default(cuid())
+  firebaseUid  String  @unique
+  email        String  @unique
   name         String?
   profileImage String?
   phone        String?
-  hostel       String?
+  hostelId     String?
+  hostel       Hostel? @relation(fields: [hostelId], references: [id], onDelete: Restrict)
   floor        Int?
   room         String?
 
   orders       Order[]
   reservations InventoryReservation[]
 
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@map("users")
 }
 
+model Hostel {
+  id           String                 @id @default(cuid())
+  name         String                 @unique
+  isActive     Boolean                @default(true)
+  users        User[]
+  inventories  ProductInventory[]
+  orders       Order[]
+  reservations InventoryReservation[]
+  createdAt    DateTime               @default(now())
+  updatedAt    DateTime               @updatedAt
+
+  @@map("hostels")
+}
+
 model Product {
-  id          String   @id @default(cuid())
+  id          String  @id @default(cuid())
   name        String
   imageUrl    String
   description String?
   price       Int
   unit        String
-  stock       Int      @default(0)
-  isDeleted   Boolean  @default(false)
+  /// Legacy global stock from before hostel-wise inventory. Kept for reference only;
+  /// customer stock now lives in ProductInventory.
+  stock       Int     @default(0)
+  isDeleted   Boolean @default(false)
 
   orderItems   OrderItem[]
   reservations InventoryReservation[]
+  inventories  ProductInventory[]
 
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@index([isDeleted])
   @@map("products")
+}
+
+// Stock of one product at one hostel. A missing row means unavailable there.
+model ProductInventory {
+  id String @id @default(cuid())
+
+  productId String
+  product   Product @relation(fields: [productId], references: [id], onDelete: Restrict)
+
+  hostelId String
+  hostel   Hostel @relation(fields: [hostelId], references: [id], onDelete: Cascade)
+
+  // Guarded by a CHECK ("quantity" >= 0) constraint in the migration.
+  quantity    Int     @default(0)
+  isAvailable Boolean @default(false)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([productId, hostelId])
+  @@index([hostelId, isAvailable])
+  @@map("product_inventories")
 }
 
 model Order {
   id          String @id @default(cuid())
   orderNumber String @unique
 
-  userId String
-  user   User   @relation(fields: [userId], references: [id])
+  // Null for guest orders, which are owned by guestAccessTokenHash instead.
+  // A CHECK constraint (migration 20261030000000) requires one of the two.
+  userId String?
+  user   User?   @relation(fields: [userId], references: [id], onDelete: Restrict)
+
+  // SHA-256 of the guest's secret checkout token. The token itself is never stored;
+  // it doubles as the idempotency key for repeated guest checkout submissions.
+  guestAccessTokenHash String? @unique
+
+  // Store hostel whose inventory the order was placed against. Null for orders
+  // created before hostel-wise inventory; customerHostel keeps the name snapshot.
+  hostelId String?
+  hostel   Hostel? @relation(fields: [hostelId], references: [id], onDelete: Restrict)
 
   subtotal    Int
   deliveryFee Int
   total       Int
 
-  paymentStatus PaymentStatus
-  orderStatus   OrderStatus
-  isFiveMinute  Boolean       @default(false)
+  paymentStatus      PaymentStatus
+  orderStatus        OrderStatus
+  isFiveMinute       Boolean       @default(false)
+  // Set when a late payment found less hostel stock than was ordered; needs manual follow-up.
+  inventoryShortfall Boolean       @default(false)
 
   // Delivery/customer snapshot
   customerName   String
-  customerEmail  String
+  customerEmail  String? // null for guest orders
   customerImage  String?
   customerPhone  String
   customerHostel String
   customerFloor  Int
-  customerRoom  String
+  customerRoom   String
 
   items           OrderItem[]
   payment         Payment?
   paymentAttempts PaymentAttempt[]
   reservations    InventoryReservation[]
 
-  createdAt  DateTime  @default(now())
+  createdAt   DateTime  @default(now())
   deliveredAt DateTime?
 
   @@index([userId])
+  @@index([hostelId])
   @@index([orderStatus])
   @@index([createdAt])
   @@map("orders")
@@ -89,7 +143,7 @@ model OrderItem {
   id String @id @default(cuid())
 
   orderId String
-  order   Order @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  order   Order  @relation(fields: [orderId], references: [id], onDelete: Cascade)
 
   productId String
   product   Product @relation(fields: [productId], references: [id])
@@ -112,8 +166,11 @@ model Payment {
   orderId String @unique
   order   Order  @relation(fields: [orderId], references: [id])
 
-  razorpayOrderId   String  @unique
-  razorpayPaymentId String? @unique
+  provider          PaymentProvider @default(RAZORPAY)
+  razorpayOrderId   String?         @unique
+  razorpayPaymentId String?         @unique
+  cashfreeOrderId   String?         @unique
+  cashfreePaymentId String?         @unique
 
   status PaymentStatus
   amount Int
@@ -128,10 +185,13 @@ model PaymentAttempt {
   id String @id @default(cuid())
 
   orderId String?
-  order   Order? @relation(fields: [orderId], references: [id])
+  order   Order?  @relation(fields: [orderId], references: [id])
 
+  provider          PaymentProvider @default(RAZORPAY)
   razorpayOrderId   String?
-  razorpayPaymentId String? @unique
+  razorpayPaymentId String?         @unique
+  cashfreeOrderId   String?
+  cashfreePaymentId String?         @unique
 
   amount Int
   status PaymentStatus
@@ -139,7 +199,7 @@ model PaymentAttempt {
   createdAt DateTime @default(now())
 
   @@index([orderId])
-  @@index([razorpayOrderId])
+  @@index([cashfreeOrderId])
   @@map("payment_attempts")
 }
 
@@ -149,11 +209,16 @@ model InventoryReservation {
   productId String
   product   Product @relation(fields: [productId], references: [id])
 
-  userId String
-  user   User @relation(fields: [userId], references: [id])
+  // Null for holds on guest orders.
+  userId String?
+  user   User?   @relation(fields: [userId], references: [id], onDelete: Restrict)
 
   orderId String?
-  order   Order? @relation(fields: [orderId], references: [id])
+  order   Order?  @relation(fields: [orderId], references: [id])
+
+  // Hostel whose product_inventories row the units were taken from.
+  hostelId String?
+  hostel   Hostel? @relation(fields: [hostelId], references: [id], onDelete: Restrict)
 
   quantity  Int
   status    ReservationStatus @default(ACTIVE)
@@ -166,6 +231,8 @@ model InventoryReservation {
   @@index([userId])
   @@index([status, expiresAt])
   @@index([orderId])
+  @@index([orderId, status])
+  @@index([hostelId])
   @@map("inventory_reservations")
 }
 
@@ -182,15 +249,14 @@ model Setting {
   @@map("settings")
 }
 
-model RazorpayWebhookEvent {
+model CashfreeWebhookEvent {
   id        String   @id @default(cuid())
   eventId   String   @unique
   eventType String
   createdAt DateTime @default(now())
 
-  @@map("razorpay_webhook_events")
+  @@map("cashfree_webhook_events")
 }
-
 
 enum PaymentStatus {
   CREATED
@@ -199,6 +265,11 @@ enum PaymentStatus {
   FAILED
   CANCELLED
   REFUNDED
+}
+
+enum PaymentProvider {
+  RAZORPAY
+  CASHFREE
 }
 
 enum ReservationStatus {

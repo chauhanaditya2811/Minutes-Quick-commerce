@@ -47,10 +47,20 @@ export { Prisma }
  */
 export type User = Prisma.UserModel
 /**
+ * Model Hostel
+ * 
+ */
+export type Hostel = Prisma.HostelModel
+/**
  * Model Product
  * 
  */
 export type Product = Prisma.ProductModel
+/**
+ * Model ProductInventory
+ * 
+ */
+export type ProductInventory = Prisma.ProductInventoryModel
 /**
  * Model Order
  * 
@@ -82,7 +92,7 @@ export type InventoryReservation = Prisma.InventoryReservationModel
  */
 export type Setting = Prisma.SettingModel
 /**
- * Model RazorpayWebhookEvent
+ * Model CashfreeWebhookEvent
  * 
  */
-export type RazorpayWebhookEvent = Prisma.RazorpayWebhookEventModel
+export type CashfreeWebhookEvent = Prisma.CashfreeWebhookEventModel

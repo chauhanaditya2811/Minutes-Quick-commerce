@@ -41,7 +41,7 @@ export type UserMinAggregateOutputType = {
   name: string | null
   profileImage: string | null
   phone: string | null
-  hostel: string | null
+  hostelId: string | null
   floor: number | null
   room: string | null
   createdAt: Date | null
@@ -55,7 +55,7 @@ export type UserMaxAggregateOutputType = {
   name: string | null
   profileImage: string | null
   phone: string | null
-  hostel: string | null
+  hostelId: string | null
   floor: number | null
   room: string | null
   createdAt: Date | null
@@ -69,7 +69,7 @@ export type UserCountAggregateOutputType = {
   name: number
   profileImage: number
   phone: number
-  hostel: number
+  hostelId: number
   floor: number
   room: number
   createdAt: number
@@ -93,7 +93,7 @@ export type UserMinAggregateInputType = {
   name?: true
   profileImage?: true
   phone?: true
-  hostel?: true
+  hostelId?: true
   floor?: true
   room?: true
   createdAt?: true
@@ -107,7 +107,7 @@ export type UserMaxAggregateInputType = {
   name?: true
   profileImage?: true
   phone?: true
-  hostel?: true
+  hostelId?: true
   floor?: true
   room?: true
   createdAt?: true
@@ -121,7 +121,7 @@ export type UserCountAggregateInputType = {
   name?: true
   profileImage?: true
   phone?: true
-  hostel?: true
+  hostelId?: true
   floor?: true
   room?: true
   createdAt?: true
@@ -222,7 +222,7 @@ export type UserGroupByOutputType = {
   name: string | null
   profileImage: string | null
   phone: string | null
-  hostel: string | null
+  hostelId: string | null
   floor: number | null
   room: string | null
   createdAt: Date
@@ -259,11 +259,12 @@ export type UserWhereInput = {
   name?: Prisma.StringNullableFilter<"User"> | string | null
   profileImage?: Prisma.StringNullableFilter<"User"> | string | null
   phone?: Prisma.StringNullableFilter<"User"> | string | null
-  hostel?: Prisma.StringNullableFilter<"User"> | string | null
+  hostelId?: Prisma.StringNullableFilter<"User"> | string | null
   floor?: Prisma.IntNullableFilter<"User"> | number | null
   room?: Prisma.StringNullableFilter<"User"> | string | null
   createdAt?: Prisma.DateTimeFilter<"User"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"User"> | Date | string
+  hostel?: Prisma.XOR<Prisma.HostelNullableScalarRelationFilter, Prisma.HostelWhereInput> | null
   orders?: Prisma.OrderListRelationFilter
   reservations?: Prisma.InventoryReservationListRelationFilter
 }
@@ -275,11 +276,12 @@ export type UserOrderByWithRelationInput = {
   name?: Prisma.SortOrderInput | Prisma.SortOrder
   profileImage?: Prisma.SortOrderInput | Prisma.SortOrder
   phone?: Prisma.SortOrderInput | Prisma.SortOrder
-  hostel?: Prisma.SortOrderInput | Prisma.SortOrder
+  hostelId?: Prisma.SortOrderInput | Prisma.SortOrder
   floor?: Prisma.SortOrderInput | Prisma.SortOrder
   room?: Prisma.SortOrderInput | Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
+  hostel?: Prisma.HostelOrderByWithRelationInput
   orders?: Prisma.OrderOrderByRelationAggregateInput
   reservations?: Prisma.InventoryReservationOrderByRelationAggregateInput
 }
@@ -294,11 +296,12 @@ export type UserWhereUniqueInput = Prisma.AtLeast<{
   name?: Prisma.StringNullableFilter<"User"> | string | null
   profileImage?: Prisma.StringNullableFilter<"User"> | string | null
   phone?: Prisma.StringNullableFilter<"User"> | string | null
-  hostel?: Prisma.StringNullableFilter<"User"> | string | null
+  hostelId?: Prisma.StringNullableFilter<"User"> | string | null
   floor?: Prisma.IntNullableFilter<"User"> | number | null
   room?: Prisma.StringNullableFilter<"User"> | string | null
   createdAt?: Prisma.DateTimeFilter<"User"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"User"> | Date | string
+  hostel?: Prisma.XOR<Prisma.HostelNullableScalarRelationFilter, Prisma.HostelWhereInput> | null
   orders?: Prisma.OrderListRelationFilter
   reservations?: Prisma.InventoryReservationListRelationFilter
 }, "id" | "firebaseUid" | "email">
@@ -310,7 +313,7 @@ export type UserOrderByWithAggregationInput = {
   name?: Prisma.SortOrderInput | Prisma.SortOrder
   profileImage?: Prisma.SortOrderInput | Prisma.SortOrder
   phone?: Prisma.SortOrderInput | Prisma.SortOrder
-  hostel?: Prisma.SortOrderInput | Prisma.SortOrder
+  hostelId?: Prisma.SortOrderInput | Prisma.SortOrder
   floor?: Prisma.SortOrderInput | Prisma.SortOrder
   room?: Prisma.SortOrderInput | Prisma.SortOrder
   createdAt?: Prisma.SortOrder
@@ -332,7 +335,7 @@ export type UserScalarWhereWithAggregatesInput = {
   name?: Prisma.StringNullableWithAggregatesFilter<"User"> | string | null
   profileImage?: Prisma.StringNullableWithAggregatesFilter<"User"> | string | null
   phone?: Prisma.StringNullableWithAggregatesFilter<"User"> | string | null
-  hostel?: Prisma.StringNullableWithAggregatesFilter<"User"> | string | null
+  hostelId?: Prisma.StringNullableWithAggregatesFilter<"User"> | string | null
   floor?: Prisma.IntNullableWithAggregatesFilter<"User"> | number | null
   room?: Prisma.StringNullableWithAggregatesFilter<"User"> | string | null
   createdAt?: Prisma.DateTimeWithAggregatesFilter<"User"> | Date | string
@@ -346,11 +349,11 @@ export type UserCreateInput = {
   name?: string | null
   profileImage?: string | null
   phone?: string | null
-  hostel?: string | null
   floor?: number | null
   room?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
+  hostel?: Prisma.HostelCreateNestedOneWithoutUsersInput
   orders?: Prisma.OrderCreateNestedManyWithoutUserInput
   reservations?: Prisma.InventoryReservationCreateNestedManyWithoutUserInput
 }
@@ -362,7 +365,7 @@ export type UserUncheckedCreateInput = {
   name?: string | null
   profileImage?: string | null
   phone?: string | null
-  hostel?: string | null
+  hostelId?: string | null
   floor?: number | null
   room?: string | null
   createdAt?: Date | string
@@ -378,11 +381,11 @@ export type UserUpdateInput = {
   name?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   profileImage?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   phone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  hostel?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   floor?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   room?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  hostel?: Prisma.HostelUpdateOneWithoutUsersNestedInput
   orders?: Prisma.OrderUpdateManyWithoutUserNestedInput
   reservations?: Prisma.InventoryReservationUpdateManyWithoutUserNestedInput
 }
@@ -394,7 +397,7 @@ export type UserUncheckedUpdateInput = {
   name?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   profileImage?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   phone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  hostel?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  hostelId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   floor?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   room?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -410,7 +413,7 @@ export type UserCreateManyInput = {
   name?: string | null
   profileImage?: string | null
   phone?: string | null
-  hostel?: string | null
+  hostelId?: string | null
   floor?: number | null
   room?: string | null
   createdAt?: Date | string
@@ -424,7 +427,6 @@ export type UserUpdateManyMutationInput = {
   name?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   profileImage?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   phone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  hostel?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   floor?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   room?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -438,7 +440,7 @@ export type UserUncheckedUpdateManyInput = {
   name?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   profileImage?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   phone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  hostel?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  hostelId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   floor?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   room?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -452,7 +454,7 @@ export type UserCountOrderByAggregateInput = {
   name?: Prisma.SortOrder
   profileImage?: Prisma.SortOrder
   phone?: Prisma.SortOrder
-  hostel?: Prisma.SortOrder
+  hostelId?: Prisma.SortOrder
   floor?: Prisma.SortOrder
   room?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
@@ -470,7 +472,7 @@ export type UserMaxOrderByAggregateInput = {
   name?: Prisma.SortOrder
   profileImage?: Prisma.SortOrder
   phone?: Prisma.SortOrder
-  hostel?: Prisma.SortOrder
+  hostelId?: Prisma.SortOrder
   floor?: Prisma.SortOrder
   room?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
@@ -484,7 +486,7 @@ export type UserMinOrderByAggregateInput = {
   name?: Prisma.SortOrder
   profileImage?: Prisma.SortOrder
   phone?: Prisma.SortOrder
-  hostel?: Prisma.SortOrder
+  hostelId?: Prisma.SortOrder
   floor?: Prisma.SortOrder
   room?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
@@ -495,9 +497,19 @@ export type UserSumOrderByAggregateInput = {
   floor?: Prisma.SortOrder
 }
 
-export type UserScalarRelationFilter = {
-  is?: Prisma.UserWhereInput
-  isNot?: Prisma.UserWhereInput
+export type UserListRelationFilter = {
+  every?: Prisma.UserWhereInput
+  some?: Prisma.UserWhereInput
+  none?: Prisma.UserWhereInput
+}
+
+export type UserOrderByRelationAggregateInput = {
+  _count?: Prisma.SortOrder
+}
+
+export type UserNullableScalarRelationFilter = {
+  is?: Prisma.UserWhereInput | null
+  isNot?: Prisma.UserWhereInput | null
 }
 
 export type StringFieldUpdateOperationsInput = {
@@ -520,16 +532,60 @@ export type DateTimeFieldUpdateOperationsInput = {
   set?: Date | string
 }
 
+export type UserCreateNestedManyWithoutHostelInput = {
+  create?: Prisma.XOR<Prisma.UserCreateWithoutHostelInput, Prisma.UserUncheckedCreateWithoutHostelInput> | Prisma.UserCreateWithoutHostelInput[] | Prisma.UserUncheckedCreateWithoutHostelInput[]
+  connectOrCreate?: Prisma.UserCreateOrConnectWithoutHostelInput | Prisma.UserCreateOrConnectWithoutHostelInput[]
+  createMany?: Prisma.UserCreateManyHostelInputEnvelope
+  connect?: Prisma.UserWhereUniqueInput | Prisma.UserWhereUniqueInput[]
+}
+
+export type UserUncheckedCreateNestedManyWithoutHostelInput = {
+  create?: Prisma.XOR<Prisma.UserCreateWithoutHostelInput, Prisma.UserUncheckedCreateWithoutHostelInput> | Prisma.UserCreateWithoutHostelInput[] | Prisma.UserUncheckedCreateWithoutHostelInput[]
+  connectOrCreate?: Prisma.UserCreateOrConnectWithoutHostelInput | Prisma.UserCreateOrConnectWithoutHostelInput[]
+  createMany?: Prisma.UserCreateManyHostelInputEnvelope
+  connect?: Prisma.UserWhereUniqueInput | Prisma.UserWhereUniqueInput[]
+}
+
+export type UserUpdateManyWithoutHostelNestedInput = {
+  create?: Prisma.XOR<Prisma.UserCreateWithoutHostelInput, Prisma.UserUncheckedCreateWithoutHostelInput> | Prisma.UserCreateWithoutHostelInput[] | Prisma.UserUncheckedCreateWithoutHostelInput[]
+  connectOrCreate?: Prisma.UserCreateOrConnectWithoutHostelInput | Prisma.UserCreateOrConnectWithoutHostelInput[]
+  upsert?: Prisma.UserUpsertWithWhereUniqueWithoutHostelInput | Prisma.UserUpsertWithWhereUniqueWithoutHostelInput[]
+  createMany?: Prisma.UserCreateManyHostelInputEnvelope
+  set?: Prisma.UserWhereUniqueInput | Prisma.UserWhereUniqueInput[]
+  disconnect?: Prisma.UserWhereUniqueInput | Prisma.UserWhereUniqueInput[]
+  delete?: Prisma.UserWhereUniqueInput | Prisma.UserWhereUniqueInput[]
+  connect?: Prisma.UserWhereUniqueInput | Prisma.UserWhereUniqueInput[]
+  update?: Prisma.UserUpdateWithWhereUniqueWithoutHostelInput | Prisma.UserUpdateWithWhereUniqueWithoutHostelInput[]
+  updateMany?: Prisma.UserUpdateManyWithWhereWithoutHostelInput | Prisma.UserUpdateManyWithWhereWithoutHostelInput[]
+  deleteMany?: Prisma.UserScalarWhereInput | Prisma.UserScalarWhereInput[]
+}
+
+export type UserUncheckedUpdateManyWithoutHostelNestedInput = {
+  create?: Prisma.XOR<Prisma.UserCreateWithoutHostelInput, Prisma.UserUncheckedCreateWithoutHostelInput> | Prisma.UserCreateWithoutHostelInput[] | Prisma.UserUncheckedCreateWithoutHostelInput[]
+  connectOrCreate?: Prisma.UserCreateOrConnectWithoutHostelInput | Prisma.UserCreateOrConnectWithoutHostelInput[]
+  upsert?: Prisma.UserUpsertWithWhereUniqueWithoutHostelInput | Prisma.UserUpsertWithWhereUniqueWithoutHostelInput[]
+  createMany?: Prisma.UserCreateManyHostelInputEnvelope
+  set?: Prisma.UserWhereUniqueInput | Prisma.UserWhereUniqueInput[]
+  disconnect?: Prisma.UserWhereUniqueInput | Prisma.UserWhereUniqueInput[]
+  delete?: Prisma.UserWhereUniqueInput | Prisma.UserWhereUniqueInput[]
+  connect?: Prisma.UserWhereUniqueInput | Prisma.UserWhereUniqueInput[]
+  update?: Prisma.UserUpdateWithWhereUniqueWithoutHostelInput | Prisma.UserUpdateWithWhereUniqueWithoutHostelInput[]
+  updateMany?: Prisma.UserUpdateManyWithWhereWithoutHostelInput | Prisma.UserUpdateManyWithWhereWithoutHostelInput[]
+  deleteMany?: Prisma.UserScalarWhereInput | Prisma.UserScalarWhereInput[]
+}
+
 export type UserCreateNestedOneWithoutOrdersInput = {
   create?: Prisma.XOR<Prisma.UserCreateWithoutOrdersInput, Prisma.UserUncheckedCreateWithoutOrdersInput>
   connectOrCreate?: Prisma.UserCreateOrConnectWithoutOrdersInput
   connect?: Prisma.UserWhereUniqueInput
 }
 
-export type UserUpdateOneRequiredWithoutOrdersNestedInput = {
+export type UserUpdateOneWithoutOrdersNestedInput = {
   create?: Prisma.XOR<Prisma.UserCreateWithoutOrdersInput, Prisma.UserUncheckedCreateWithoutOrdersInput>
   connectOrCreate?: Prisma.UserCreateOrConnectWithoutOrdersInput
   upsert?: Prisma.UserUpsertWithoutOrdersInput
+  disconnect?: Prisma.UserWhereInput | boolean
+  delete?: Prisma.UserWhereInput | boolean
   connect?: Prisma.UserWhereUniqueInput
   update?: Prisma.XOR<Prisma.XOR<Prisma.UserUpdateToOneWithWhereWithoutOrdersInput, Prisma.UserUpdateWithoutOrdersInput>, Prisma.UserUncheckedUpdateWithoutOrdersInput>
 }
@@ -540,12 +596,87 @@ export type UserCreateNestedOneWithoutReservationsInput = {
   connect?: Prisma.UserWhereUniqueInput
 }
 
-export type UserUpdateOneRequiredWithoutReservationsNestedInput = {
+export type UserUpdateOneWithoutReservationsNestedInput = {
   create?: Prisma.XOR<Prisma.UserCreateWithoutReservationsInput, Prisma.UserUncheckedCreateWithoutReservationsInput>
   connectOrCreate?: Prisma.UserCreateOrConnectWithoutReservationsInput
   upsert?: Prisma.UserUpsertWithoutReservationsInput
+  disconnect?: Prisma.UserWhereInput | boolean
+  delete?: Prisma.UserWhereInput | boolean
   connect?: Prisma.UserWhereUniqueInput
   update?: Prisma.XOR<Prisma.XOR<Prisma.UserUpdateToOneWithWhereWithoutReservationsInput, Prisma.UserUpdateWithoutReservationsInput>, Prisma.UserUncheckedUpdateWithoutReservationsInput>
+}
+
+export type UserCreateWithoutHostelInput = {
+  id?: string
+  firebaseUid: string
+  email: string
+  name?: string | null
+  profileImage?: string | null
+  phone?: string | null
+  floor?: number | null
+  room?: string | null
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  orders?: Prisma.OrderCreateNestedManyWithoutUserInput
+  reservations?: Prisma.InventoryReservationCreateNestedManyWithoutUserInput
+}
+
+export type UserUncheckedCreateWithoutHostelInput = {
+  id?: string
+  firebaseUid: string
+  email: string
+  name?: string | null
+  profileImage?: string | null
+  phone?: string | null
+  floor?: number | null
+  room?: string | null
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  orders?: Prisma.OrderUncheckedCreateNestedManyWithoutUserInput
+  reservations?: Prisma.InventoryReservationUncheckedCreateNestedManyWithoutUserInput
+}
+
+export type UserCreateOrConnectWithoutHostelInput = {
+  where: Prisma.UserWhereUniqueInput
+  create: Prisma.XOR<Prisma.UserCreateWithoutHostelInput, Prisma.UserUncheckedCreateWithoutHostelInput>
+}
+
+export type UserCreateManyHostelInputEnvelope = {
+  data: Prisma.UserCreateManyHostelInput | Prisma.UserCreateManyHostelInput[]
+  skipDuplicates?: boolean
+}
+
+export type UserUpsertWithWhereUniqueWithoutHostelInput = {
+  where: Prisma.UserWhereUniqueInput
+  update: Prisma.XOR<Prisma.UserUpdateWithoutHostelInput, Prisma.UserUncheckedUpdateWithoutHostelInput>
+  create: Prisma.XOR<Prisma.UserCreateWithoutHostelInput, Prisma.UserUncheckedCreateWithoutHostelInput>
+}
+
+export type UserUpdateWithWhereUniqueWithoutHostelInput = {
+  where: Prisma.UserWhereUniqueInput
+  data: Prisma.XOR<Prisma.UserUpdateWithoutHostelInput, Prisma.UserUncheckedUpdateWithoutHostelInput>
+}
+
+export type UserUpdateManyWithWhereWithoutHostelInput = {
+  where: Prisma.UserScalarWhereInput
+  data: Prisma.XOR<Prisma.UserUpdateManyMutationInput, Prisma.UserUncheckedUpdateManyWithoutHostelInput>
+}
+
+export type UserScalarWhereInput = {
+  AND?: Prisma.UserScalarWhereInput | Prisma.UserScalarWhereInput[]
+  OR?: Prisma.UserScalarWhereInput[]
+  NOT?: Prisma.UserScalarWhereInput | Prisma.UserScalarWhereInput[]
+  id?: Prisma.StringFilter<"User"> | string
+  firebaseUid?: Prisma.StringFilter<"User"> | string
+  email?: Prisma.StringFilter<"User"> | string
+  name?: Prisma.StringNullableFilter<"User"> | string | null
+  profileImage?: Prisma.StringNullableFilter<"User"> | string | null
+  phone?: Prisma.StringNullableFilter<"User"> | string | null
+  hostelId?: Prisma.StringNullableFilter<"User"> | string | null
+  floor?: Prisma.IntNullableFilter<"User"> | number | null
+  room?: Prisma.StringNullableFilter<"User"> | string | null
+  createdAt?: Prisma.DateTimeFilter<"User"> | Date | string
+  updatedAt?: Prisma.DateTimeFilter<"User"> | Date | string
 }
 
 export type UserCreateWithoutOrdersInput = {
@@ -555,11 +686,11 @@ export type UserCreateWithoutOrdersInput = {
   name?: string | null
   profileImage?: string | null
   phone?: string | null
-  hostel?: string | null
   floor?: number | null
   room?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
+  hostel?: Prisma.HostelCreateNestedOneWithoutUsersInput
   reservations?: Prisma.InventoryReservationCreateNestedManyWithoutUserInput
 }
 
@@ -570,7 +701,7 @@ export type UserUncheckedCreateWithoutOrdersInput = {
   name?: string | null
   profileImage?: string | null
   phone?: string | null
-  hostel?: string | null
+  hostelId?: string | null
   floor?: number | null
   room?: string | null
   createdAt?: Date | string
@@ -601,11 +732,11 @@ export type UserUpdateWithoutOrdersInput = {
   name?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   profileImage?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   phone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  hostel?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   floor?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   room?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  hostel?: Prisma.HostelUpdateOneWithoutUsersNestedInput
   reservations?: Prisma.InventoryReservationUpdateManyWithoutUserNestedInput
 }
 
@@ -616,7 +747,7 @@ export type UserUncheckedUpdateWithoutOrdersInput = {
   name?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   profileImage?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   phone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  hostel?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  hostelId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   floor?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   room?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -631,11 +762,11 @@ export type UserCreateWithoutReservationsInput = {
   name?: string | null
   profileImage?: string | null
   phone?: string | null
-  hostel?: string | null
   floor?: number | null
   room?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
+  hostel?: Prisma.HostelCreateNestedOneWithoutUsersInput
   orders?: Prisma.OrderCreateNestedManyWithoutUserInput
 }
 
@@ -646,7 +777,7 @@ export type UserUncheckedCreateWithoutReservationsInput = {
   name?: string | null
   profileImage?: string | null
   phone?: string | null
-  hostel?: string | null
+  hostelId?: string | null
   floor?: number | null
   room?: string | null
   createdAt?: Date | string
@@ -677,11 +808,11 @@ export type UserUpdateWithoutReservationsInput = {
   name?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   profileImage?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   phone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  hostel?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   floor?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   room?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  hostel?: Prisma.HostelUpdateOneWithoutUsersNestedInput
   orders?: Prisma.OrderUpdateManyWithoutUserNestedInput
 }
 
@@ -692,12 +823,68 @@ export type UserUncheckedUpdateWithoutReservationsInput = {
   name?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   profileImage?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   phone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  hostel?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  hostelId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   floor?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   room?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   orders?: Prisma.OrderUncheckedUpdateManyWithoutUserNestedInput
+}
+
+export type UserCreateManyHostelInput = {
+  id?: string
+  firebaseUid: string
+  email: string
+  name?: string | null
+  profileImage?: string | null
+  phone?: string | null
+  floor?: number | null
+  room?: string | null
+  createdAt?: Date | string
+  updatedAt?: Date | string
+}
+
+export type UserUpdateWithoutHostelInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  firebaseUid?: Prisma.StringFieldUpdateOperationsInput | string
+  email?: Prisma.StringFieldUpdateOperationsInput | string
+  name?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  profileImage?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  phone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  floor?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  room?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  orders?: Prisma.OrderUpdateManyWithoutUserNestedInput
+  reservations?: Prisma.InventoryReservationUpdateManyWithoutUserNestedInput
+}
+
+export type UserUncheckedUpdateWithoutHostelInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  firebaseUid?: Prisma.StringFieldUpdateOperationsInput | string
+  email?: Prisma.StringFieldUpdateOperationsInput | string
+  name?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  profileImage?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  phone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  floor?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  room?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  orders?: Prisma.OrderUncheckedUpdateManyWithoutUserNestedInput
+  reservations?: Prisma.InventoryReservationUncheckedUpdateManyWithoutUserNestedInput
+}
+
+export type UserUncheckedUpdateManyWithoutHostelInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  firebaseUid?: Prisma.StringFieldUpdateOperationsInput | string
+  email?: Prisma.StringFieldUpdateOperationsInput | string
+  name?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  profileImage?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  phone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  floor?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  room?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
 
 
@@ -747,11 +934,12 @@ export type UserSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = r
   name?: boolean
   profileImage?: boolean
   phone?: boolean
-  hostel?: boolean
+  hostelId?: boolean
   floor?: boolean
   room?: boolean
   createdAt?: boolean
   updatedAt?: boolean
+  hostel?: boolean | Prisma.User$hostelArgs<ExtArgs>
   orders?: boolean | Prisma.User$ordersArgs<ExtArgs>
   reservations?: boolean | Prisma.User$reservationsArgs<ExtArgs>
   _count?: boolean | Prisma.UserCountOutputTypeDefaultArgs<ExtArgs>
@@ -764,11 +952,12 @@ export type UserSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Extensio
   name?: boolean
   profileImage?: boolean
   phone?: boolean
-  hostel?: boolean
+  hostelId?: boolean
   floor?: boolean
   room?: boolean
   createdAt?: boolean
   updatedAt?: boolean
+  hostel?: boolean | Prisma.User$hostelArgs<ExtArgs>
 }, ExtArgs["result"]["user"]>
 
 export type UserSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
@@ -778,11 +967,12 @@ export type UserSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensio
   name?: boolean
   profileImage?: boolean
   phone?: boolean
-  hostel?: boolean
+  hostelId?: boolean
   floor?: boolean
   room?: boolean
   createdAt?: boolean
   updatedAt?: boolean
+  hostel?: boolean | Prisma.User$hostelArgs<ExtArgs>
 }, ExtArgs["result"]["user"]>
 
 export type UserSelectScalar = {
@@ -792,25 +982,31 @@ export type UserSelectScalar = {
   name?: boolean
   profileImage?: boolean
   phone?: boolean
-  hostel?: boolean
+  hostelId?: boolean
   floor?: boolean
   room?: boolean
   createdAt?: boolean
   updatedAt?: boolean
 }
 
-export type UserOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "firebaseUid" | "email" | "name" | "profileImage" | "phone" | "hostel" | "floor" | "room" | "createdAt" | "updatedAt", ExtArgs["result"]["user"]>
+export type UserOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "firebaseUid" | "email" | "name" | "profileImage" | "phone" | "hostelId" | "floor" | "room" | "createdAt" | "updatedAt", ExtArgs["result"]["user"]>
 export type UserInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  hostel?: boolean | Prisma.User$hostelArgs<ExtArgs>
   orders?: boolean | Prisma.User$ordersArgs<ExtArgs>
   reservations?: boolean | Prisma.User$reservationsArgs<ExtArgs>
   _count?: boolean | Prisma.UserCountOutputTypeDefaultArgs<ExtArgs>
 }
-export type UserIncludeCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {}
-export type UserIncludeUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {}
+export type UserIncludeCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  hostel?: boolean | Prisma.User$hostelArgs<ExtArgs>
+}
+export type UserIncludeUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  hostel?: boolean | Prisma.User$hostelArgs<ExtArgs>
+}
 
 export type $UserPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   name: "User"
   objects: {
+    hostel: Prisma.$HostelPayload<ExtArgs> | null
     orders: Prisma.$OrderPayload<ExtArgs>[]
     reservations: Prisma.$InventoryReservationPayload<ExtArgs>[]
   }
@@ -821,7 +1017,7 @@ export type $UserPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs =
     name: string | null
     profileImage: string | null
     phone: string | null
-    hostel: string | null
+    hostelId: string | null
     floor: number | null
     room: string | null
     createdAt: Date
@@ -1220,6 +1416,7 @@ readonly fields: UserFieldRefs;
  */
 export interface Prisma__UserClient<T, Null = never, ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
   readonly [Symbol.toStringTag]: "PrismaPromise"
+  hostel<T extends Prisma.User$hostelArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.User$hostelArgs<ExtArgs>>): Prisma.Prisma__HostelClient<runtime.Types.Result.GetResult<Prisma.$HostelPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
   orders<T extends Prisma.User$ordersArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.User$ordersArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$OrderPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   reservations<T extends Prisma.User$reservationsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.User$reservationsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$InventoryReservationPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   /**
@@ -1257,7 +1454,7 @@ export interface UserFieldRefs {
   readonly name: Prisma.FieldRef<"User", 'String'>
   readonly profileImage: Prisma.FieldRef<"User", 'String'>
   readonly phone: Prisma.FieldRef<"User", 'String'>
-  readonly hostel: Prisma.FieldRef<"User", 'String'>
+  readonly hostelId: Prisma.FieldRef<"User", 'String'>
   readonly floor: Prisma.FieldRef<"User", 'Int'>
   readonly room: Prisma.FieldRef<"User", 'String'>
   readonly createdAt: Prisma.FieldRef<"User", 'DateTime'>
@@ -1516,6 +1713,10 @@ export type UserCreateManyAndReturnArgs<ExtArgs extends runtime.Types.Extensions
    */
   data: Prisma.UserCreateManyInput | Prisma.UserCreateManyInput[]
   skipDuplicates?: boolean
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.UserIncludeCreateManyAndReturn<ExtArgs> | null
 }
 
 /**
@@ -1586,6 +1787,10 @@ export type UserUpdateManyAndReturnArgs<ExtArgs extends runtime.Types.Extensions
    * Limit how many Users to update.
    */
   limit?: number
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.UserIncludeUpdateManyAndReturn<ExtArgs> | null
 }
 
 /**
@@ -1652,6 +1857,25 @@ export type UserDeleteManyArgs<ExtArgs extends runtime.Types.Extensions.Internal
    * Limit how many Users to delete.
    */
   limit?: number
+}
+
+/**
+ * User.hostel
+ */
+export type User$hostelArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the Hostel
+   */
+  select?: Prisma.HostelSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the Hostel
+   */
+  omit?: Prisma.HostelOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.HostelInclude<ExtArgs> | null
+  where?: Prisma.HostelWhereInput
 }
 
 /**

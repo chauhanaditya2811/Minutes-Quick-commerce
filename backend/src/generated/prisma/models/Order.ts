@@ -44,12 +44,15 @@ export type OrderMinAggregateOutputType = {
   id: string | null
   orderNumber: string | null
   userId: string | null
+  guestAccessTokenHash: string | null
+  hostelId: string | null
   subtotal: number | null
   deliveryFee: number | null
   total: number | null
   paymentStatus: $Enums.PaymentStatus | null
   orderStatus: $Enums.OrderStatus | null
   isFiveMinute: boolean | null
+  inventoryShortfall: boolean | null
   customerName: string | null
   customerEmail: string | null
   customerImage: string | null
@@ -65,12 +68,15 @@ export type OrderMaxAggregateOutputType = {
   id: string | null
   orderNumber: string | null
   userId: string | null
+  guestAccessTokenHash: string | null
+  hostelId: string | null
   subtotal: number | null
   deliveryFee: number | null
   total: number | null
   paymentStatus: $Enums.PaymentStatus | null
   orderStatus: $Enums.OrderStatus | null
   isFiveMinute: boolean | null
+  inventoryShortfall: boolean | null
   customerName: string | null
   customerEmail: string | null
   customerImage: string | null
@@ -86,12 +92,15 @@ export type OrderCountAggregateOutputType = {
   id: number
   orderNumber: number
   userId: number
+  guestAccessTokenHash: number
+  hostelId: number
   subtotal: number
   deliveryFee: number
   total: number
   paymentStatus: number
   orderStatus: number
   isFiveMinute: number
+  inventoryShortfall: number
   customerName: number
   customerEmail: number
   customerImage: number
@@ -123,12 +132,15 @@ export type OrderMinAggregateInputType = {
   id?: true
   orderNumber?: true
   userId?: true
+  guestAccessTokenHash?: true
+  hostelId?: true
   subtotal?: true
   deliveryFee?: true
   total?: true
   paymentStatus?: true
   orderStatus?: true
   isFiveMinute?: true
+  inventoryShortfall?: true
   customerName?: true
   customerEmail?: true
   customerImage?: true
@@ -144,12 +156,15 @@ export type OrderMaxAggregateInputType = {
   id?: true
   orderNumber?: true
   userId?: true
+  guestAccessTokenHash?: true
+  hostelId?: true
   subtotal?: true
   deliveryFee?: true
   total?: true
   paymentStatus?: true
   orderStatus?: true
   isFiveMinute?: true
+  inventoryShortfall?: true
   customerName?: true
   customerEmail?: true
   customerImage?: true
@@ -165,12 +180,15 @@ export type OrderCountAggregateInputType = {
   id?: true
   orderNumber?: true
   userId?: true
+  guestAccessTokenHash?: true
+  hostelId?: true
   subtotal?: true
   deliveryFee?: true
   total?: true
   paymentStatus?: true
   orderStatus?: true
   isFiveMinute?: true
+  inventoryShortfall?: true
   customerName?: true
   customerEmail?: true
   customerImage?: true
@@ -272,15 +290,18 @@ export type OrderGroupByArgs<ExtArgs extends runtime.Types.Extensions.InternalAr
 export type OrderGroupByOutputType = {
   id: string
   orderNumber: string
-  userId: string
+  userId: string | null
+  guestAccessTokenHash: string | null
+  hostelId: string | null
   subtotal: number
   deliveryFee: number
   total: number
   paymentStatus: $Enums.PaymentStatus
   orderStatus: $Enums.OrderStatus
   isFiveMinute: boolean
+  inventoryShortfall: boolean
   customerName: string
-  customerEmail: string
+  customerEmail: string | null
   customerImage: string | null
   customerPhone: string
   customerHostel: string
@@ -316,15 +337,18 @@ export type OrderWhereInput = {
   NOT?: Prisma.OrderWhereInput | Prisma.OrderWhereInput[]
   id?: Prisma.StringFilter<"Order"> | string
   orderNumber?: Prisma.StringFilter<"Order"> | string
-  userId?: Prisma.StringFilter<"Order"> | string
+  userId?: Prisma.StringNullableFilter<"Order"> | string | null
+  guestAccessTokenHash?: Prisma.StringNullableFilter<"Order"> | string | null
+  hostelId?: Prisma.StringNullableFilter<"Order"> | string | null
   subtotal?: Prisma.IntFilter<"Order"> | number
   deliveryFee?: Prisma.IntFilter<"Order"> | number
   total?: Prisma.IntFilter<"Order"> | number
   paymentStatus?: Prisma.EnumPaymentStatusFilter<"Order"> | $Enums.PaymentStatus
   orderStatus?: Prisma.EnumOrderStatusFilter<"Order"> | $Enums.OrderStatus
   isFiveMinute?: Prisma.BoolFilter<"Order"> | boolean
+  inventoryShortfall?: Prisma.BoolFilter<"Order"> | boolean
   customerName?: Prisma.StringFilter<"Order"> | string
-  customerEmail?: Prisma.StringFilter<"Order"> | string
+  customerEmail?: Prisma.StringNullableFilter<"Order"> | string | null
   customerImage?: Prisma.StringNullableFilter<"Order"> | string | null
   customerPhone?: Prisma.StringFilter<"Order"> | string
   customerHostel?: Prisma.StringFilter<"Order"> | string
@@ -332,7 +356,8 @@ export type OrderWhereInput = {
   customerRoom?: Prisma.StringFilter<"Order"> | string
   createdAt?: Prisma.DateTimeFilter<"Order"> | Date | string
   deliveredAt?: Prisma.DateTimeNullableFilter<"Order"> | Date | string | null
-  user?: Prisma.XOR<Prisma.UserScalarRelationFilter, Prisma.UserWhereInput>
+  user?: Prisma.XOR<Prisma.UserNullableScalarRelationFilter, Prisma.UserWhereInput> | null
+  hostel?: Prisma.XOR<Prisma.HostelNullableScalarRelationFilter, Prisma.HostelWhereInput> | null
   items?: Prisma.OrderItemListRelationFilter
   payment?: Prisma.XOR<Prisma.PaymentNullableScalarRelationFilter, Prisma.PaymentWhereInput> | null
   paymentAttempts?: Prisma.PaymentAttemptListRelationFilter
@@ -342,15 +367,18 @@ export type OrderWhereInput = {
 export type OrderOrderByWithRelationInput = {
   id?: Prisma.SortOrder
   orderNumber?: Prisma.SortOrder
-  userId?: Prisma.SortOrder
+  userId?: Prisma.SortOrderInput | Prisma.SortOrder
+  guestAccessTokenHash?: Prisma.SortOrderInput | Prisma.SortOrder
+  hostelId?: Prisma.SortOrderInput | Prisma.SortOrder
   subtotal?: Prisma.SortOrder
   deliveryFee?: Prisma.SortOrder
   total?: Prisma.SortOrder
   paymentStatus?: Prisma.SortOrder
   orderStatus?: Prisma.SortOrder
   isFiveMinute?: Prisma.SortOrder
+  inventoryShortfall?: Prisma.SortOrder
   customerName?: Prisma.SortOrder
-  customerEmail?: Prisma.SortOrder
+  customerEmail?: Prisma.SortOrderInput | Prisma.SortOrder
   customerImage?: Prisma.SortOrderInput | Prisma.SortOrder
   customerPhone?: Prisma.SortOrder
   customerHostel?: Prisma.SortOrder
@@ -359,6 +387,7 @@ export type OrderOrderByWithRelationInput = {
   createdAt?: Prisma.SortOrder
   deliveredAt?: Prisma.SortOrderInput | Prisma.SortOrder
   user?: Prisma.UserOrderByWithRelationInput
+  hostel?: Prisma.HostelOrderByWithRelationInput
   items?: Prisma.OrderItemOrderByRelationAggregateInput
   payment?: Prisma.PaymentOrderByWithRelationInput
   paymentAttempts?: Prisma.PaymentAttemptOrderByRelationAggregateInput
@@ -368,18 +397,21 @@ export type OrderOrderByWithRelationInput = {
 export type OrderWhereUniqueInput = Prisma.AtLeast<{
   id?: string
   orderNumber?: string
+  guestAccessTokenHash?: string
   AND?: Prisma.OrderWhereInput | Prisma.OrderWhereInput[]
   OR?: Prisma.OrderWhereInput[]
   NOT?: Prisma.OrderWhereInput | Prisma.OrderWhereInput[]
-  userId?: Prisma.StringFilter<"Order"> | string
+  userId?: Prisma.StringNullableFilter<"Order"> | string | null
+  hostelId?: Prisma.StringNullableFilter<"Order"> | string | null
   subtotal?: Prisma.IntFilter<"Order"> | number
   deliveryFee?: Prisma.IntFilter<"Order"> | number
   total?: Prisma.IntFilter<"Order"> | number
   paymentStatus?: Prisma.EnumPaymentStatusFilter<"Order"> | $Enums.PaymentStatus
   orderStatus?: Prisma.EnumOrderStatusFilter<"Order"> | $Enums.OrderStatus
   isFiveMinute?: Prisma.BoolFilter<"Order"> | boolean
+  inventoryShortfall?: Prisma.BoolFilter<"Order"> | boolean
   customerName?: Prisma.StringFilter<"Order"> | string
-  customerEmail?: Prisma.StringFilter<"Order"> | string
+  customerEmail?: Prisma.StringNullableFilter<"Order"> | string | null
   customerImage?: Prisma.StringNullableFilter<"Order"> | string | null
   customerPhone?: Prisma.StringFilter<"Order"> | string
   customerHostel?: Prisma.StringFilter<"Order"> | string
@@ -387,25 +419,29 @@ export type OrderWhereUniqueInput = Prisma.AtLeast<{
   customerRoom?: Prisma.StringFilter<"Order"> | string
   createdAt?: Prisma.DateTimeFilter<"Order"> | Date | string
   deliveredAt?: Prisma.DateTimeNullableFilter<"Order"> | Date | string | null
-  user?: Prisma.XOR<Prisma.UserScalarRelationFilter, Prisma.UserWhereInput>
+  user?: Prisma.XOR<Prisma.UserNullableScalarRelationFilter, Prisma.UserWhereInput> | null
+  hostel?: Prisma.XOR<Prisma.HostelNullableScalarRelationFilter, Prisma.HostelWhereInput> | null
   items?: Prisma.OrderItemListRelationFilter
   payment?: Prisma.XOR<Prisma.PaymentNullableScalarRelationFilter, Prisma.PaymentWhereInput> | null
   paymentAttempts?: Prisma.PaymentAttemptListRelationFilter
   reservations?: Prisma.InventoryReservationListRelationFilter
-}, "id" | "orderNumber">
+}, "id" | "orderNumber" | "guestAccessTokenHash">
 
 export type OrderOrderByWithAggregationInput = {
   id?: Prisma.SortOrder
   orderNumber?: Prisma.SortOrder
-  userId?: Prisma.SortOrder
+  userId?: Prisma.SortOrderInput | Prisma.SortOrder
+  guestAccessTokenHash?: Prisma.SortOrderInput | Prisma.SortOrder
+  hostelId?: Prisma.SortOrderInput | Prisma.SortOrder
   subtotal?: Prisma.SortOrder
   deliveryFee?: Prisma.SortOrder
   total?: Prisma.SortOrder
   paymentStatus?: Prisma.SortOrder
   orderStatus?: Prisma.SortOrder
   isFiveMinute?: Prisma.SortOrder
+  inventoryShortfall?: Prisma.SortOrder
   customerName?: Prisma.SortOrder
-  customerEmail?: Prisma.SortOrder
+  customerEmail?: Prisma.SortOrderInput | Prisma.SortOrder
   customerImage?: Prisma.SortOrderInput | Prisma.SortOrder
   customerPhone?: Prisma.SortOrder
   customerHostel?: Prisma.SortOrder
@@ -426,15 +462,18 @@ export type OrderScalarWhereWithAggregatesInput = {
   NOT?: Prisma.OrderScalarWhereWithAggregatesInput | Prisma.OrderScalarWhereWithAggregatesInput[]
   id?: Prisma.StringWithAggregatesFilter<"Order"> | string
   orderNumber?: Prisma.StringWithAggregatesFilter<"Order"> | string
-  userId?: Prisma.StringWithAggregatesFilter<"Order"> | string
+  userId?: Prisma.StringNullableWithAggregatesFilter<"Order"> | string | null
+  guestAccessTokenHash?: Prisma.StringNullableWithAggregatesFilter<"Order"> | string | null
+  hostelId?: Prisma.StringNullableWithAggregatesFilter<"Order"> | string | null
   subtotal?: Prisma.IntWithAggregatesFilter<"Order"> | number
   deliveryFee?: Prisma.IntWithAggregatesFilter<"Order"> | number
   total?: Prisma.IntWithAggregatesFilter<"Order"> | number
   paymentStatus?: Prisma.EnumPaymentStatusWithAggregatesFilter<"Order"> | $Enums.PaymentStatus
   orderStatus?: Prisma.EnumOrderStatusWithAggregatesFilter<"Order"> | $Enums.OrderStatus
   isFiveMinute?: Prisma.BoolWithAggregatesFilter<"Order"> | boolean
+  inventoryShortfall?: Prisma.BoolWithAggregatesFilter<"Order"> | boolean
   customerName?: Prisma.StringWithAggregatesFilter<"Order"> | string
-  customerEmail?: Prisma.StringWithAggregatesFilter<"Order"> | string
+  customerEmail?: Prisma.StringNullableWithAggregatesFilter<"Order"> | string | null
   customerImage?: Prisma.StringNullableWithAggregatesFilter<"Order"> | string | null
   customerPhone?: Prisma.StringWithAggregatesFilter<"Order"> | string
   customerHostel?: Prisma.StringWithAggregatesFilter<"Order"> | string
@@ -447,14 +486,16 @@ export type OrderScalarWhereWithAggregatesInput = {
 export type OrderCreateInput = {
   id?: string
   orderNumber: string
+  guestAccessTokenHash?: string | null
   subtotal: number
   deliveryFee: number
   total: number
   paymentStatus: $Enums.PaymentStatus
   orderStatus: $Enums.OrderStatus
   isFiveMinute?: boolean
+  inventoryShortfall?: boolean
   customerName: string
-  customerEmail: string
+  customerEmail?: string | null
   customerImage?: string | null
   customerPhone: string
   customerHostel: string
@@ -462,7 +503,8 @@ export type OrderCreateInput = {
   customerRoom: string
   createdAt?: Date | string
   deliveredAt?: Date | string | null
-  user: Prisma.UserCreateNestedOneWithoutOrdersInput
+  user?: Prisma.UserCreateNestedOneWithoutOrdersInput
+  hostel?: Prisma.HostelCreateNestedOneWithoutOrdersInput
   items?: Prisma.OrderItemCreateNestedManyWithoutOrderInput
   payment?: Prisma.PaymentCreateNestedOneWithoutOrderInput
   paymentAttempts?: Prisma.PaymentAttemptCreateNestedManyWithoutOrderInput
@@ -472,15 +514,18 @@ export type OrderCreateInput = {
 export type OrderUncheckedCreateInput = {
   id?: string
   orderNumber: string
-  userId: string
+  userId?: string | null
+  guestAccessTokenHash?: string | null
+  hostelId?: string | null
   subtotal: number
   deliveryFee: number
   total: number
   paymentStatus: $Enums.PaymentStatus
   orderStatus: $Enums.OrderStatus
   isFiveMinute?: boolean
+  inventoryShortfall?: boolean
   customerName: string
-  customerEmail: string
+  customerEmail?: string | null
   customerImage?: string | null
   customerPhone: string
   customerHostel: string
@@ -497,14 +542,16 @@ export type OrderUncheckedCreateInput = {
 export type OrderUpdateInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   orderNumber?: Prisma.StringFieldUpdateOperationsInput | string
+  guestAccessTokenHash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   subtotal?: Prisma.IntFieldUpdateOperationsInput | number
   deliveryFee?: Prisma.IntFieldUpdateOperationsInput | number
   total?: Prisma.IntFieldUpdateOperationsInput | number
   paymentStatus?: Prisma.EnumPaymentStatusFieldUpdateOperationsInput | $Enums.PaymentStatus
   orderStatus?: Prisma.EnumOrderStatusFieldUpdateOperationsInput | $Enums.OrderStatus
   isFiveMinute?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  inventoryShortfall?: Prisma.BoolFieldUpdateOperationsInput | boolean
   customerName?: Prisma.StringFieldUpdateOperationsInput | string
-  customerEmail?: Prisma.StringFieldUpdateOperationsInput | string
+  customerEmail?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   customerImage?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   customerPhone?: Prisma.StringFieldUpdateOperationsInput | string
   customerHostel?: Prisma.StringFieldUpdateOperationsInput | string
@@ -512,7 +559,8 @@ export type OrderUpdateInput = {
   customerRoom?: Prisma.StringFieldUpdateOperationsInput | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   deliveredAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  user?: Prisma.UserUpdateOneRequiredWithoutOrdersNestedInput
+  user?: Prisma.UserUpdateOneWithoutOrdersNestedInput
+  hostel?: Prisma.HostelUpdateOneWithoutOrdersNestedInput
   items?: Prisma.OrderItemUpdateManyWithoutOrderNestedInput
   payment?: Prisma.PaymentUpdateOneWithoutOrderNestedInput
   paymentAttempts?: Prisma.PaymentAttemptUpdateManyWithoutOrderNestedInput
@@ -522,15 +570,18 @@ export type OrderUpdateInput = {
 export type OrderUncheckedUpdateInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   orderNumber?: Prisma.StringFieldUpdateOperationsInput | string
-  userId?: Prisma.StringFieldUpdateOperationsInput | string
+  userId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  guestAccessTokenHash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  hostelId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   subtotal?: Prisma.IntFieldUpdateOperationsInput | number
   deliveryFee?: Prisma.IntFieldUpdateOperationsInput | number
   total?: Prisma.IntFieldUpdateOperationsInput | number
   paymentStatus?: Prisma.EnumPaymentStatusFieldUpdateOperationsInput | $Enums.PaymentStatus
   orderStatus?: Prisma.EnumOrderStatusFieldUpdateOperationsInput | $Enums.OrderStatus
   isFiveMinute?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  inventoryShortfall?: Prisma.BoolFieldUpdateOperationsInput | boolean
   customerName?: Prisma.StringFieldUpdateOperationsInput | string
-  customerEmail?: Prisma.StringFieldUpdateOperationsInput | string
+  customerEmail?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   customerImage?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   customerPhone?: Prisma.StringFieldUpdateOperationsInput | string
   customerHostel?: Prisma.StringFieldUpdateOperationsInput | string
@@ -547,15 +598,18 @@ export type OrderUncheckedUpdateInput = {
 export type OrderCreateManyInput = {
   id?: string
   orderNumber: string
-  userId: string
+  userId?: string | null
+  guestAccessTokenHash?: string | null
+  hostelId?: string | null
   subtotal: number
   deliveryFee: number
   total: number
   paymentStatus: $Enums.PaymentStatus
   orderStatus: $Enums.OrderStatus
   isFiveMinute?: boolean
+  inventoryShortfall?: boolean
   customerName: string
-  customerEmail: string
+  customerEmail?: string | null
   customerImage?: string | null
   customerPhone: string
   customerHostel: string
@@ -568,14 +622,16 @@ export type OrderCreateManyInput = {
 export type OrderUpdateManyMutationInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   orderNumber?: Prisma.StringFieldUpdateOperationsInput | string
+  guestAccessTokenHash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   subtotal?: Prisma.IntFieldUpdateOperationsInput | number
   deliveryFee?: Prisma.IntFieldUpdateOperationsInput | number
   total?: Prisma.IntFieldUpdateOperationsInput | number
   paymentStatus?: Prisma.EnumPaymentStatusFieldUpdateOperationsInput | $Enums.PaymentStatus
   orderStatus?: Prisma.EnumOrderStatusFieldUpdateOperationsInput | $Enums.OrderStatus
   isFiveMinute?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  inventoryShortfall?: Prisma.BoolFieldUpdateOperationsInput | boolean
   customerName?: Prisma.StringFieldUpdateOperationsInput | string
-  customerEmail?: Prisma.StringFieldUpdateOperationsInput | string
+  customerEmail?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   customerImage?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   customerPhone?: Prisma.StringFieldUpdateOperationsInput | string
   customerHostel?: Prisma.StringFieldUpdateOperationsInput | string
@@ -588,15 +644,18 @@ export type OrderUpdateManyMutationInput = {
 export type OrderUncheckedUpdateManyInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   orderNumber?: Prisma.StringFieldUpdateOperationsInput | string
-  userId?: Prisma.StringFieldUpdateOperationsInput | string
+  userId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  guestAccessTokenHash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  hostelId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   subtotal?: Prisma.IntFieldUpdateOperationsInput | number
   deliveryFee?: Prisma.IntFieldUpdateOperationsInput | number
   total?: Prisma.IntFieldUpdateOperationsInput | number
   paymentStatus?: Prisma.EnumPaymentStatusFieldUpdateOperationsInput | $Enums.PaymentStatus
   orderStatus?: Prisma.EnumOrderStatusFieldUpdateOperationsInput | $Enums.OrderStatus
   isFiveMinute?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  inventoryShortfall?: Prisma.BoolFieldUpdateOperationsInput | boolean
   customerName?: Prisma.StringFieldUpdateOperationsInput | string
-  customerEmail?: Prisma.StringFieldUpdateOperationsInput | string
+  customerEmail?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   customerImage?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   customerPhone?: Prisma.StringFieldUpdateOperationsInput | string
   customerHostel?: Prisma.StringFieldUpdateOperationsInput | string
@@ -620,12 +679,15 @@ export type OrderCountOrderByAggregateInput = {
   id?: Prisma.SortOrder
   orderNumber?: Prisma.SortOrder
   userId?: Prisma.SortOrder
+  guestAccessTokenHash?: Prisma.SortOrder
+  hostelId?: Prisma.SortOrder
   subtotal?: Prisma.SortOrder
   deliveryFee?: Prisma.SortOrder
   total?: Prisma.SortOrder
   paymentStatus?: Prisma.SortOrder
   orderStatus?: Prisma.SortOrder
   isFiveMinute?: Prisma.SortOrder
+  inventoryShortfall?: Prisma.SortOrder
   customerName?: Prisma.SortOrder
   customerEmail?: Prisma.SortOrder
   customerImage?: Prisma.SortOrder
@@ -648,12 +710,15 @@ export type OrderMaxOrderByAggregateInput = {
   id?: Prisma.SortOrder
   orderNumber?: Prisma.SortOrder
   userId?: Prisma.SortOrder
+  guestAccessTokenHash?: Prisma.SortOrder
+  hostelId?: Prisma.SortOrder
   subtotal?: Prisma.SortOrder
   deliveryFee?: Prisma.SortOrder
   total?: Prisma.SortOrder
   paymentStatus?: Prisma.SortOrder
   orderStatus?: Prisma.SortOrder
   isFiveMinute?: Prisma.SortOrder
+  inventoryShortfall?: Prisma.SortOrder
   customerName?: Prisma.SortOrder
   customerEmail?: Prisma.SortOrder
   customerImage?: Prisma.SortOrder
@@ -669,12 +734,15 @@ export type OrderMinOrderByAggregateInput = {
   id?: Prisma.SortOrder
   orderNumber?: Prisma.SortOrder
   userId?: Prisma.SortOrder
+  guestAccessTokenHash?: Prisma.SortOrder
+  hostelId?: Prisma.SortOrder
   subtotal?: Prisma.SortOrder
   deliveryFee?: Prisma.SortOrder
   total?: Prisma.SortOrder
   paymentStatus?: Prisma.SortOrder
   orderStatus?: Prisma.SortOrder
   isFiveMinute?: Prisma.SortOrder
+  inventoryShortfall?: Prisma.SortOrder
   customerName?: Prisma.SortOrder
   customerEmail?: Prisma.SortOrder
   customerImage?: Prisma.SortOrder
@@ -742,6 +810,48 @@ export type OrderUncheckedUpdateManyWithoutUserNestedInput = {
   connect?: Prisma.OrderWhereUniqueInput | Prisma.OrderWhereUniqueInput[]
   update?: Prisma.OrderUpdateWithWhereUniqueWithoutUserInput | Prisma.OrderUpdateWithWhereUniqueWithoutUserInput[]
   updateMany?: Prisma.OrderUpdateManyWithWhereWithoutUserInput | Prisma.OrderUpdateManyWithWhereWithoutUserInput[]
+  deleteMany?: Prisma.OrderScalarWhereInput | Prisma.OrderScalarWhereInput[]
+}
+
+export type OrderCreateNestedManyWithoutHostelInput = {
+  create?: Prisma.XOR<Prisma.OrderCreateWithoutHostelInput, Prisma.OrderUncheckedCreateWithoutHostelInput> | Prisma.OrderCreateWithoutHostelInput[] | Prisma.OrderUncheckedCreateWithoutHostelInput[]
+  connectOrCreate?: Prisma.OrderCreateOrConnectWithoutHostelInput | Prisma.OrderCreateOrConnectWithoutHostelInput[]
+  createMany?: Prisma.OrderCreateManyHostelInputEnvelope
+  connect?: Prisma.OrderWhereUniqueInput | Prisma.OrderWhereUniqueInput[]
+}
+
+export type OrderUncheckedCreateNestedManyWithoutHostelInput = {
+  create?: Prisma.XOR<Prisma.OrderCreateWithoutHostelInput, Prisma.OrderUncheckedCreateWithoutHostelInput> | Prisma.OrderCreateWithoutHostelInput[] | Prisma.OrderUncheckedCreateWithoutHostelInput[]
+  connectOrCreate?: Prisma.OrderCreateOrConnectWithoutHostelInput | Prisma.OrderCreateOrConnectWithoutHostelInput[]
+  createMany?: Prisma.OrderCreateManyHostelInputEnvelope
+  connect?: Prisma.OrderWhereUniqueInput | Prisma.OrderWhereUniqueInput[]
+}
+
+export type OrderUpdateManyWithoutHostelNestedInput = {
+  create?: Prisma.XOR<Prisma.OrderCreateWithoutHostelInput, Prisma.OrderUncheckedCreateWithoutHostelInput> | Prisma.OrderCreateWithoutHostelInput[] | Prisma.OrderUncheckedCreateWithoutHostelInput[]
+  connectOrCreate?: Prisma.OrderCreateOrConnectWithoutHostelInput | Prisma.OrderCreateOrConnectWithoutHostelInput[]
+  upsert?: Prisma.OrderUpsertWithWhereUniqueWithoutHostelInput | Prisma.OrderUpsertWithWhereUniqueWithoutHostelInput[]
+  createMany?: Prisma.OrderCreateManyHostelInputEnvelope
+  set?: Prisma.OrderWhereUniqueInput | Prisma.OrderWhereUniqueInput[]
+  disconnect?: Prisma.OrderWhereUniqueInput | Prisma.OrderWhereUniqueInput[]
+  delete?: Prisma.OrderWhereUniqueInput | Prisma.OrderWhereUniqueInput[]
+  connect?: Prisma.OrderWhereUniqueInput | Prisma.OrderWhereUniqueInput[]
+  update?: Prisma.OrderUpdateWithWhereUniqueWithoutHostelInput | Prisma.OrderUpdateWithWhereUniqueWithoutHostelInput[]
+  updateMany?: Prisma.OrderUpdateManyWithWhereWithoutHostelInput | Prisma.OrderUpdateManyWithWhereWithoutHostelInput[]
+  deleteMany?: Prisma.OrderScalarWhereInput | Prisma.OrderScalarWhereInput[]
+}
+
+export type OrderUncheckedUpdateManyWithoutHostelNestedInput = {
+  create?: Prisma.XOR<Prisma.OrderCreateWithoutHostelInput, Prisma.OrderUncheckedCreateWithoutHostelInput> | Prisma.OrderCreateWithoutHostelInput[] | Prisma.OrderUncheckedCreateWithoutHostelInput[]
+  connectOrCreate?: Prisma.OrderCreateOrConnectWithoutHostelInput | Prisma.OrderCreateOrConnectWithoutHostelInput[]
+  upsert?: Prisma.OrderUpsertWithWhereUniqueWithoutHostelInput | Prisma.OrderUpsertWithWhereUniqueWithoutHostelInput[]
+  createMany?: Prisma.OrderCreateManyHostelInputEnvelope
+  set?: Prisma.OrderWhereUniqueInput | Prisma.OrderWhereUniqueInput[]
+  disconnect?: Prisma.OrderWhereUniqueInput | Prisma.OrderWhereUniqueInput[]
+  delete?: Prisma.OrderWhereUniqueInput | Prisma.OrderWhereUniqueInput[]
+  connect?: Prisma.OrderWhereUniqueInput | Prisma.OrderWhereUniqueInput[]
+  update?: Prisma.OrderUpdateWithWhereUniqueWithoutHostelInput | Prisma.OrderUpdateWithWhereUniqueWithoutHostelInput[]
+  updateMany?: Prisma.OrderUpdateManyWithWhereWithoutHostelInput | Prisma.OrderUpdateManyWithWhereWithoutHostelInput[]
   deleteMany?: Prisma.OrderScalarWhereInput | Prisma.OrderScalarWhereInput[]
 }
 
@@ -820,14 +930,16 @@ export type OrderUpdateOneWithoutReservationsNestedInput = {
 export type OrderCreateWithoutUserInput = {
   id?: string
   orderNumber: string
+  guestAccessTokenHash?: string | null
   subtotal: number
   deliveryFee: number
   total: number
   paymentStatus: $Enums.PaymentStatus
   orderStatus: $Enums.OrderStatus
   isFiveMinute?: boolean
+  inventoryShortfall?: boolean
   customerName: string
-  customerEmail: string
+  customerEmail?: string | null
   customerImage?: string | null
   customerPhone: string
   customerHostel: string
@@ -835,6 +947,7 @@ export type OrderCreateWithoutUserInput = {
   customerRoom: string
   createdAt?: Date | string
   deliveredAt?: Date | string | null
+  hostel?: Prisma.HostelCreateNestedOneWithoutOrdersInput
   items?: Prisma.OrderItemCreateNestedManyWithoutOrderInput
   payment?: Prisma.PaymentCreateNestedOneWithoutOrderInput
   paymentAttempts?: Prisma.PaymentAttemptCreateNestedManyWithoutOrderInput
@@ -844,14 +957,17 @@ export type OrderCreateWithoutUserInput = {
 export type OrderUncheckedCreateWithoutUserInput = {
   id?: string
   orderNumber: string
+  guestAccessTokenHash?: string | null
+  hostelId?: string | null
   subtotal: number
   deliveryFee: number
   total: number
   paymentStatus: $Enums.PaymentStatus
   orderStatus: $Enums.OrderStatus
   isFiveMinute?: boolean
+  inventoryShortfall?: boolean
   customerName: string
-  customerEmail: string
+  customerEmail?: string | null
   customerImage?: string | null
   customerPhone: string
   customerHostel: string
@@ -897,15 +1013,18 @@ export type OrderScalarWhereInput = {
   NOT?: Prisma.OrderScalarWhereInput | Prisma.OrderScalarWhereInput[]
   id?: Prisma.StringFilter<"Order"> | string
   orderNumber?: Prisma.StringFilter<"Order"> | string
-  userId?: Prisma.StringFilter<"Order"> | string
+  userId?: Prisma.StringNullableFilter<"Order"> | string | null
+  guestAccessTokenHash?: Prisma.StringNullableFilter<"Order"> | string | null
+  hostelId?: Prisma.StringNullableFilter<"Order"> | string | null
   subtotal?: Prisma.IntFilter<"Order"> | number
   deliveryFee?: Prisma.IntFilter<"Order"> | number
   total?: Prisma.IntFilter<"Order"> | number
   paymentStatus?: Prisma.EnumPaymentStatusFilter<"Order"> | $Enums.PaymentStatus
   orderStatus?: Prisma.EnumOrderStatusFilter<"Order"> | $Enums.OrderStatus
   isFiveMinute?: Prisma.BoolFilter<"Order"> | boolean
+  inventoryShortfall?: Prisma.BoolFilter<"Order"> | boolean
   customerName?: Prisma.StringFilter<"Order"> | string
-  customerEmail?: Prisma.StringFilter<"Order"> | string
+  customerEmail?: Prisma.StringNullableFilter<"Order"> | string | null
   customerImage?: Prisma.StringNullableFilter<"Order"> | string | null
   customerPhone?: Prisma.StringFilter<"Order"> | string
   customerHostel?: Prisma.StringFilter<"Order"> | string
@@ -915,17 +1034,19 @@ export type OrderScalarWhereInput = {
   deliveredAt?: Prisma.DateTimeNullableFilter<"Order"> | Date | string | null
 }
 
-export type OrderCreateWithoutItemsInput = {
+export type OrderCreateWithoutHostelInput = {
   id?: string
   orderNumber: string
+  guestAccessTokenHash?: string | null
   subtotal: number
   deliveryFee: number
   total: number
   paymentStatus: $Enums.PaymentStatus
   orderStatus: $Enums.OrderStatus
   isFiveMinute?: boolean
+  inventoryShortfall?: boolean
   customerName: string
-  customerEmail: string
+  customerEmail?: string | null
   customerImage?: string | null
   customerPhone: string
   customerHostel: string
@@ -933,7 +1054,88 @@ export type OrderCreateWithoutItemsInput = {
   customerRoom: string
   createdAt?: Date | string
   deliveredAt?: Date | string | null
-  user: Prisma.UserCreateNestedOneWithoutOrdersInput
+  user?: Prisma.UserCreateNestedOneWithoutOrdersInput
+  items?: Prisma.OrderItemCreateNestedManyWithoutOrderInput
+  payment?: Prisma.PaymentCreateNestedOneWithoutOrderInput
+  paymentAttempts?: Prisma.PaymentAttemptCreateNestedManyWithoutOrderInput
+  reservations?: Prisma.InventoryReservationCreateNestedManyWithoutOrderInput
+}
+
+export type OrderUncheckedCreateWithoutHostelInput = {
+  id?: string
+  orderNumber: string
+  userId?: string | null
+  guestAccessTokenHash?: string | null
+  subtotal: number
+  deliveryFee: number
+  total: number
+  paymentStatus: $Enums.PaymentStatus
+  orderStatus: $Enums.OrderStatus
+  isFiveMinute?: boolean
+  inventoryShortfall?: boolean
+  customerName: string
+  customerEmail?: string | null
+  customerImage?: string | null
+  customerPhone: string
+  customerHostel: string
+  customerFloor: number
+  customerRoom: string
+  createdAt?: Date | string
+  deliveredAt?: Date | string | null
+  items?: Prisma.OrderItemUncheckedCreateNestedManyWithoutOrderInput
+  payment?: Prisma.PaymentUncheckedCreateNestedOneWithoutOrderInput
+  paymentAttempts?: Prisma.PaymentAttemptUncheckedCreateNestedManyWithoutOrderInput
+  reservations?: Prisma.InventoryReservationUncheckedCreateNestedManyWithoutOrderInput
+}
+
+export type OrderCreateOrConnectWithoutHostelInput = {
+  where: Prisma.OrderWhereUniqueInput
+  create: Prisma.XOR<Prisma.OrderCreateWithoutHostelInput, Prisma.OrderUncheckedCreateWithoutHostelInput>
+}
+
+export type OrderCreateManyHostelInputEnvelope = {
+  data: Prisma.OrderCreateManyHostelInput | Prisma.OrderCreateManyHostelInput[]
+  skipDuplicates?: boolean
+}
+
+export type OrderUpsertWithWhereUniqueWithoutHostelInput = {
+  where: Prisma.OrderWhereUniqueInput
+  update: Prisma.XOR<Prisma.OrderUpdateWithoutHostelInput, Prisma.OrderUncheckedUpdateWithoutHostelInput>
+  create: Prisma.XOR<Prisma.OrderCreateWithoutHostelInput, Prisma.OrderUncheckedCreateWithoutHostelInput>
+}
+
+export type OrderUpdateWithWhereUniqueWithoutHostelInput = {
+  where: Prisma.OrderWhereUniqueInput
+  data: Prisma.XOR<Prisma.OrderUpdateWithoutHostelInput, Prisma.OrderUncheckedUpdateWithoutHostelInput>
+}
+
+export type OrderUpdateManyWithWhereWithoutHostelInput = {
+  where: Prisma.OrderScalarWhereInput
+  data: Prisma.XOR<Prisma.OrderUpdateManyMutationInput, Prisma.OrderUncheckedUpdateManyWithoutHostelInput>
+}
+
+export type OrderCreateWithoutItemsInput = {
+  id?: string
+  orderNumber: string
+  guestAccessTokenHash?: string | null
+  subtotal: number
+  deliveryFee: number
+  total: number
+  paymentStatus: $Enums.PaymentStatus
+  orderStatus: $Enums.OrderStatus
+  isFiveMinute?: boolean
+  inventoryShortfall?: boolean
+  customerName: string
+  customerEmail?: string | null
+  customerImage?: string | null
+  customerPhone: string
+  customerHostel: string
+  customerFloor: number
+  customerRoom: string
+  createdAt?: Date | string
+  deliveredAt?: Date | string | null
+  user?: Prisma.UserCreateNestedOneWithoutOrdersInput
+  hostel?: Prisma.HostelCreateNestedOneWithoutOrdersInput
   payment?: Prisma.PaymentCreateNestedOneWithoutOrderInput
   paymentAttempts?: Prisma.PaymentAttemptCreateNestedManyWithoutOrderInput
   reservations?: Prisma.InventoryReservationCreateNestedManyWithoutOrderInput
@@ -942,15 +1144,18 @@ export type OrderCreateWithoutItemsInput = {
 export type OrderUncheckedCreateWithoutItemsInput = {
   id?: string
   orderNumber: string
-  userId: string
+  userId?: string | null
+  guestAccessTokenHash?: string | null
+  hostelId?: string | null
   subtotal: number
   deliveryFee: number
   total: number
   paymentStatus: $Enums.PaymentStatus
   orderStatus: $Enums.OrderStatus
   isFiveMinute?: boolean
+  inventoryShortfall?: boolean
   customerName: string
-  customerEmail: string
+  customerEmail?: string | null
   customerImage?: string | null
   customerPhone: string
   customerHostel: string
@@ -982,14 +1187,16 @@ export type OrderUpdateToOneWithWhereWithoutItemsInput = {
 export type OrderUpdateWithoutItemsInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   orderNumber?: Prisma.StringFieldUpdateOperationsInput | string
+  guestAccessTokenHash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   subtotal?: Prisma.IntFieldUpdateOperationsInput | number
   deliveryFee?: Prisma.IntFieldUpdateOperationsInput | number
   total?: Prisma.IntFieldUpdateOperationsInput | number
   paymentStatus?: Prisma.EnumPaymentStatusFieldUpdateOperationsInput | $Enums.PaymentStatus
   orderStatus?: Prisma.EnumOrderStatusFieldUpdateOperationsInput | $Enums.OrderStatus
   isFiveMinute?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  inventoryShortfall?: Prisma.BoolFieldUpdateOperationsInput | boolean
   customerName?: Prisma.StringFieldUpdateOperationsInput | string
-  customerEmail?: Prisma.StringFieldUpdateOperationsInput | string
+  customerEmail?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   customerImage?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   customerPhone?: Prisma.StringFieldUpdateOperationsInput | string
   customerHostel?: Prisma.StringFieldUpdateOperationsInput | string
@@ -997,7 +1204,8 @@ export type OrderUpdateWithoutItemsInput = {
   customerRoom?: Prisma.StringFieldUpdateOperationsInput | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   deliveredAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  user?: Prisma.UserUpdateOneRequiredWithoutOrdersNestedInput
+  user?: Prisma.UserUpdateOneWithoutOrdersNestedInput
+  hostel?: Prisma.HostelUpdateOneWithoutOrdersNestedInput
   payment?: Prisma.PaymentUpdateOneWithoutOrderNestedInput
   paymentAttempts?: Prisma.PaymentAttemptUpdateManyWithoutOrderNestedInput
   reservations?: Prisma.InventoryReservationUpdateManyWithoutOrderNestedInput
@@ -1006,15 +1214,18 @@ export type OrderUpdateWithoutItemsInput = {
 export type OrderUncheckedUpdateWithoutItemsInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   orderNumber?: Prisma.StringFieldUpdateOperationsInput | string
-  userId?: Prisma.StringFieldUpdateOperationsInput | string
+  userId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  guestAccessTokenHash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  hostelId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   subtotal?: Prisma.IntFieldUpdateOperationsInput | number
   deliveryFee?: Prisma.IntFieldUpdateOperationsInput | number
   total?: Prisma.IntFieldUpdateOperationsInput | number
   paymentStatus?: Prisma.EnumPaymentStatusFieldUpdateOperationsInput | $Enums.PaymentStatus
   orderStatus?: Prisma.EnumOrderStatusFieldUpdateOperationsInput | $Enums.OrderStatus
   isFiveMinute?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  inventoryShortfall?: Prisma.BoolFieldUpdateOperationsInput | boolean
   customerName?: Prisma.StringFieldUpdateOperationsInput | string
-  customerEmail?: Prisma.StringFieldUpdateOperationsInput | string
+  customerEmail?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   customerImage?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   customerPhone?: Prisma.StringFieldUpdateOperationsInput | string
   customerHostel?: Prisma.StringFieldUpdateOperationsInput | string
@@ -1030,14 +1241,16 @@ export type OrderUncheckedUpdateWithoutItemsInput = {
 export type OrderCreateWithoutPaymentInput = {
   id?: string
   orderNumber: string
+  guestAccessTokenHash?: string | null
   subtotal: number
   deliveryFee: number
   total: number
   paymentStatus: $Enums.PaymentStatus
   orderStatus: $Enums.OrderStatus
   isFiveMinute?: boolean
+  inventoryShortfall?: boolean
   customerName: string
-  customerEmail: string
+  customerEmail?: string | null
   customerImage?: string | null
   customerPhone: string
   customerHostel: string
@@ -1045,7 +1258,8 @@ export type OrderCreateWithoutPaymentInput = {
   customerRoom: string
   createdAt?: Date | string
   deliveredAt?: Date | string | null
-  user: Prisma.UserCreateNestedOneWithoutOrdersInput
+  user?: Prisma.UserCreateNestedOneWithoutOrdersInput
+  hostel?: Prisma.HostelCreateNestedOneWithoutOrdersInput
   items?: Prisma.OrderItemCreateNestedManyWithoutOrderInput
   paymentAttempts?: Prisma.PaymentAttemptCreateNestedManyWithoutOrderInput
   reservations?: Prisma.InventoryReservationCreateNestedManyWithoutOrderInput
@@ -1054,15 +1268,18 @@ export type OrderCreateWithoutPaymentInput = {
 export type OrderUncheckedCreateWithoutPaymentInput = {
   id?: string
   orderNumber: string
-  userId: string
+  userId?: string | null
+  guestAccessTokenHash?: string | null
+  hostelId?: string | null
   subtotal: number
   deliveryFee: number
   total: number
   paymentStatus: $Enums.PaymentStatus
   orderStatus: $Enums.OrderStatus
   isFiveMinute?: boolean
+  inventoryShortfall?: boolean
   customerName: string
-  customerEmail: string
+  customerEmail?: string | null
   customerImage?: string | null
   customerPhone: string
   customerHostel: string
@@ -1094,14 +1311,16 @@ export type OrderUpdateToOneWithWhereWithoutPaymentInput = {
 export type OrderUpdateWithoutPaymentInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   orderNumber?: Prisma.StringFieldUpdateOperationsInput | string
+  guestAccessTokenHash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   subtotal?: Prisma.IntFieldUpdateOperationsInput | number
   deliveryFee?: Prisma.IntFieldUpdateOperationsInput | number
   total?: Prisma.IntFieldUpdateOperationsInput | number
   paymentStatus?: Prisma.EnumPaymentStatusFieldUpdateOperationsInput | $Enums.PaymentStatus
   orderStatus?: Prisma.EnumOrderStatusFieldUpdateOperationsInput | $Enums.OrderStatus
   isFiveMinute?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  inventoryShortfall?: Prisma.BoolFieldUpdateOperationsInput | boolean
   customerName?: Prisma.StringFieldUpdateOperationsInput | string
-  customerEmail?: Prisma.StringFieldUpdateOperationsInput | string
+  customerEmail?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   customerImage?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   customerPhone?: Prisma.StringFieldUpdateOperationsInput | string
   customerHostel?: Prisma.StringFieldUpdateOperationsInput | string
@@ -1109,7 +1328,8 @@ export type OrderUpdateWithoutPaymentInput = {
   customerRoom?: Prisma.StringFieldUpdateOperationsInput | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   deliveredAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  user?: Prisma.UserUpdateOneRequiredWithoutOrdersNestedInput
+  user?: Prisma.UserUpdateOneWithoutOrdersNestedInput
+  hostel?: Prisma.HostelUpdateOneWithoutOrdersNestedInput
   items?: Prisma.OrderItemUpdateManyWithoutOrderNestedInput
   paymentAttempts?: Prisma.PaymentAttemptUpdateManyWithoutOrderNestedInput
   reservations?: Prisma.InventoryReservationUpdateManyWithoutOrderNestedInput
@@ -1118,15 +1338,18 @@ export type OrderUpdateWithoutPaymentInput = {
 export type OrderUncheckedUpdateWithoutPaymentInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   orderNumber?: Prisma.StringFieldUpdateOperationsInput | string
-  userId?: Prisma.StringFieldUpdateOperationsInput | string
+  userId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  guestAccessTokenHash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  hostelId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   subtotal?: Prisma.IntFieldUpdateOperationsInput | number
   deliveryFee?: Prisma.IntFieldUpdateOperationsInput | number
   total?: Prisma.IntFieldUpdateOperationsInput | number
   paymentStatus?: Prisma.EnumPaymentStatusFieldUpdateOperationsInput | $Enums.PaymentStatus
   orderStatus?: Prisma.EnumOrderStatusFieldUpdateOperationsInput | $Enums.OrderStatus
   isFiveMinute?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  inventoryShortfall?: Prisma.BoolFieldUpdateOperationsInput | boolean
   customerName?: Prisma.StringFieldUpdateOperationsInput | string
-  customerEmail?: Prisma.StringFieldUpdateOperationsInput | string
+  customerEmail?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   customerImage?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   customerPhone?: Prisma.StringFieldUpdateOperationsInput | string
   customerHostel?: Prisma.StringFieldUpdateOperationsInput | string
@@ -1142,14 +1365,16 @@ export type OrderUncheckedUpdateWithoutPaymentInput = {
 export type OrderCreateWithoutPaymentAttemptsInput = {
   id?: string
   orderNumber: string
+  guestAccessTokenHash?: string | null
   subtotal: number
   deliveryFee: number
   total: number
   paymentStatus: $Enums.PaymentStatus
   orderStatus: $Enums.OrderStatus
   isFiveMinute?: boolean
+  inventoryShortfall?: boolean
   customerName: string
-  customerEmail: string
+  customerEmail?: string | null
   customerImage?: string | null
   customerPhone: string
   customerHostel: string
@@ -1157,7 +1382,8 @@ export type OrderCreateWithoutPaymentAttemptsInput = {
   customerRoom: string
   createdAt?: Date | string
   deliveredAt?: Date | string | null
-  user: Prisma.UserCreateNestedOneWithoutOrdersInput
+  user?: Prisma.UserCreateNestedOneWithoutOrdersInput
+  hostel?: Prisma.HostelCreateNestedOneWithoutOrdersInput
   items?: Prisma.OrderItemCreateNestedManyWithoutOrderInput
   payment?: Prisma.PaymentCreateNestedOneWithoutOrderInput
   reservations?: Prisma.InventoryReservationCreateNestedManyWithoutOrderInput
@@ -1166,15 +1392,18 @@ export type OrderCreateWithoutPaymentAttemptsInput = {
 export type OrderUncheckedCreateWithoutPaymentAttemptsInput = {
   id?: string
   orderNumber: string
-  userId: string
+  userId?: string | null
+  guestAccessTokenHash?: string | null
+  hostelId?: string | null
   subtotal: number
   deliveryFee: number
   total: number
   paymentStatus: $Enums.PaymentStatus
   orderStatus: $Enums.OrderStatus
   isFiveMinute?: boolean
+  inventoryShortfall?: boolean
   customerName: string
-  customerEmail: string
+  customerEmail?: string | null
   customerImage?: string | null
   customerPhone: string
   customerHostel: string
@@ -1206,14 +1435,16 @@ export type OrderUpdateToOneWithWhereWithoutPaymentAttemptsInput = {
 export type OrderUpdateWithoutPaymentAttemptsInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   orderNumber?: Prisma.StringFieldUpdateOperationsInput | string
+  guestAccessTokenHash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   subtotal?: Prisma.IntFieldUpdateOperationsInput | number
   deliveryFee?: Prisma.IntFieldUpdateOperationsInput | number
   total?: Prisma.IntFieldUpdateOperationsInput | number
   paymentStatus?: Prisma.EnumPaymentStatusFieldUpdateOperationsInput | $Enums.PaymentStatus
   orderStatus?: Prisma.EnumOrderStatusFieldUpdateOperationsInput | $Enums.OrderStatus
   isFiveMinute?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  inventoryShortfall?: Prisma.BoolFieldUpdateOperationsInput | boolean
   customerName?: Prisma.StringFieldUpdateOperationsInput | string
-  customerEmail?: Prisma.StringFieldUpdateOperationsInput | string
+  customerEmail?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   customerImage?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   customerPhone?: Prisma.StringFieldUpdateOperationsInput | string
   customerHostel?: Prisma.StringFieldUpdateOperationsInput | string
@@ -1221,7 +1452,8 @@ export type OrderUpdateWithoutPaymentAttemptsInput = {
   customerRoom?: Prisma.StringFieldUpdateOperationsInput | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   deliveredAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  user?: Prisma.UserUpdateOneRequiredWithoutOrdersNestedInput
+  user?: Prisma.UserUpdateOneWithoutOrdersNestedInput
+  hostel?: Prisma.HostelUpdateOneWithoutOrdersNestedInput
   items?: Prisma.OrderItemUpdateManyWithoutOrderNestedInput
   payment?: Prisma.PaymentUpdateOneWithoutOrderNestedInput
   reservations?: Prisma.InventoryReservationUpdateManyWithoutOrderNestedInput
@@ -1230,15 +1462,18 @@ export type OrderUpdateWithoutPaymentAttemptsInput = {
 export type OrderUncheckedUpdateWithoutPaymentAttemptsInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   orderNumber?: Prisma.StringFieldUpdateOperationsInput | string
-  userId?: Prisma.StringFieldUpdateOperationsInput | string
+  userId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  guestAccessTokenHash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  hostelId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   subtotal?: Prisma.IntFieldUpdateOperationsInput | number
   deliveryFee?: Prisma.IntFieldUpdateOperationsInput | number
   total?: Prisma.IntFieldUpdateOperationsInput | number
   paymentStatus?: Prisma.EnumPaymentStatusFieldUpdateOperationsInput | $Enums.PaymentStatus
   orderStatus?: Prisma.EnumOrderStatusFieldUpdateOperationsInput | $Enums.OrderStatus
   isFiveMinute?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  inventoryShortfall?: Prisma.BoolFieldUpdateOperationsInput | boolean
   customerName?: Prisma.StringFieldUpdateOperationsInput | string
-  customerEmail?: Prisma.StringFieldUpdateOperationsInput | string
+  customerEmail?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   customerImage?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   customerPhone?: Prisma.StringFieldUpdateOperationsInput | string
   customerHostel?: Prisma.StringFieldUpdateOperationsInput | string
@@ -1254,14 +1489,16 @@ export type OrderUncheckedUpdateWithoutPaymentAttemptsInput = {
 export type OrderCreateWithoutReservationsInput = {
   id?: string
   orderNumber: string
+  guestAccessTokenHash?: string | null
   subtotal: number
   deliveryFee: number
   total: number
   paymentStatus: $Enums.PaymentStatus
   orderStatus: $Enums.OrderStatus
   isFiveMinute?: boolean
+  inventoryShortfall?: boolean
   customerName: string
-  customerEmail: string
+  customerEmail?: string | null
   customerImage?: string | null
   customerPhone: string
   customerHostel: string
@@ -1269,7 +1506,8 @@ export type OrderCreateWithoutReservationsInput = {
   customerRoom: string
   createdAt?: Date | string
   deliveredAt?: Date | string | null
-  user: Prisma.UserCreateNestedOneWithoutOrdersInput
+  user?: Prisma.UserCreateNestedOneWithoutOrdersInput
+  hostel?: Prisma.HostelCreateNestedOneWithoutOrdersInput
   items?: Prisma.OrderItemCreateNestedManyWithoutOrderInput
   payment?: Prisma.PaymentCreateNestedOneWithoutOrderInput
   paymentAttempts?: Prisma.PaymentAttemptCreateNestedManyWithoutOrderInput
@@ -1278,15 +1516,18 @@ export type OrderCreateWithoutReservationsInput = {
 export type OrderUncheckedCreateWithoutReservationsInput = {
   id?: string
   orderNumber: string
-  userId: string
+  userId?: string | null
+  guestAccessTokenHash?: string | null
+  hostelId?: string | null
   subtotal: number
   deliveryFee: number
   total: number
   paymentStatus: $Enums.PaymentStatus
   orderStatus: $Enums.OrderStatus
   isFiveMinute?: boolean
+  inventoryShortfall?: boolean
   customerName: string
-  customerEmail: string
+  customerEmail?: string | null
   customerImage?: string | null
   customerPhone: string
   customerHostel: string
@@ -1318,14 +1559,16 @@ export type OrderUpdateToOneWithWhereWithoutReservationsInput = {
 export type OrderUpdateWithoutReservationsInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   orderNumber?: Prisma.StringFieldUpdateOperationsInput | string
+  guestAccessTokenHash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   subtotal?: Prisma.IntFieldUpdateOperationsInput | number
   deliveryFee?: Prisma.IntFieldUpdateOperationsInput | number
   total?: Prisma.IntFieldUpdateOperationsInput | number
   paymentStatus?: Prisma.EnumPaymentStatusFieldUpdateOperationsInput | $Enums.PaymentStatus
   orderStatus?: Prisma.EnumOrderStatusFieldUpdateOperationsInput | $Enums.OrderStatus
   isFiveMinute?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  inventoryShortfall?: Prisma.BoolFieldUpdateOperationsInput | boolean
   customerName?: Prisma.StringFieldUpdateOperationsInput | string
-  customerEmail?: Prisma.StringFieldUpdateOperationsInput | string
+  customerEmail?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   customerImage?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   customerPhone?: Prisma.StringFieldUpdateOperationsInput | string
   customerHostel?: Prisma.StringFieldUpdateOperationsInput | string
@@ -1333,7 +1576,8 @@ export type OrderUpdateWithoutReservationsInput = {
   customerRoom?: Prisma.StringFieldUpdateOperationsInput | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   deliveredAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  user?: Prisma.UserUpdateOneRequiredWithoutOrdersNestedInput
+  user?: Prisma.UserUpdateOneWithoutOrdersNestedInput
+  hostel?: Prisma.HostelUpdateOneWithoutOrdersNestedInput
   items?: Prisma.OrderItemUpdateManyWithoutOrderNestedInput
   payment?: Prisma.PaymentUpdateOneWithoutOrderNestedInput
   paymentAttempts?: Prisma.PaymentAttemptUpdateManyWithoutOrderNestedInput
@@ -1342,15 +1586,18 @@ export type OrderUpdateWithoutReservationsInput = {
 export type OrderUncheckedUpdateWithoutReservationsInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   orderNumber?: Prisma.StringFieldUpdateOperationsInput | string
-  userId?: Prisma.StringFieldUpdateOperationsInput | string
+  userId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  guestAccessTokenHash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  hostelId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   subtotal?: Prisma.IntFieldUpdateOperationsInput | number
   deliveryFee?: Prisma.IntFieldUpdateOperationsInput | number
   total?: Prisma.IntFieldUpdateOperationsInput | number
   paymentStatus?: Prisma.EnumPaymentStatusFieldUpdateOperationsInput | $Enums.PaymentStatus
   orderStatus?: Prisma.EnumOrderStatusFieldUpdateOperationsInput | $Enums.OrderStatus
   isFiveMinute?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  inventoryShortfall?: Prisma.BoolFieldUpdateOperationsInput | boolean
   customerName?: Prisma.StringFieldUpdateOperationsInput | string
-  customerEmail?: Prisma.StringFieldUpdateOperationsInput | string
+  customerEmail?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   customerImage?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   customerPhone?: Prisma.StringFieldUpdateOperationsInput | string
   customerHostel?: Prisma.StringFieldUpdateOperationsInput | string
@@ -1366,14 +1613,17 @@ export type OrderUncheckedUpdateWithoutReservationsInput = {
 export type OrderCreateManyUserInput = {
   id?: string
   orderNumber: string
+  guestAccessTokenHash?: string | null
+  hostelId?: string | null
   subtotal: number
   deliveryFee: number
   total: number
   paymentStatus: $Enums.PaymentStatus
   orderStatus: $Enums.OrderStatus
   isFiveMinute?: boolean
+  inventoryShortfall?: boolean
   customerName: string
-  customerEmail: string
+  customerEmail?: string | null
   customerImage?: string | null
   customerPhone: string
   customerHostel: string
@@ -1386,14 +1636,16 @@ export type OrderCreateManyUserInput = {
 export type OrderUpdateWithoutUserInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   orderNumber?: Prisma.StringFieldUpdateOperationsInput | string
+  guestAccessTokenHash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   subtotal?: Prisma.IntFieldUpdateOperationsInput | number
   deliveryFee?: Prisma.IntFieldUpdateOperationsInput | number
   total?: Prisma.IntFieldUpdateOperationsInput | number
   paymentStatus?: Prisma.EnumPaymentStatusFieldUpdateOperationsInput | $Enums.PaymentStatus
   orderStatus?: Prisma.EnumOrderStatusFieldUpdateOperationsInput | $Enums.OrderStatus
   isFiveMinute?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  inventoryShortfall?: Prisma.BoolFieldUpdateOperationsInput | boolean
   customerName?: Prisma.StringFieldUpdateOperationsInput | string
-  customerEmail?: Prisma.StringFieldUpdateOperationsInput | string
+  customerEmail?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   customerImage?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   customerPhone?: Prisma.StringFieldUpdateOperationsInput | string
   customerHostel?: Prisma.StringFieldUpdateOperationsInput | string
@@ -1401,6 +1653,7 @@ export type OrderUpdateWithoutUserInput = {
   customerRoom?: Prisma.StringFieldUpdateOperationsInput | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   deliveredAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  hostel?: Prisma.HostelUpdateOneWithoutOrdersNestedInput
   items?: Prisma.OrderItemUpdateManyWithoutOrderNestedInput
   payment?: Prisma.PaymentUpdateOneWithoutOrderNestedInput
   paymentAttempts?: Prisma.PaymentAttemptUpdateManyWithoutOrderNestedInput
@@ -1410,14 +1663,17 @@ export type OrderUpdateWithoutUserInput = {
 export type OrderUncheckedUpdateWithoutUserInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   orderNumber?: Prisma.StringFieldUpdateOperationsInput | string
+  guestAccessTokenHash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  hostelId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   subtotal?: Prisma.IntFieldUpdateOperationsInput | number
   deliveryFee?: Prisma.IntFieldUpdateOperationsInput | number
   total?: Prisma.IntFieldUpdateOperationsInput | number
   paymentStatus?: Prisma.EnumPaymentStatusFieldUpdateOperationsInput | $Enums.PaymentStatus
   orderStatus?: Prisma.EnumOrderStatusFieldUpdateOperationsInput | $Enums.OrderStatus
   isFiveMinute?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  inventoryShortfall?: Prisma.BoolFieldUpdateOperationsInput | boolean
   customerName?: Prisma.StringFieldUpdateOperationsInput | string
-  customerEmail?: Prisma.StringFieldUpdateOperationsInput | string
+  customerEmail?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   customerImage?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   customerPhone?: Prisma.StringFieldUpdateOperationsInput | string
   customerHostel?: Prisma.StringFieldUpdateOperationsInput | string
@@ -1434,14 +1690,117 @@ export type OrderUncheckedUpdateWithoutUserInput = {
 export type OrderUncheckedUpdateManyWithoutUserInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   orderNumber?: Prisma.StringFieldUpdateOperationsInput | string
+  guestAccessTokenHash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  hostelId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   subtotal?: Prisma.IntFieldUpdateOperationsInput | number
   deliveryFee?: Prisma.IntFieldUpdateOperationsInput | number
   total?: Prisma.IntFieldUpdateOperationsInput | number
   paymentStatus?: Prisma.EnumPaymentStatusFieldUpdateOperationsInput | $Enums.PaymentStatus
   orderStatus?: Prisma.EnumOrderStatusFieldUpdateOperationsInput | $Enums.OrderStatus
   isFiveMinute?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  inventoryShortfall?: Prisma.BoolFieldUpdateOperationsInput | boolean
   customerName?: Prisma.StringFieldUpdateOperationsInput | string
-  customerEmail?: Prisma.StringFieldUpdateOperationsInput | string
+  customerEmail?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  customerImage?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  customerPhone?: Prisma.StringFieldUpdateOperationsInput | string
+  customerHostel?: Prisma.StringFieldUpdateOperationsInput | string
+  customerFloor?: Prisma.IntFieldUpdateOperationsInput | number
+  customerRoom?: Prisma.StringFieldUpdateOperationsInput | string
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  deliveredAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+}
+
+export type OrderCreateManyHostelInput = {
+  id?: string
+  orderNumber: string
+  userId?: string | null
+  guestAccessTokenHash?: string | null
+  subtotal: number
+  deliveryFee: number
+  total: number
+  paymentStatus: $Enums.PaymentStatus
+  orderStatus: $Enums.OrderStatus
+  isFiveMinute?: boolean
+  inventoryShortfall?: boolean
+  customerName: string
+  customerEmail?: string | null
+  customerImage?: string | null
+  customerPhone: string
+  customerHostel: string
+  customerFloor: number
+  customerRoom: string
+  createdAt?: Date | string
+  deliveredAt?: Date | string | null
+}
+
+export type OrderUpdateWithoutHostelInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  orderNumber?: Prisma.StringFieldUpdateOperationsInput | string
+  guestAccessTokenHash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  subtotal?: Prisma.IntFieldUpdateOperationsInput | number
+  deliveryFee?: Prisma.IntFieldUpdateOperationsInput | number
+  total?: Prisma.IntFieldUpdateOperationsInput | number
+  paymentStatus?: Prisma.EnumPaymentStatusFieldUpdateOperationsInput | $Enums.PaymentStatus
+  orderStatus?: Prisma.EnumOrderStatusFieldUpdateOperationsInput | $Enums.OrderStatus
+  isFiveMinute?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  inventoryShortfall?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  customerName?: Prisma.StringFieldUpdateOperationsInput | string
+  customerEmail?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  customerImage?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  customerPhone?: Prisma.StringFieldUpdateOperationsInput | string
+  customerHostel?: Prisma.StringFieldUpdateOperationsInput | string
+  customerFloor?: Prisma.IntFieldUpdateOperationsInput | number
+  customerRoom?: Prisma.StringFieldUpdateOperationsInput | string
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  deliveredAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  user?: Prisma.UserUpdateOneWithoutOrdersNestedInput
+  items?: Prisma.OrderItemUpdateManyWithoutOrderNestedInput
+  payment?: Prisma.PaymentUpdateOneWithoutOrderNestedInput
+  paymentAttempts?: Prisma.PaymentAttemptUpdateManyWithoutOrderNestedInput
+  reservations?: Prisma.InventoryReservationUpdateManyWithoutOrderNestedInput
+}
+
+export type OrderUncheckedUpdateWithoutHostelInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  orderNumber?: Prisma.StringFieldUpdateOperationsInput | string
+  userId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  guestAccessTokenHash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  subtotal?: Prisma.IntFieldUpdateOperationsInput | number
+  deliveryFee?: Prisma.IntFieldUpdateOperationsInput | number
+  total?: Prisma.IntFieldUpdateOperationsInput | number
+  paymentStatus?: Prisma.EnumPaymentStatusFieldUpdateOperationsInput | $Enums.PaymentStatus
+  orderStatus?: Prisma.EnumOrderStatusFieldUpdateOperationsInput | $Enums.OrderStatus
+  isFiveMinute?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  inventoryShortfall?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  customerName?: Prisma.StringFieldUpdateOperationsInput | string
+  customerEmail?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  customerImage?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  customerPhone?: Prisma.StringFieldUpdateOperationsInput | string
+  customerHostel?: Prisma.StringFieldUpdateOperationsInput | string
+  customerFloor?: Prisma.IntFieldUpdateOperationsInput | number
+  customerRoom?: Prisma.StringFieldUpdateOperationsInput | string
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  deliveredAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  items?: Prisma.OrderItemUncheckedUpdateManyWithoutOrderNestedInput
+  payment?: Prisma.PaymentUncheckedUpdateOneWithoutOrderNestedInput
+  paymentAttempts?: Prisma.PaymentAttemptUncheckedUpdateManyWithoutOrderNestedInput
+  reservations?: Prisma.InventoryReservationUncheckedUpdateManyWithoutOrderNestedInput
+}
+
+export type OrderUncheckedUpdateManyWithoutHostelInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  orderNumber?: Prisma.StringFieldUpdateOperationsInput | string
+  userId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  guestAccessTokenHash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  subtotal?: Prisma.IntFieldUpdateOperationsInput | number
+  deliveryFee?: Prisma.IntFieldUpdateOperationsInput | number
+  total?: Prisma.IntFieldUpdateOperationsInput | number
+  paymentStatus?: Prisma.EnumPaymentStatusFieldUpdateOperationsInput | $Enums.PaymentStatus
+  orderStatus?: Prisma.EnumOrderStatusFieldUpdateOperationsInput | $Enums.OrderStatus
+  isFiveMinute?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  inventoryShortfall?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  customerName?: Prisma.StringFieldUpdateOperationsInput | string
+  customerEmail?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   customerImage?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   customerPhone?: Prisma.StringFieldUpdateOperationsInput | string
   customerHostel?: Prisma.StringFieldUpdateOperationsInput | string
@@ -1504,12 +1863,15 @@ export type OrderSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = 
   id?: boolean
   orderNumber?: boolean
   userId?: boolean
+  guestAccessTokenHash?: boolean
+  hostelId?: boolean
   subtotal?: boolean
   deliveryFee?: boolean
   total?: boolean
   paymentStatus?: boolean
   orderStatus?: boolean
   isFiveMinute?: boolean
+  inventoryShortfall?: boolean
   customerName?: boolean
   customerEmail?: boolean
   customerImage?: boolean
@@ -1519,7 +1881,8 @@ export type OrderSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = 
   customerRoom?: boolean
   createdAt?: boolean
   deliveredAt?: boolean
-  user?: boolean | Prisma.UserDefaultArgs<ExtArgs>
+  user?: boolean | Prisma.Order$userArgs<ExtArgs>
+  hostel?: boolean | Prisma.Order$hostelArgs<ExtArgs>
   items?: boolean | Prisma.Order$itemsArgs<ExtArgs>
   payment?: boolean | Prisma.Order$paymentArgs<ExtArgs>
   paymentAttempts?: boolean | Prisma.Order$paymentAttemptsArgs<ExtArgs>
@@ -1531,12 +1894,15 @@ export type OrderSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Extensi
   id?: boolean
   orderNumber?: boolean
   userId?: boolean
+  guestAccessTokenHash?: boolean
+  hostelId?: boolean
   subtotal?: boolean
   deliveryFee?: boolean
   total?: boolean
   paymentStatus?: boolean
   orderStatus?: boolean
   isFiveMinute?: boolean
+  inventoryShortfall?: boolean
   customerName?: boolean
   customerEmail?: boolean
   customerImage?: boolean
@@ -1546,19 +1912,23 @@ export type OrderSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Extensi
   customerRoom?: boolean
   createdAt?: boolean
   deliveredAt?: boolean
-  user?: boolean | Prisma.UserDefaultArgs<ExtArgs>
+  user?: boolean | Prisma.Order$userArgs<ExtArgs>
+  hostel?: boolean | Prisma.Order$hostelArgs<ExtArgs>
 }, ExtArgs["result"]["order"]>
 
 export type OrderSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   id?: boolean
   orderNumber?: boolean
   userId?: boolean
+  guestAccessTokenHash?: boolean
+  hostelId?: boolean
   subtotal?: boolean
   deliveryFee?: boolean
   total?: boolean
   paymentStatus?: boolean
   orderStatus?: boolean
   isFiveMinute?: boolean
+  inventoryShortfall?: boolean
   customerName?: boolean
   customerEmail?: boolean
   customerImage?: boolean
@@ -1568,19 +1938,23 @@ export type OrderSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensi
   customerRoom?: boolean
   createdAt?: boolean
   deliveredAt?: boolean
-  user?: boolean | Prisma.UserDefaultArgs<ExtArgs>
+  user?: boolean | Prisma.Order$userArgs<ExtArgs>
+  hostel?: boolean | Prisma.Order$hostelArgs<ExtArgs>
 }, ExtArgs["result"]["order"]>
 
 export type OrderSelectScalar = {
   id?: boolean
   orderNumber?: boolean
   userId?: boolean
+  guestAccessTokenHash?: boolean
+  hostelId?: boolean
   subtotal?: boolean
   deliveryFee?: boolean
   total?: boolean
   paymentStatus?: boolean
   orderStatus?: boolean
   isFiveMinute?: boolean
+  inventoryShortfall?: boolean
   customerName?: boolean
   customerEmail?: boolean
   customerImage?: boolean
@@ -1592,9 +1966,10 @@ export type OrderSelectScalar = {
   deliveredAt?: boolean
 }
 
-export type OrderOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "orderNumber" | "userId" | "subtotal" | "deliveryFee" | "total" | "paymentStatus" | "orderStatus" | "isFiveMinute" | "customerName" | "customerEmail" | "customerImage" | "customerPhone" | "customerHostel" | "customerFloor" | "customerRoom" | "createdAt" | "deliveredAt", ExtArgs["result"]["order"]>
+export type OrderOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "orderNumber" | "userId" | "guestAccessTokenHash" | "hostelId" | "subtotal" | "deliveryFee" | "total" | "paymentStatus" | "orderStatus" | "isFiveMinute" | "inventoryShortfall" | "customerName" | "customerEmail" | "customerImage" | "customerPhone" | "customerHostel" | "customerFloor" | "customerRoom" | "createdAt" | "deliveredAt", ExtArgs["result"]["order"]>
 export type OrderInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
-  user?: boolean | Prisma.UserDefaultArgs<ExtArgs>
+  user?: boolean | Prisma.Order$userArgs<ExtArgs>
+  hostel?: boolean | Prisma.Order$hostelArgs<ExtArgs>
   items?: boolean | Prisma.Order$itemsArgs<ExtArgs>
   payment?: boolean | Prisma.Order$paymentArgs<ExtArgs>
   paymentAttempts?: boolean | Prisma.Order$paymentAttemptsArgs<ExtArgs>
@@ -1602,16 +1977,19 @@ export type OrderInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs =
   _count?: boolean | Prisma.OrderCountOutputTypeDefaultArgs<ExtArgs>
 }
 export type OrderIncludeCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
-  user?: boolean | Prisma.UserDefaultArgs<ExtArgs>
+  user?: boolean | Prisma.Order$userArgs<ExtArgs>
+  hostel?: boolean | Prisma.Order$hostelArgs<ExtArgs>
 }
 export type OrderIncludeUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
-  user?: boolean | Prisma.UserDefaultArgs<ExtArgs>
+  user?: boolean | Prisma.Order$userArgs<ExtArgs>
+  hostel?: boolean | Prisma.Order$hostelArgs<ExtArgs>
 }
 
 export type $OrderPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   name: "Order"
   objects: {
-    user: Prisma.$UserPayload<ExtArgs>
+    user: Prisma.$UserPayload<ExtArgs> | null
+    hostel: Prisma.$HostelPayload<ExtArgs> | null
     items: Prisma.$OrderItemPayload<ExtArgs>[]
     payment: Prisma.$PaymentPayload<ExtArgs> | null
     paymentAttempts: Prisma.$PaymentAttemptPayload<ExtArgs>[]
@@ -1620,15 +1998,18 @@ export type $OrderPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs 
   scalars: runtime.Types.Extensions.GetPayloadResult<{
     id: string
     orderNumber: string
-    userId: string
+    userId: string | null
+    guestAccessTokenHash: string | null
+    hostelId: string | null
     subtotal: number
     deliveryFee: number
     total: number
     paymentStatus: $Enums.PaymentStatus
     orderStatus: $Enums.OrderStatus
     isFiveMinute: boolean
+    inventoryShortfall: boolean
     customerName: string
-    customerEmail: string
+    customerEmail: string | null
     customerImage: string | null
     customerPhone: string
     customerHostel: string
@@ -2030,7 +2411,8 @@ readonly fields: OrderFieldRefs;
  */
 export interface Prisma__OrderClient<T, Null = never, ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
   readonly [Symbol.toStringTag]: "PrismaPromise"
-  user<T extends Prisma.UserDefaultArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.UserDefaultArgs<ExtArgs>>): Prisma.Prisma__UserClient<runtime.Types.Result.GetResult<Prisma.$UserPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
+  user<T extends Prisma.Order$userArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Order$userArgs<ExtArgs>>): Prisma.Prisma__UserClient<runtime.Types.Result.GetResult<Prisma.$UserPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+  hostel<T extends Prisma.Order$hostelArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Order$hostelArgs<ExtArgs>>): Prisma.Prisma__HostelClient<runtime.Types.Result.GetResult<Prisma.$HostelPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
   items<T extends Prisma.Order$itemsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Order$itemsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$OrderItemPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   payment<T extends Prisma.Order$paymentArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Order$paymentArgs<ExtArgs>>): Prisma.Prisma__PaymentClient<runtime.Types.Result.GetResult<Prisma.$PaymentPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
   paymentAttempts<T extends Prisma.Order$paymentAttemptsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Order$paymentAttemptsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$PaymentAttemptPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
@@ -2067,12 +2449,15 @@ export interface OrderFieldRefs {
   readonly id: Prisma.FieldRef<"Order", 'String'>
   readonly orderNumber: Prisma.FieldRef<"Order", 'String'>
   readonly userId: Prisma.FieldRef<"Order", 'String'>
+  readonly guestAccessTokenHash: Prisma.FieldRef<"Order", 'String'>
+  readonly hostelId: Prisma.FieldRef<"Order", 'String'>
   readonly subtotal: Prisma.FieldRef<"Order", 'Int'>
   readonly deliveryFee: Prisma.FieldRef<"Order", 'Int'>
   readonly total: Prisma.FieldRef<"Order", 'Int'>
   readonly paymentStatus: Prisma.FieldRef<"Order", 'PaymentStatus'>
   readonly orderStatus: Prisma.FieldRef<"Order", 'OrderStatus'>
   readonly isFiveMinute: Prisma.FieldRef<"Order", 'Boolean'>
+  readonly inventoryShortfall: Prisma.FieldRef<"Order", 'Boolean'>
   readonly customerName: Prisma.FieldRef<"Order", 'String'>
   readonly customerEmail: Prisma.FieldRef<"Order", 'String'>
   readonly customerImage: Prisma.FieldRef<"Order", 'String'>
@@ -2480,6 +2865,44 @@ export type OrderDeleteManyArgs<ExtArgs extends runtime.Types.Extensions.Interna
    * Limit how many Orders to delete.
    */
   limit?: number
+}
+
+/**
+ * Order.user
+ */
+export type Order$userArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the User
+   */
+  select?: Prisma.UserSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the User
+   */
+  omit?: Prisma.UserOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.UserInclude<ExtArgs> | null
+  where?: Prisma.UserWhereInput
+}
+
+/**
+ * Order.hostel
+ */
+export type Order$hostelArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the Hostel
+   */
+  select?: Prisma.HostelSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the Hostel
+   */
+  omit?: Prisma.HostelOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.HostelInclude<ExtArgs> | null
+  where?: Prisma.HostelWhereInput
 }
 
 /**

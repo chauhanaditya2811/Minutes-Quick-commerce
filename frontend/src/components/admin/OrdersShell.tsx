@@ -84,8 +84,12 @@ export default function OrdersShell() {
                   <td data-label="Order">{order.orderNumber}</td>
                   <td data-label="Customer">
                     <strong>{order.customerName}</strong>
-                    <small className="admin-order__subline">{order.customerEmail}</small>
-                    <small className="admin-order__subline">{order.customerPhone}</small>
+                    {order.userId === null ? (
+                      <small className="admin-order__subline"><span className="status status--guest">Guest</span> no account</small>
+                    ) : (
+                      order.customerEmail && <small className="admin-order__subline">{order.customerEmail}</small>
+                    )}
+                    <small className="admin-order__subline"><a href={`tel:${order.customerPhone}`}>{order.customerPhone}</a></small>
                   </td>
                   <td data-label="Delivery address">{order.customerHostel}, Floor {order.customerFloor}, Room {order.customerRoom}</td>
                   <td data-label="Items">
@@ -98,8 +102,16 @@ export default function OrdersShell() {
                     </ul>
                   </td>
                   <td data-label="Total">{formatINR(order.total)}</td>
-                  <td data-label="Payment"><span className="status">{order.paymentStatus.replace(/_/g, ' ')}</span></td>
-                  <td data-label="Order status"><span className={`status status--${order.orderStatus.toLowerCase()}`}>{order.orderStatus.replace(/_/g, ' ')}</span></td>
+                  <td data-label="Payment">
+                    <span className="status">{order.paymentStatus.replace(/_/g, ' ')}</span>
+                    {order.payment?.cashfreePaymentId && (
+                      <small className="admin-order__subline admin-order__ref" title={`Cashfree order ${order.payment.cashfreeOrderId ?? ''}`}>Ref {order.payment.cashfreePaymentId}</small>
+                    )}
+                  </td>
+                  <td data-label="Order status">
+                    <span className={`status status--${order.orderStatus.toLowerCase()}`}>{order.orderStatus.replace(/_/g, ' ')}</span>
+                    {order.inventoryShortfall && <span className="status status--shortfall" title="Paid after the stock hold expired and the hostel no longer had enough stock. Fulfil or refund manually.">Stock shortfall</span>}
+                  </td>
                   <td data-label="Created"><time dateTime={order.createdAt}>{formatDate(order.createdAt)}</time></td>
                   <td data-label="Action">
                     {canDeliver ? (

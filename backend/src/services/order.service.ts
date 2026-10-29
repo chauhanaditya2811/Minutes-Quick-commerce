@@ -1,6 +1,14 @@
-import { randomUUID } from "node:crypto";
+import { createHash, randomUUID } from "node:crypto";
 import type { Prisma } from "../generated/prisma/client.js";
 import { prisma } from "../config/database.js";
+import {
+  InventoryReservationError,
+  consumeOrderReservations,
+  releaseOrderReservations,
+  releaseUserPendingReservations,
+  reservationExpiry,
+  reserveOrderStock,
+} from "./inventory.service.js";
 
 const SETTINGS_ID = "store-settings";
 const MAX_ORDER_AMOUNT = 2_147_483_647;
@@ -12,8 +20,13 @@ export interface CheckoutItemInput {
 
 type CheckoutClient = Pick<
   Prisma.TransactionClient,
-  "user" | "setting" | "product"
+  "user" | "hostel" | "setting" | "productInventory"
 >;
+
+export interface CheckoutInput {
+  hostelId: unknown;
+  items: unknown;
+}
 
 export class CheckoutError extends Error {
   constructor(
@@ -70,33 +83,81 @@ const parseCheckoutItems = (items: unknown): CheckoutItemInput[] => {
   return parsedItems;
 };
 
-const validateCheckoutWithClient = async (
-  client: CheckoutClient,
-  firebaseUid: string,
-  input: unknown
-) => {
-  const items = parseCheckoutItems(input);
-
-  const user = await client.user.findUnique({
-    where: { firebaseUid },
-  });
-
-  if (
-    !user ||
-    !user.name?.trim() ||
-    !user.phone?.trim() ||
-    !user.hostel?.trim() ||
-    user.floor === null ||
-    !Number.isInteger(user.floor) ||
-    user.floor < 0 ||
-    !user.room?.trim()
-  ) {
-    throw new CheckoutError(
-      "Please complete your customer profile before checkout.",
-      400
-    );
+const parseCheckoutHostelId = (hostelId: unknown): string => {
+  if (typeof hostelId !== "string" || !hostelId.trim()) {
+    throw new CheckoutError("Select a hostel before checkout.", 400);
   }
 
+  return hostelId.trim();
+};
+
+export interface GuestCheckoutInput extends CheckoutInput {
+  customer: unknown;
+}
+
+export interface GuestOrderInput extends GuestCheckoutInput {
+  checkoutToken: unknown;
+  /** Optional { orderId, checkoutToken } of the guest's earlier unpaid order to release. */
+  replacesOrder?: unknown;
+}
+
+export interface GuestCustomer {
+  name: string;
+  phone: string;
+  floor: number;
+  room: string;
+}
+
+// Same rules as the signed-in profile: Indian 10-digit mobile numbers starting 6-9.
+const PHONE_PATTERN = /^[6-9]\d{9}$/;
+const MAX_FLOOR = 200;
+
+const parseGuestCustomer = (input: unknown): GuestCustomer => {
+  if (!isRecord(input)) {
+    throw new CheckoutError("Enter your delivery details.", 400);
+  }
+
+  const name = typeof input.name === "string" ? input.name.trim().replace(/\s+/g, " ") : "";
+  if (name.length < 2 || name.length > 80) {
+    throw new CheckoutError("Enter your full name (2 to 80 characters).", 400);
+  }
+
+  const phone = typeof input.phone === "string" ? input.phone.trim() : "";
+  if (!PHONE_PATTERN.test(phone)) {
+    throw new CheckoutError("Phone must be exactly 10 digits and start with 6-9.", 400);
+  }
+
+  const floor = input.floor;
+  if (typeof floor !== "number" || !Number.isSafeInteger(floor) || floor < 0 || floor > MAX_FLOOR) {
+    throw new CheckoutError(`Floor must be a whole number from 0 to ${MAX_FLOOR}.`, 400);
+  }
+
+  const room = typeof input.room === "string" ? input.room.trim() : "";
+  if (!room || room.length > 20) {
+    throw new CheckoutError("Enter your room number (up to 20 characters).", 400);
+  }
+
+  return { name, phone, floor, room };
+};
+
+// Guest checkout tokens are 256-bit random values generated in the browser (43+ base64url
+// characters). Only their SHA-256 hash is stored, so a database leak does not expose them.
+const GUEST_TOKEN_PATTERN = /^[A-Za-z0-9_-]{43,128}$/;
+
+const isGuestToken = (value: unknown): value is string =>
+  typeof value === "string" && GUEST_TOKEN_PATTERN.test(value);
+
+export const hashGuestToken = (token: string) => createHash("sha256").update(token).digest("hex");
+
+const parseGuestToken = (value: unknown): string => {
+  if (!isGuestToken(value)) {
+    throw new CheckoutError("This checkout session is invalid. Please refresh and try again.", 400);
+  }
+  return value;
+};
+
+// Loads and sanity-checks the store settings that every checkout depends on.
+const loadStoreSettings = async (client: CheckoutClient) => {
   const settings = await client.setting.findUnique({
     where: { id: SETTINGS_ID },
   });
@@ -120,23 +181,44 @@ const validateCheckoutWithClient = async (
     throw new CheckoutError("Store settings are invalid.", 503);
   }
 
-  const products = await client.product.findMany({
+  return settings;
+};
+
+// Prices a cart from the hostel's current stock and the database prices. Client-supplied
+// prices, fees and totals are never used: only product IDs and quantities are read.
+const priceCartAtHostel = async (
+  client: CheckoutClient,
+  hostel: { id: string; name: string },
+  items: CheckoutItemInput[],
+  settings: { deliveryFee: number; minimumOrder: number }
+) => {
+  const inventories = await client.productInventory.findMany({
     where: {
-      id: { in: items.map(({ productId }) => productId) },
-      isDeleted: false,
+      hostelId: hostel.id,
+      productId: { in: items.map(({ productId }) => productId) },
+      isAvailable: true,
+      product: { isDeleted: false },
     },
     select: {
-      id: true,
-      name: true,
-      price: true,
-      unit: true,
-      stock: true,
+      quantity: true,
+      product: {
+        select: {
+          id: true,
+          name: true,
+          price: true,
+          unit: true,
+        },
+      },
     },
   });
+  const products = inventories.map(({ quantity, product }) => ({
+    ...product,
+    stock: quantity,
+  }));
 
   if (products.length !== items.length) {
     throw new CheckoutError(
-      "One or more products are no longer available.",
+      `One or more products are no longer available at ${hostel.name}.`,
       409
     );
   }
@@ -202,69 +284,293 @@ const validateCheckoutWithClient = async (
     );
   }
 
+  return { items: orderItems, subtotal, deliveryFee: settings.deliveryFee, total };
+};
+
+const validateCheckoutWithClient = async (
+  client: CheckoutClient,
+  firebaseUid: string,
+  input: CheckoutInput
+) => {
+  const storeHostelId = parseCheckoutHostelId(input.hostelId);
+  const items = parseCheckoutItems(input.items);
+
+  const user = await client.user.findUnique({
+    where: { firebaseUid },
+  });
+
+  if (
+    !user ||
+    !user.name?.trim() ||
+    !user.phone?.trim() ||
+    !user.hostelId ||
+    user.floor === null ||
+    !Number.isInteger(user.floor) ||
+    user.floor < 0 ||
+    !user.room?.trim()
+  ) {
+    throw new CheckoutError(
+      "Please complete your customer profile before checkout.",
+      400
+    );
+  }
+
+  const hostel = await client.hostel.findUnique({ where: { id: user.hostelId } });
+  if (!hostel || !hostel.isActive) {
+    throw new CheckoutError("Your hostel is inactive or no longer available. Please update your profile.", 400);
+  }
+
+  // Orders are fulfilled from the delivery hostel's own stock, so the store the
+  // customer browsed must be the hostel saved in their delivery details.
+  if (storeHostelId !== hostel.id) {
+    const storeHostel = await client.hostel.findUnique({ where: { id: storeHostelId } });
+    if (!storeHostel || !storeHostel.isActive) {
+      throw new CheckoutError("The selected hostel is no longer available. Please choose another hostel.", 409);
+    }
+    throw new CheckoutError(
+      `Your delivery details are for ${hostel.name}, but you are shopping at ${storeHostel.name}. Update your delivery hostel or switch store.`,
+      409
+    );
+  }
+
+  const settings = await loadStoreSettings(client);
+  const priced = await priceCartAtHostel(client, hostel, items, settings);
+
   return {
+    hostelId: hostel.id,
     customer: {
       id: user.id,
       name: user.name.trim(),
       email: user.email,
       image: user.profileImage,
       phone: user.phone.trim(),
-      hostel: user.hostel.trim(),
+      hostel: hostel.name,
       floor: user.floor,
       room: user.room.trim(),
     },
-    items: orderItems,
-    subtotal,
-    deliveryFee: settings.deliveryFee,
-    total,
+    ...priced,
   };
 };
 
+// A guest delivers to the hostel they are shopping at, so its stock is the stock that is sold.
+const validateGuestCheckoutWithClient = async (
+  client: CheckoutClient,
+  input: GuestCheckoutInput
+) => {
+  const hostelId = parseCheckoutHostelId(input.hostelId);
+  const items = parseCheckoutItems(input.items);
+  const customer = parseGuestCustomer(input.customer);
+
+  const hostel = await client.hostel.findUnique({ where: { id: hostelId } });
+  if (!hostel || !hostel.isActive) {
+    throw new CheckoutError("The selected hostel is no longer available. Please choose another hostel.", 409);
+  }
+
+  const settings = await loadStoreSettings(client);
+  const priced = await priceCartAtHostel(client, hostel, items, settings);
+
+  return {
+    hostelId: hostel.id,
+    customer: {
+      id: null,
+      name: customer.name,
+      email: null,
+      image: null,
+      phone: customer.phone,
+      hostel: hostel.name,
+      floor: customer.floor,
+      room: customer.room,
+    },
+    ...priced,
+  };
+};
+
+type ValidatedCheckout = Awaited<ReturnType<typeof validateCheckoutWithClient>> | Awaited<ReturnType<typeof validateGuestCheckoutWithClient>>;
+
 export const validateCheckout = (
   firebaseUid: string,
-  items: unknown
-) => validateCheckoutWithClient(prisma, firebaseUid, items);
+  input: CheckoutInput
+) => validateCheckoutWithClient(prisma, firebaseUid, input);
 
-export const createOrder = async (firebaseUid: string, input: unknown) =>
-  prisma.$transaction(async (tx) => {
-    const checkout = await validateCheckoutWithClient(
-      tx,
-      firebaseUid,
-      isRecord(input) ? input.items : input
-    );
+/** Server-priced summary for a guest cart. Nothing is stored. */
+export const validateGuestCheckout = async (input: GuestCheckoutInput) => {
+  const { customer, ...checkout } = await validateGuestCheckoutWithClient(prisma, input);
+  const { id: _id, email: _email, image: _image, ...details } = customer;
+  return { ...checkout, customer: details };
+};
 
-    return tx.order.create({
-      data: {
-        orderNumber: `MIN-${randomUUID().replaceAll("-", "").toUpperCase()}`,
-        userId: checkout.customer.id,
-        subtotal: checkout.subtotal,
-        deliveryFee: checkout.deliveryFee,
-        total: checkout.total,
-        paymentStatus: "PENDING",
-        orderStatus: "PENDING_PAYMENT",
-        customerName: checkout.customer.name,
-        customerEmail: checkout.customer.email,
-        customerImage: checkout.customer.image,
-        customerPhone: checkout.customer.phone,
-        customerHostel: checkout.customer.hostel,
-        customerFloor: checkout.customer.floor,
-        customerRoom: checkout.customer.room,
-        items: {
-          create: checkout.items,
-        },
-        paymentAttempts: {
-          create: {
-            amount: checkout.total,
-            status: "PENDING",
-          },
+// Creates a PENDING_PAYMENT order with its first payment attempt and holds its stock at the
+// order's hostel, inside the caller's transaction: either all of it happens or none of it.
+const createPendingOrder = async (
+  tx: Prisma.TransactionClient,
+  checkout: ValidatedCheckout,
+  owner: { userId: string | null; guestAccessTokenHash: string | null }
+) => {
+  const order = await tx.order.create({
+    data: {
+      orderNumber: `MIN-${randomUUID().replaceAll("-", "").toUpperCase()}`,
+      userId: owner.userId,
+      guestAccessTokenHash: owner.guestAccessTokenHash,
+      hostelId: checkout.hostelId,
+      subtotal: checkout.subtotal,
+      deliveryFee: checkout.deliveryFee,
+      total: checkout.total,
+      paymentStatus: "PENDING",
+      orderStatus: "PENDING_PAYMENT",
+      customerName: checkout.customer.name,
+      customerEmail: checkout.customer.email,
+      customerImage: checkout.customer.image,
+      customerPhone: checkout.customer.phone,
+      customerHostel: checkout.customer.hostel,
+      customerFloor: checkout.customer.floor,
+      customerRoom: checkout.customer.room,
+      items: {
+        create: checkout.items,
+      },
+      paymentAttempts: {
+        create: {
+          amount: checkout.total,
+          status: "PENDING",
         },
       },
-      include: {
-        items: true,
-        paymentAttempts: true,
-      },
-    });
+    },
+    include: {
+      items: true,
+      paymentAttempts: true,
+    },
   });
+
+  const holdExpiresAt = reservationExpiry();
+  try {
+    await reserveOrderStock(tx, {
+      userId: owner.userId,
+      orderId: order.id,
+      hostelId: checkout.hostelId,
+      items: checkout.items.map(({ productId, productName, quantity }) => ({ productId, productName, quantity })),
+      expiresAt: holdExpiresAt,
+    });
+  } catch (error) {
+    if (error instanceof InventoryReservationError) {
+      throw new CheckoutError(error.message, error.statusCode);
+    }
+    throw error;
+  }
+
+  return { ...order, holdExpiresAt };
+};
+
+// Creates the order and holds its stock at the order's hostel in one transaction:
+// either both happen or neither does.
+export const createOrder = async (firebaseUid: string, input: CheckoutInput) =>
+  prisma.$transaction(async (tx) => {
+    // Free this customer's holds on earlier unpaid orders first, so an abandoned
+    // checkout never blocks their own new order.
+    const customer = await tx.user.findUnique({ where: { firebaseUid }, select: { id: true } });
+    if (customer) await releaseUserPendingReservations(tx, customer.id);
+
+    const checkout = await validateCheckoutWithClient(tx, firebaseUid, input);
+    return createPendingOrder(tx, checkout, { userId: checkout.customer.id, guestAccessTokenHash: null });
+  });
+
+// The order a guest token already created, if any. A token is single-use per cart:
+// replaying it with the same cart returns the same order instead of creating another.
+const findGuestOrderForReplay = async (tokenHash: string, hostelId: string, items: CheckoutItemInput[]) => {
+  const existing = await prisma.order.findUnique({
+    where: { guestAccessTokenHash: tokenHash },
+    include: { items: true, paymentAttempts: true },
+  });
+  if (!existing) return null;
+
+  const sameCart =
+    existing.hostelId === hostelId &&
+    existing.items.length === items.length &&
+    items.every((item) => existing.items.some((line) => line.productId === item.productId && line.quantity === item.quantity));
+  if (!sameCart) {
+    throw new CheckoutError("This checkout was already used for a different cart. Please try again.", 409);
+  }
+
+  return { ...existing, holdExpiresAt: null };
+};
+
+// Frees the stock held by a guest's earlier unpaid order that this checkout replaces,
+// but only when the caller proves they own it with that order's token.
+const releaseReplacedGuestOrder = async (tx: Prisma.TransactionClient, replaces: unknown) => {
+  if (!isRecord(replaces) || typeof replaces.orderId !== "string") return;
+  const token = isGuestToken(replaces.checkoutToken) ? replaces.checkoutToken : null;
+  if (!token) return;
+
+  const owned = await tx.order.findFirst({
+    where: { id: replaces.orderId, userId: null, guestAccessTokenHash: hashGuestToken(token), orderStatus: "PENDING_PAYMENT" },
+    select: { id: true },
+  });
+  if (owned) await releaseOrderReservations(tx, owned.id);
+};
+
+/**
+ * Creates a guest order (no account) and holds its stock. Idempotent per checkout token:
+ * a retried, refreshed or double-submitted request with the same token and cart returns the
+ * order that was already created, never a second one.
+ */
+export const createGuestOrder = async (input: GuestOrderInput) => {
+  const token = parseGuestToken(input.checkoutToken);
+  const tokenHash = hashGuestToken(token);
+  const hostelId = parseCheckoutHostelId(input.hostelId);
+  const items = parseCheckoutItems(input.items);
+
+  const replayed = await findGuestOrderForReplay(tokenHash, hostelId, items);
+  if (replayed) return replayed;
+
+  try {
+    return await prisma.$transaction(async (tx) => {
+      await releaseReplacedGuestOrder(tx, input.replacesOrder);
+      const checkout = await validateGuestCheckoutWithClient(tx, input);
+      return createPendingOrder(tx, checkout, { userId: null, guestAccessTokenHash: tokenHash });
+    });
+  } catch (error) {
+    // Two identical submissions raced: the unique token hash let only one order in.
+    if (isRecord(error) && error.code === "P2002") {
+      const winner = await findGuestOrderForReplay(tokenHash, hostelId, items);
+      if (winner) return winner;
+    }
+    throw error;
+  }
+};
+
+const maskPhone = (phone: string) => (phone.length > 4 ? `${"•".repeat(phone.length - 4)}${phone.slice(-4)}` : phone);
+
+/**
+ * A guest's own order, found only by its ID together with the secret token that created it.
+ * Knowing an order ID, order number or phone number is never enough.
+ */
+export const getGuestOrder = async (orderId: string, rawToken: unknown) => {
+  if (!isGuestToken(rawToken)) throw new CheckoutError("Order not found.", 404);
+
+  const order = await prisma.order.findFirst({
+    where: { id: orderId, userId: null, guestAccessTokenHash: hashGuestToken(rawToken) },
+    select: {
+      id: true,
+      orderNumber: true,
+      orderStatus: true,
+      paymentStatus: true,
+      subtotal: true,
+      deliveryFee: true,
+      total: true,
+      createdAt: true,
+      deliveredAt: true,
+      customerName: true,
+      customerPhone: true,
+      customerHostel: true,
+      customerFloor: true,
+      customerRoom: true,
+      items: {
+        select: { productName: true, price: true, unit: true, quantity: true, subtotal: true },
+      },
+    },
+  });
+  if (!order) throw new CheckoutError("Order not found.", 404);
+
+  return { ...order, customerPhone: maskPhone(order.customerPhone) };
+};
 
 export const getCustomerOrders = (firebaseUid: string) =>
   prisma.order.findMany({
@@ -295,12 +601,15 @@ export const getCustomerOrders = (firebaseUid: string) =>
 const adminOrderSelection = {
   id: true,
   orderNumber: true,
+  // null userId marks a guest order (no account); the snapshot fields below hold its details.
+  userId: true,
   customerName: true,
   customerEmail: true,
   customerPhone: true,
   customerHostel: true,
   customerFloor: true,
   customerRoom: true,
+  inventoryShortfall: true,
   subtotal: true,
   deliveryFee: true,
   total: true,
@@ -317,6 +626,8 @@ const adminOrderSelection = {
       subtotal: true,
     },
   },
+  // Transaction references only, for reconciling with the Cashfree dashboard.
+  payment: { select: { cashfreeOrderId: true, cashfreePaymentId: true } },
 } as const;
 
 export class OrderManagementError extends Error {
@@ -379,46 +690,82 @@ const getOrderForPaymentTransition = (
     include: { items: true, paymentAttempts: true },
   });
 
-// Call only after a payment provider has independently verified success.
-export const confirmOrderPaymentAfterVerification = async (
-  orderId: string
-) =>
-  prisma.$transaction(async (tx) => {
-    const updated = await tx.order.updateMany({
-      where: {
-        id: orderId,
-        orderStatus: "PENDING_PAYMENT",
-        paymentStatus: { in: ["CREATED", "PENDING", "FAILED"] },
-      },
-      data: {
-        paymentStatus: "SUCCESS",
-        orderStatus: "CONFIRMED",
-      },
-    });
+export interface VerifiedPayment {
+  orderId: string;
+  attemptId: string;
+  cashfreeOrderId: string;
+  cashfreePaymentId: string;
+  amount: number;
+}
 
-    if (updated.count > 0) {
-      await tx.paymentAttempt.updateMany({
-        where: {
-          orderId,
-          status: { in: ["CREATED", "PENDING", "FAILED"] },
-        },
-        data: { status: "SUCCESS" },
-      });
-    }
-
-    const order = await getOrderForPaymentTransition(tx, orderId);
-    if (
-      order?.paymentStatus === "SUCCESS" &&
-      ["CONFIRMED", "DELIVERED"].includes(order.orderStatus)
-    ) {
-      return order;
-    }
-
-    throw new CheckoutError(
-      "Order is not eligible for payment confirmation.",
-      409
-    );
+/**
+ * Confirms an order whose payment the provider has independently verified, and finalises its
+ * stock. Shared by payment verification and the webhook. Idempotent: the conditional update lets
+ * exactly one caller confirm the order; any other (a retry, a duplicate webhook, or verification
+ * racing the webhook) waits on the row lock, sees it already confirmed, and changes nothing.
+ */
+export const finalizePaidOrder = async (tx: Prisma.TransactionClient, payment: VerifiedPayment) => {
+  const updated = await tx.order.updateMany({
+    where: { id: payment.orderId, orderStatus: "PENDING_PAYMENT" },
+    data: { paymentStatus: "SUCCESS", orderStatus: "CONFIRMED" },
   });
+  const order = await tx.order.findUnique({ where: { id: payment.orderId }, include: { items: true } });
+  if (!order) throw new CheckoutError("Order not found.", 404);
+
+  if (updated.count === 0) {
+    if (order.paymentStatus === "SUCCESS" && ["CONFIRMED", "DELIVERED"].includes(order.orderStatus)) {
+      return { order, newlyConfirmed: false, shortfall: false };
+    }
+    throw new CheckoutError("The order is not eligible for payment confirmation.", 409);
+  }
+
+  const { shortfall } = await consumeOrderReservations(tx, {
+    id: order.id,
+    userId: order.userId,
+    hostelId: order.hostelId,
+    items: order.items.map(({ productId, quantity }) => ({ productId, quantity })),
+  });
+  if (shortfall) {
+    await tx.order.update({ where: { id: order.id }, data: { inventoryShortfall: true } });
+  }
+
+  await tx.paymentAttempt.update({
+    where: { id: payment.attemptId },
+    data: { status: "SUCCESS", cashfreePaymentId: payment.cashfreePaymentId, provider: "CASHFREE" },
+  });
+  const paymentData = {
+    cashfreeOrderId: payment.cashfreeOrderId,
+    cashfreePaymentId: payment.cashfreePaymentId,
+    amount: payment.amount,
+    status: "SUCCESS" as const,
+    provider: "CASHFREE" as const,
+  };
+  await tx.payment.upsert({
+    where: { orderId: order.id },
+    create: { orderId: order.id, ...paymentData },
+    update: paymentData,
+  });
+
+  return { order: { ...order, inventoryShortfall: shortfall }, newlyConfirmed: true, shortfall };
+};
+
+/**
+ * Records a failed payment attempt without ever overwriting a success that committed first.
+ * Stock stays held: the customer can retry until the hold expires.
+ */
+export const recordFailedPaymentAttempt = async (
+  tx: Prisma.TransactionClient,
+  failure: { orderId: string; attemptId: string; cashfreePaymentId: string }
+) => {
+  await tx.paymentAttempt.updateMany({
+    where: { id: failure.attemptId, status: { not: "SUCCESS" } },
+    data: { status: "FAILED", cashfreePaymentId: failure.cashfreePaymentId, provider: "CASHFREE" },
+  });
+  await tx.order.updateMany({
+    where: { id: failure.orderId, orderStatus: "PENDING_PAYMENT", paymentStatus: { not: "SUCCESS" } },
+    data: { paymentStatus: "FAILED" },
+  });
+};
 
 export const markOrderPaymentFailed = async (orderId: string) =>
   prisma.$transaction(async (tx) => {

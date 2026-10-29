@@ -398,14 +398,16 @@ type FieldRefInputType<Model, FieldType> = Model extends never ? never : FieldRe
 
 export const ModelName = {
   User: 'User',
+  Hostel: 'Hostel',
   Product: 'Product',
+  ProductInventory: 'ProductInventory',
   Order: 'Order',
   OrderItem: 'OrderItem',
   Payment: 'Payment',
   PaymentAttempt: 'PaymentAttempt',
   InventoryReservation: 'InventoryReservation',
   Setting: 'Setting',
-  RazorpayWebhookEvent: 'RazorpayWebhookEvent'
+  CashfreeWebhookEvent: 'CashfreeWebhookEvent'
 } as const
 
 export type ModelName = (typeof ModelName)[keyof typeof ModelName]
@@ -421,7 +423,7 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
     omit: GlobalOmitOptions
   }
   meta: {
-    modelProps: "user" | "product" | "order" | "orderItem" | "payment" | "paymentAttempt" | "inventoryReservation" | "setting" | "razorpayWebhookEvent"
+    modelProps: "user" | "hostel" | "product" | "productInventory" | "order" | "orderItem" | "payment" | "paymentAttempt" | "inventoryReservation" | "setting" | "cashfreeWebhookEvent"
     txIsolationLevel: TransactionIsolationLevel
   }
   model: {
@@ -499,6 +501,80 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
         }
       }
     }
+    Hostel: {
+      payload: Prisma.$HostelPayload<ExtArgs>
+      fields: Prisma.HostelFieldRefs
+      operations: {
+        findUnique: {
+          args: Prisma.HostelFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$HostelPayload> | null
+        }
+        findUniqueOrThrow: {
+          args: Prisma.HostelFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$HostelPayload>
+        }
+        findFirst: {
+          args: Prisma.HostelFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$HostelPayload> | null
+        }
+        findFirstOrThrow: {
+          args: Prisma.HostelFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$HostelPayload>
+        }
+        findMany: {
+          args: Prisma.HostelFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$HostelPayload>[]
+        }
+        create: {
+          args: Prisma.HostelCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$HostelPayload>
+        }
+        createMany: {
+          args: Prisma.HostelCreateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        createManyAndReturn: {
+          args: Prisma.HostelCreateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$HostelPayload>[]
+        }
+        delete: {
+          args: Prisma.HostelDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$HostelPayload>
+        }
+        update: {
+          args: Prisma.HostelUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$HostelPayload>
+        }
+        deleteMany: {
+          args: Prisma.HostelDeleteManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateMany: {
+          args: Prisma.HostelUpdateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateManyAndReturn: {
+          args: Prisma.HostelUpdateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$HostelPayload>[]
+        }
+        upsert: {
+          args: Prisma.HostelUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$HostelPayload>
+        }
+        aggregate: {
+          args: Prisma.HostelAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregateHostel>
+        }
+        groupBy: {
+          args: Prisma.HostelGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.HostelGroupByOutputType>[]
+        }
+        count: {
+          args: Prisma.HostelCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.HostelCountAggregateOutputType> | number
+        }
+      }
+    }
     Product: {
       payload: Prisma.$ProductPayload<ExtArgs>
       fields: Prisma.ProductFieldRefs
@@ -570,6 +646,80 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
         count: {
           args: Prisma.ProductCountArgs<ExtArgs>
           result: runtime.Types.Utils.Optional<Prisma.ProductCountAggregateOutputType> | number
+        }
+      }
+    }
+    ProductInventory: {
+      payload: Prisma.$ProductInventoryPayload<ExtArgs>
+      fields: Prisma.ProductInventoryFieldRefs
+      operations: {
+        findUnique: {
+          args: Prisma.ProductInventoryFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ProductInventoryPayload> | null
+        }
+        findUniqueOrThrow: {
+          args: Prisma.ProductInventoryFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ProductInventoryPayload>
+        }
+        findFirst: {
+          args: Prisma.ProductInventoryFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ProductInventoryPayload> | null
+        }
+        findFirstOrThrow: {
+          args: Prisma.ProductInventoryFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ProductInventoryPayload>
+        }
+        findMany: {
+          args: Prisma.ProductInventoryFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ProductInventoryPayload>[]
+        }
+        create: {
+          args: Prisma.ProductInventoryCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ProductInventoryPayload>
+        }
+        createMany: {
+          args: Prisma.ProductInventoryCreateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        createManyAndReturn: {
+          args: Prisma.ProductInventoryCreateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ProductInventoryPayload>[]
+        }
+        delete: {
+          args: Prisma.ProductInventoryDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ProductInventoryPayload>
+        }
+        update: {
+          args: Prisma.ProductInventoryUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ProductInventoryPayload>
+        }
+        deleteMany: {
+          args: Prisma.ProductInventoryDeleteManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateMany: {
+          args: Prisma.ProductInventoryUpdateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateManyAndReturn: {
+          args: Prisma.ProductInventoryUpdateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ProductInventoryPayload>[]
+        }
+        upsert: {
+          args: Prisma.ProductInventoryUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ProductInventoryPayload>
+        }
+        aggregate: {
+          args: Prisma.ProductInventoryAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregateProductInventory>
+        }
+        groupBy: {
+          args: Prisma.ProductInventoryGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.ProductInventoryGroupByOutputType>[]
+        }
+        count: {
+          args: Prisma.ProductInventoryCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.ProductInventoryCountAggregateOutputType> | number
         }
       }
     }
@@ -1017,77 +1167,77 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
         }
       }
     }
-    RazorpayWebhookEvent: {
-      payload: Prisma.$RazorpayWebhookEventPayload<ExtArgs>
-      fields: Prisma.RazorpayWebhookEventFieldRefs
+    CashfreeWebhookEvent: {
+      payload: Prisma.$CashfreeWebhookEventPayload<ExtArgs>
+      fields: Prisma.CashfreeWebhookEventFieldRefs
       operations: {
         findUnique: {
-          args: Prisma.RazorpayWebhookEventFindUniqueArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$RazorpayWebhookEventPayload> | null
+          args: Prisma.CashfreeWebhookEventFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$CashfreeWebhookEventPayload> | null
         }
         findUniqueOrThrow: {
-          args: Prisma.RazorpayWebhookEventFindUniqueOrThrowArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$RazorpayWebhookEventPayload>
+          args: Prisma.CashfreeWebhookEventFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$CashfreeWebhookEventPayload>
         }
         findFirst: {
-          args: Prisma.RazorpayWebhookEventFindFirstArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$RazorpayWebhookEventPayload> | null
+          args: Prisma.CashfreeWebhookEventFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$CashfreeWebhookEventPayload> | null
         }
         findFirstOrThrow: {
-          args: Prisma.RazorpayWebhookEventFindFirstOrThrowArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$RazorpayWebhookEventPayload>
+          args: Prisma.CashfreeWebhookEventFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$CashfreeWebhookEventPayload>
         }
         findMany: {
-          args: Prisma.RazorpayWebhookEventFindManyArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$RazorpayWebhookEventPayload>[]
+          args: Prisma.CashfreeWebhookEventFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$CashfreeWebhookEventPayload>[]
         }
         create: {
-          args: Prisma.RazorpayWebhookEventCreateArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$RazorpayWebhookEventPayload>
+          args: Prisma.CashfreeWebhookEventCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$CashfreeWebhookEventPayload>
         }
         createMany: {
-          args: Prisma.RazorpayWebhookEventCreateManyArgs<ExtArgs>
+          args: Prisma.CashfreeWebhookEventCreateManyArgs<ExtArgs>
           result: BatchPayload
         }
         createManyAndReturn: {
-          args: Prisma.RazorpayWebhookEventCreateManyAndReturnArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$RazorpayWebhookEventPayload>[]
+          args: Prisma.CashfreeWebhookEventCreateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$CashfreeWebhookEventPayload>[]
         }
         delete: {
-          args: Prisma.RazorpayWebhookEventDeleteArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$RazorpayWebhookEventPayload>
+          args: Prisma.CashfreeWebhookEventDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$CashfreeWebhookEventPayload>
         }
         update: {
-          args: Prisma.RazorpayWebhookEventUpdateArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$RazorpayWebhookEventPayload>
+          args: Prisma.CashfreeWebhookEventUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$CashfreeWebhookEventPayload>
         }
         deleteMany: {
-          args: Prisma.RazorpayWebhookEventDeleteManyArgs<ExtArgs>
+          args: Prisma.CashfreeWebhookEventDeleteManyArgs<ExtArgs>
           result: BatchPayload
         }
         updateMany: {
-          args: Prisma.RazorpayWebhookEventUpdateManyArgs<ExtArgs>
+          args: Prisma.CashfreeWebhookEventUpdateManyArgs<ExtArgs>
           result: BatchPayload
         }
         updateManyAndReturn: {
-          args: Prisma.RazorpayWebhookEventUpdateManyAndReturnArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$RazorpayWebhookEventPayload>[]
+          args: Prisma.CashfreeWebhookEventUpdateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$CashfreeWebhookEventPayload>[]
         }
         upsert: {
-          args: Prisma.RazorpayWebhookEventUpsertArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$RazorpayWebhookEventPayload>
+          args: Prisma.CashfreeWebhookEventUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$CashfreeWebhookEventPayload>
         }
         aggregate: {
-          args: Prisma.RazorpayWebhookEventAggregateArgs<ExtArgs>
-          result: runtime.Types.Utils.Optional<Prisma.AggregateRazorpayWebhookEvent>
+          args: Prisma.CashfreeWebhookEventAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregateCashfreeWebhookEvent>
         }
         groupBy: {
-          args: Prisma.RazorpayWebhookEventGroupByArgs<ExtArgs>
-          result: runtime.Types.Utils.Optional<Prisma.RazorpayWebhookEventGroupByOutputType>[]
+          args: Prisma.CashfreeWebhookEventGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.CashfreeWebhookEventGroupByOutputType>[]
         }
         count: {
-          args: Prisma.RazorpayWebhookEventCountArgs<ExtArgs>
-          result: runtime.Types.Utils.Optional<Prisma.RazorpayWebhookEventCountAggregateOutputType> | number
+          args: Prisma.CashfreeWebhookEventCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.CashfreeWebhookEventCountAggregateOutputType> | number
         }
       }
     }
@@ -1137,7 +1287,7 @@ export const UserScalarFieldEnum = {
   name: 'name',
   profileImage: 'profileImage',
   phone: 'phone',
-  hostel: 'hostel',
+  hostelId: 'hostelId',
   floor: 'floor',
   room: 'room',
   createdAt: 'createdAt',
@@ -1145,6 +1295,17 @@ export const UserScalarFieldEnum = {
 } as const
 
 export type UserScalarFieldEnum = (typeof UserScalarFieldEnum)[keyof typeof UserScalarFieldEnum]
+
+
+export const HostelScalarFieldEnum = {
+  id: 'id',
+  name: 'name',
+  isActive: 'isActive',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type HostelScalarFieldEnum = (typeof HostelScalarFieldEnum)[keyof typeof HostelScalarFieldEnum]
 
 
 export const ProductScalarFieldEnum = {
@@ -1163,16 +1324,32 @@ export const ProductScalarFieldEnum = {
 export type ProductScalarFieldEnum = (typeof ProductScalarFieldEnum)[keyof typeof ProductScalarFieldEnum]
 
 
+export const ProductInventoryScalarFieldEnum = {
+  id: 'id',
+  productId: 'productId',
+  hostelId: 'hostelId',
+  quantity: 'quantity',
+  isAvailable: 'isAvailable',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type ProductInventoryScalarFieldEnum = (typeof ProductInventoryScalarFieldEnum)[keyof typeof ProductInventoryScalarFieldEnum]
+
+
 export const OrderScalarFieldEnum = {
   id: 'id',
   orderNumber: 'orderNumber',
   userId: 'userId',
+  guestAccessTokenHash: 'guestAccessTokenHash',
+  hostelId: 'hostelId',
   subtotal: 'subtotal',
   deliveryFee: 'deliveryFee',
   total: 'total',
   paymentStatus: 'paymentStatus',
   orderStatus: 'orderStatus',
   isFiveMinute: 'isFiveMinute',
+  inventoryShortfall: 'inventoryShortfall',
   customerName: 'customerName',
   customerEmail: 'customerEmail',
   customerImage: 'customerImage',
@@ -1204,8 +1381,11 @@ export type OrderItemScalarFieldEnum = (typeof OrderItemScalarFieldEnum)[keyof t
 export const PaymentScalarFieldEnum = {
   id: 'id',
   orderId: 'orderId',
+  provider: 'provider',
   razorpayOrderId: 'razorpayOrderId',
   razorpayPaymentId: 'razorpayPaymentId',
+  cashfreeOrderId: 'cashfreeOrderId',
+  cashfreePaymentId: 'cashfreePaymentId',
   status: 'status',
   amount: 'amount',
   createdAt: 'createdAt',
@@ -1218,8 +1398,11 @@ export type PaymentScalarFieldEnum = (typeof PaymentScalarFieldEnum)[keyof typeo
 export const PaymentAttemptScalarFieldEnum = {
   id: 'id',
   orderId: 'orderId',
+  provider: 'provider',
   razorpayOrderId: 'razorpayOrderId',
   razorpayPaymentId: 'razorpayPaymentId',
+  cashfreeOrderId: 'cashfreeOrderId',
+  cashfreePaymentId: 'cashfreePaymentId',
   amount: 'amount',
   status: 'status',
   createdAt: 'createdAt'
@@ -1233,6 +1416,7 @@ export const InventoryReservationScalarFieldEnum = {
   productId: 'productId',
   userId: 'userId',
   orderId: 'orderId',
+  hostelId: 'hostelId',
   quantity: 'quantity',
   status: 'status',
   expiresAt: 'expiresAt',
@@ -1255,14 +1439,14 @@ export const SettingScalarFieldEnum = {
 export type SettingScalarFieldEnum = (typeof SettingScalarFieldEnum)[keyof typeof SettingScalarFieldEnum]
 
 
-export const RazorpayWebhookEventScalarFieldEnum = {
+export const CashfreeWebhookEventScalarFieldEnum = {
   id: 'id',
   eventId: 'eventId',
   eventType: 'eventType',
   createdAt: 'createdAt'
 } as const
 
-export type RazorpayWebhookEventScalarFieldEnum = (typeof RazorpayWebhookEventScalarFieldEnum)[keyof typeof RazorpayWebhookEventScalarFieldEnum]
+export type CashfreeWebhookEventScalarFieldEnum = (typeof CashfreeWebhookEventScalarFieldEnum)[keyof typeof CashfreeWebhookEventScalarFieldEnum]
 
 
 export const SortOrder = {
@@ -1369,6 +1553,20 @@ export type EnumOrderStatusFieldRefInput<$PrismaModel> = FieldRefInputType<$Pris
  * Reference to a field of type 'OrderStatus[]'
  */
 export type ListEnumOrderStatusFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'OrderStatus[]'>
+    
+
+
+/**
+ * Reference to a field of type 'PaymentProvider'
+ */
+export type EnumPaymentProviderFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'PaymentProvider'>
+    
+
+
+/**
+ * Reference to a field of type 'PaymentProvider[]'
+ */
+export type ListEnumPaymentProviderFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'PaymentProvider[]'>
     
 
 
@@ -1551,14 +1749,16 @@ export interface PrismaClientOptionsWithAdapter extends PrismaClientBaseOptions 
 export type PrismaClientOptions = PrismaClientOptionsWithAccelerateUrl | PrismaClientOptionsWithAdapter
 export type GlobalOmitConfig = {
   user?: Prisma.UserOmit
+  hostel?: Prisma.HostelOmit
   product?: Prisma.ProductOmit
+  productInventory?: Prisma.ProductInventoryOmit
   order?: Prisma.OrderOmit
   orderItem?: Prisma.OrderItemOmit
   payment?: Prisma.PaymentOmit
   paymentAttempt?: Prisma.PaymentAttemptOmit
   inventoryReservation?: Prisma.InventoryReservationOmit
   setting?: Prisma.SettingOmit
-  razorpayWebhookEvent?: Prisma.RazorpayWebhookEventOmit
+  cashfreeWebhookEvent?: Prisma.CashfreeWebhookEventOmit
 }
 
 /* Types for Logging */

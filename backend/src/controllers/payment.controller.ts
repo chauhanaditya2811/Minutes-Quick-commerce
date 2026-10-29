@@ -1,15 +1,15 @@
 
 import type { Response } from "express";
 import type { AuthenticatedRequest } from "../middleware/auth.middleware.js";
-import { RazorpayConfigError } from "../config/razorpay.js";
+import { CashfreeConfigError } from "../config/cashfree.js";
 import { CheckoutError } from "../services/order.service.js";
 import {
-  createRazorpayOrderForCustomer,
-  verifyRazorpayPaymentForCustomer,
+  createCashfreeOrderForCustomer,
+  verifyCashfreePaymentForCustomer,
 } from "../services/payment.service.js";
 
 // Initialize payment for an existing order owned by the signed-in customer.
-export const createRazorpayOrderController = async (
+export const createCashfreeOrderController = async (
   req: AuthenticatedRequest,
   res: Response
 ): Promise<void> => {
@@ -29,7 +29,7 @@ export const createRazorpayOrderController = async (
   }
 
   try {
-    const payment = await createRazorpayOrderForCustomer(
+    const payment = await createCashfreeOrderForCustomer(
       firebaseUser.uid,
       orderId
     );
@@ -46,7 +46,7 @@ export const createRazorpayOrderController = async (
       return;
     }
 
-    if (error instanceof RazorpayConfigError) {
+    if (error instanceof CashfreeConfigError) {
       res.status(503).json({
         message: "Payment service is not configured.",
       });
@@ -54,14 +54,14 @@ export const createRazorpayOrderController = async (
     }
 
     // Log the internal error without exposing provider details to customers.
-    console.error("Razorpay payment initialization failed.", error);
+    console.error("Cashfree payment initialization failed.", error);
 
     res.status(500).json({
       message: "Unable to initialize payment. Please try again.",
     });
   }
 };
-export const verifyRazorpayPaymentController = async (
+export const verifyCashfreePaymentController = async (
   req: AuthenticatedRequest,
   res: Response
 ): Promise<void> => {
@@ -83,7 +83,7 @@ export const verifyRazorpayPaymentController = async (
   }
 
   try {
-    const payment = await verifyRazorpayPaymentForCustomer(
+    const payment = await verifyCashfreePaymentForCustomer(
       firebaseUser.uid,
       orderId,
       req.body
@@ -101,14 +101,14 @@ export const verifyRazorpayPaymentController = async (
       return;
     }
 
-    if (error instanceof RazorpayConfigError) {
+    if (error instanceof CashfreeConfigError) {
       res.status(503).json({
         message: "Payment service is not configured.",
       });
       return;
     }
 
-    console.error("Razorpay payment verification failed.", error);
+    console.error("Cashfree payment verification failed.", error);
 
     res.status(500).json({
       message: "Unable to verify payment. Please try again.",

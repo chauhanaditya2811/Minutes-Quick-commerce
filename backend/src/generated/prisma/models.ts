@@ -9,12 +9,14 @@
  * 🟢 You can import this file directly.
  */
 export type * from './models/User.js'
+export type * from './models/Hostel.js'
 export type * from './models/Product.js'
+export type * from './models/ProductInventory.js'
 export type * from './models/Order.js'
 export type * from './models/OrderItem.js'
 export type * from './models/Payment.js'
 export type * from './models/PaymentAttempt.js'
 export type * from './models/InventoryReservation.js'
 export type * from './models/Setting.js'
-export type * from './models/RazorpayWebhookEvent.js'
+export type * from './models/CashfreeWebhookEvent.js'
 export type * from './commonInputTypes.js'

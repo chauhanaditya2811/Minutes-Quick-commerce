@@ -1,5 +1,6 @@
 import { Link, useNavigate } from 'react-router-dom';
 import { useCart } from '../../context/CartContext';
+import { useHostel } from '../../context/HostelContext';
 import { useStoreSettings } from '../../hooks/useStoreSettings';
 import { formatINR } from '../../utils/format';
 import CartItemRow from '../../components/cart/CartItemRow';
@@ -9,6 +10,7 @@ import Notice from '../../components/ui/Notice';
 export default function CartPage() {
   const { lines, subtotal, clearCart } = useCart();
   const { data: settings } = useStoreSettings();
+  const { selectedHostel, openPicker } = useHostel();
   const navigate = useNavigate();
 
   if (lines.length === 0) {
@@ -30,6 +32,10 @@ export default function CartPage() {
           <h1>Shopping cart</h1>
           <button type="button" className="btn btn--red btn--sm" onClick={clearCart}>Clear Cart</button>
         </div>
+        <p className="cart-hostel muted small">
+          Shopping at <strong>{selectedHostel?.name}</strong> ·{' '}
+          <button type="button" className="link-btn" onClick={openPicker}>Change</button>
+        </p>
         <ul className="cart-list">
           {lines.map((l) => <CartItemRow key={l.product.id} line={l} />)}
         </ul>

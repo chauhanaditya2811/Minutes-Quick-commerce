@@ -2,25 +2,30 @@ import { Link, useParams } from 'react-router-dom';
 import { useProduct } from '../../hooks/useProducts';
 import { useStoreSettings } from '../../hooks/useStoreSettings';
 import { useCart } from '../../context/CartContext';
+import { useHostel } from '../../context/HostelContext';
 import { formatINR } from '../../utils/format';
-import Loading from '../../components/Loading';
+//import Loading from '../../components/Loading';
 import Notice from '../../components/ui/Notice';
 import EmptyState from '../../components/ui/EmptyState';
 import QuantityStepper from '../../components/ui/QuantityStepper';
 import { CartIcon } from '../../components/ui/Icons';
+import ProductDetailsSkeleton from '../../components/skeletons/ProductDetailsSkeleton';
 
 export default function ProductDetailsPage() {
   const { id } = useParams();
-  const { data: product, loading, error } = useProduct(id);
+  const { selectedHostel } = useHostel();
+  const { data: product, loading, error } = useProduct(id, selectedHostel?.id);
   const { data: settings, error: settingsError, reload: reloadSettings } = useStoreSettings();
   const { quantityOf, addItem, setQuantity } = useCart();
 
-  if (loading) return <Loading />;
+  //if (loading) return <Loading />;
+  if (loading) return <ProductDetailsSkeleton />;
+
   if (error) return <Notice tone="error">{error}</Notice>;
   if (!product) {
     return (
-      <EmptyState title="Product not found">
-        <p>It may have been removed.</p>
+      <EmptyState title={`Not available at ${selectedHostel?.name}`}>
+        <p>This product isn’t stocked at your hostel right now, or it has been removed.</p>
         <Link to="/" className="btn btn--yellow">Back to shop</Link>
       </EmptyState>
     );

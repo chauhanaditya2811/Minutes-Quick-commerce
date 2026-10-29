@@ -9,17 +9,24 @@ import settingsRoutes from "./routes/settings.routes.js";
 import adminSettingsRoutes from "./routes/admin-settings.routes.js";
 import orderRoutes from "./routes/order.routes.js";
 import adminOrderRoutes from "./routes/admin-order.routes.js";
-import razorpayWebhookRoutes from "./routes/razorpay-webhook.routes.js";
+import cashfreeWebhookRoutes from "./routes/cashfree-webhook.routes.js";
+import hostelRoutes from "./routes/hostel.routes.js";
+import adminHostelRoutes from "./routes/admin-hostel.routes.js";
+import guestRoutes from "./routes/guest.routes.js";
 
 const app = express();
+
+// Azure App Service sits behind one front-end proxy; trust it so req.ip is the client's
+// address (used by the per-IP rate limits on public guest checkout routes).
+app.set("trust proxy", 1);
 
 app.use(cors());
 
 // IMPORTANT: register the webhook before the general JSON parser.
 app.use(
-  "/api/webhooks/razorpay",
+  "/api/webhooks/cashfree",
   express.raw({ type: "application/json" }),
-  razorpayWebhookRoutes
+  cashfreeWebhookRoutes
 );
 
 // Parse JSON for the rest of the API.
@@ -29,6 +36,8 @@ app.use("/api/health", healthRoutes);
 app.use("/api/auth", authRoutes);
 app.use("/api/users", userRoutes);
 app.use("/api/products", productRoutes);
+app.use("/api/hostels", hostelRoutes);
+app.use("/api/admin/hostels", adminHostelRoutes);
 app.use("/api/admin", adminProductRoutes);
 app.use("/api/admin", adminOrderRoutes);
 // Public store settings.
@@ -39,5 +48,8 @@ app.use("/api/admin/settings", adminSettingsRoutes);
 
 //order routes
 app.use("/api/orders", orderRoutes);
+
+// Public guest checkout (no sign-in); every guest order is gated by its own secret token.
+app.use("/api/guest", guestRoutes);
 
 export default app;

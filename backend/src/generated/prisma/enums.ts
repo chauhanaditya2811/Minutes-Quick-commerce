@@ -21,6 +21,14 @@ export const PaymentStatus = {
 export type PaymentStatus = (typeof PaymentStatus)[keyof typeof PaymentStatus]
 
 
+export const PaymentProvider = {
+  RAZORPAY: 'RAZORPAY',
+  CASHFREE: 'CASHFREE'
+} as const
+
+export type PaymentProvider = (typeof PaymentProvider)[keyof typeof PaymentProvider]
+
+
 export const ReservationStatus = {
   ACTIVE: 'ACTIVE',
   CONSUMED: 'CONSUMED',

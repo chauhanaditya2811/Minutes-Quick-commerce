@@ -1,330 +1,270 @@
-
-import { Prisma } from "../generated/prisma/client.js";
+import type { Prisma } from "../generated/prisma/client.js";
 import { prisma } from "../config/database.js";
 
-const MAX_TRANSACTION_ATTEMPTS = 3;
+// Reservations take units out of product_inventories.quantity when the customer starts paying,
+// so `quantity` always means stock available to sell now. Every state change below is
+// conditional on the current state, which makes each reservation consumed or restored exactly once.
 
-// Retries transactions that fail because of serialization conflicts.
-const runSerializableTransaction = async <T>(
-  operation: (tx: Prisma.TransactionClient) => Promise<T>
-): Promise<T> => {
-  for (let attempt = 1; attempt <= MAX_TRANSACTION_ATTEMPTS; attempt++) {
-    try {
-      return await prisma.$transaction(operation, {
-        isolationLevel: Prisma.TransactionIsolationLevel.Serializable,
-      });
-    } catch (error) {
-      const isSerializationConflict =
-        error instanceof Prisma.PrismaClientKnownRequestError &&
-        error.code === "P2034";
+type Tx = Prisma.TransactionClient;
 
-      if (!isSerializationConflict || attempt === MAX_TRANSACTION_ATTEMPTS) {
-        throw error;
-      }
-    }
+const DEFAULT_HOLD_MINUTES = 10;
+const DEFAULT_GRACE_MINUTES = 5;
+
+export class InventoryReservationError extends Error {
+  constructor(message: string, readonly statusCode = 409) {
+    super(message);
+    this.name = "InventoryReservationError";
   }
-
-  throw new Error("Transaction failed after maximum retry attempts.");
-};
-
-// Reserves available stock atomically for one product.
-export const reserveStock = async (
-  userId: string,
-  productId: string,
-  quantity: number
-) => {
-  if (!Number.isInteger(quantity) || quantity <= 0) {
-    throw new Error("Quantity must be a positive integer.");
-  }
-
-  const lifetimeMinutes = Number(
-    process.env.RESERVATION_LIFETIME_MINUTES ?? 5
-  );
-
-  if (!Number.isInteger(lifetimeMinutes) || lifetimeMinutes <= 0) {
-    throw new Error("Reservation lifetime configuration is invalid.");
-  }
-
-  return runSerializableTransaction(async (tx) => {
-    const product = await tx.product.findFirst({
-      where: {
-        id: productId,
-        isDeleted: false,
-      },
-      select: {
-        id: true,
-      },
-    });
-
-    if (!product) {
-      throw new Error("Product not found.");
-    }
-
-    const updated = await tx.product.updateMany({
-      where: {
-        id: productId,
-        isDeleted: false,
-        stock: {
-          gte: quantity,
-        },
-      },
-      data: {
-        stock: {
-          decrement: quantity,
-        },
-      },
-    });
-
-    if (updated.count !== 1) {
-      throw new Error("Insufficient stock.");
-    }
-
-    const expiresAt = new Date(
-      Date.now() + lifetimeMinutes * 60 * 1000
-    );
-
-    return tx.inventoryReservation.create({
-      data: {
-        userId,
-        productId,
-        quantity,
-        expiresAt,
-      },
-    });
-  });
-};
-
-export interface ReservationItemInput {
-  productId: string;
-  quantity: number;
 }
 
-// Reserves multiple products atomically or rolls back every stock change.
-export const reserveMultipleProducts = async (
-  userId: string,
-  items: ReservationItemInput[]
-) => {
-  if (items.length === 0) {
-    throw new Error("At least one product is required.");
+export interface OrderStockItem {
+  productId: string;
+  quantity: number;
+  productName?: string;
+}
+
+export interface OrderStockTarget {
+  id: string;
+  userId: string | null; // null for guest orders
+  hostelId: string | null;
+  items: OrderStockItem[];
+}
+
+const readMinutes = (name: string, fallback: number, min: number) => {
+  const raw = process.env[name];
+  const value = raw === undefined || raw.trim() === "" ? fallback : Number(raw);
+  if (!Number.isInteger(value) || value < min) {
+    throw new Error(`${name} must be a whole number of minutes (at least ${min}).`);
   }
+  return value;
+};
 
-  const quantities = new Map<string, number>();
+/** Minutes a customer has to complete payment. */
+export const getCheckoutHoldMinutes = () => readMinutes("CHECKOUT_HOLD_MINUTES", DEFAULT_HOLD_MINUTES, 1);
 
-  for (const item of items) {
-    if (!Number.isInteger(item.quantity) || item.quantity <= 0) {
-      throw new Error("Every quantity must be a positive integer.");
-    }
-
-    if (!item.productId.trim()) {
-      throw new Error("Every product must have a valid ID.");
-    }
-
-    quantities.set(
-      item.productId,
-      (quantities.get(item.productId) ?? 0) + item.quantity
-    );
-  }
-
-  const lifetimeMinutes = Number(
-    process.env.RESERVATION_LIFETIME_MINUTES ?? 5
+/** When a hold made now is released: the checkout hold plus a grace period for delayed confirmations. */
+export const reservationExpiry = (now = new Date()) =>
+  new Date(
+    now.getTime() +
+      (getCheckoutHoldMinutes() + readMinutes("RESERVATION_GRACE_MINUTES", DEFAULT_GRACE_MINUTES, 0)) * 60_000
   );
 
-  if (!Number.isInteger(lifetimeMinutes) || lifetimeMinutes <= 0) {
-    throw new Error("Reservation lifetime configuration is invalid.");
+const byProductId = <T extends { productId: string }>(a: T, b: T) => a.productId.localeCompare(b.productId);
+
+// Atomic conditional decrement: Postgres re-checks `quantity >= n` after taking the row lock,
+// so two buyers can never both take the last unit.
+const takeAvailable = (tx: Tx, productId: string, hostelId: string, quantity: number) =>
+  tx.$executeRaw`
+    UPDATE "product_inventories"
+    SET "quantity" = "quantity" - ${quantity}, "updatedAt" = NOW()
+    WHERE "productId" = ${productId}
+      AND "hostelId" = ${hostelId}
+      AND "isAvailable" = true
+      AND "quantity" >= ${quantity}`;
+
+// Takes up to `quantity` units regardless of availability, never below zero. Returns units taken.
+const takeUpTo = async (tx: Tx, productId: string, hostelId: string, quantity: number) => {
+  const rows = await tx.$queryRaw<{ before: number }[]>`
+    WITH locked AS (
+      SELECT "id", "quantity" FROM "product_inventories"
+      WHERE "productId" = ${productId} AND "hostelId" = ${hostelId}
+      FOR UPDATE
+    )
+    UPDATE "product_inventories" AS p
+    SET "quantity" = GREATEST(p."quantity" - ${quantity}, 0), "updatedAt" = NOW()
+    FROM locked
+    WHERE p."id" = locked."id"
+    RETURNING locked."quantity" AS "before"`;
+  const before = rows[0]?.before ?? 0;
+  return Math.min(Number(before), quantity);
+};
+
+/** Holds stock at one hostel for an order. Throws (rolling back the caller's transaction) if any item is short. */
+export const reserveOrderStock = async (
+  tx: Tx,
+  input: { userId: string | null; orderId: string; hostelId: string; items: OrderStockItem[]; expiresAt: Date }
+) => {
+  for (const item of [...input.items].sort(byProductId)) {
+    if (!Number.isInteger(item.quantity) || item.quantity <= 0) {
+      throw new InventoryReservationError("Every quantity must be a positive whole number.", 400);
+    }
+    const taken = await takeAvailable(tx, item.productId, input.hostelId, item.quantity);
+    if (taken !== 1) {
+      throw new InventoryReservationError(
+        `${item.productName ?? "An item in your cart"} is no longer available in the quantity you selected.`
+      );
+    }
   }
 
-  return runSerializableTransaction(async (tx) => {
-    const reservations = [];
+  await tx.inventoryReservation.createMany({
+    data: input.items.map((item) => ({
+      userId: input.userId,
+      orderId: input.orderId,
+      hostelId: input.hostelId,
+      productId: item.productId,
+      quantity: item.quantity,
+      expiresAt: input.expiresAt,
+    })),
+  });
+};
 
-    const sortedItems = [...quantities.entries()].sort(([a], [b]) =>
-      a.localeCompare(b)
-    );
+type RestorableReservation = { id: string; productId: string; hostelId: string | null; quantity: number };
 
-    for (const [productId, quantity] of sortedItems) {
-      const updated = await tx.product.updateMany({
-        where: {
-          id: productId,
-          isDeleted: false,
-          stock: {
-            gte: quantity,
-          },
-        },
+// Moves ACTIVE reservations to `status` and returns their units to stock, once each.
+const restoreReservations = async (
+  tx: Tx,
+  reservations: RestorableReservation[],
+  status: "RELEASED" | "EXPIRED",
+  dueBy?: Date
+) => {
+  let restored = 0;
+  for (const reservation of [...reservations].sort(byProductId)) {
+    // For expiry, also re-check the deadline: a payment retry may have just extended the hold.
+    const updated = await tx.inventoryReservation.updateMany({
+      where: { id: reservation.id, status: "ACTIVE", ...(dueBy ? { expiresAt: { lte: dueBy } } : {}) },
+      data: { status },
+    });
+    if (updated.count !== 1) continue;
+    if (reservation.hostelId) {
+      await tx.productInventory.updateMany({
+        where: { productId: reservation.productId, hostelId: reservation.hostelId },
+        data: { quantity: { increment: reservation.quantity } },
+      });
+    }
+    restored += 1;
+  }
+  return restored;
+};
+
+/** Releases the live holds of one unpaid order, e.g. a guest checkout replaced by a newer one. */
+export const releaseOrderReservations = async (tx: Tx, orderId: string) => {
+  const reservations = await tx.inventoryReservation.findMany({
+    where: { orderId, status: "ACTIVE", order: { orderStatus: "PENDING_PAYMENT" } },
+    select: { id: true, productId: true, hostelId: true, quantity: true },
+  });
+  return restoreReservations(tx, reservations, "RELEASED");
+};
+
+/** Releases a customer's holds on their other unpaid orders, e.g. after they abandoned a checkout. */
+export const releaseUserPendingReservations = async (tx: Tx, userId: string, exceptOrderId?: string) => {
+  const reservations = await tx.inventoryReservation.findMany({
+    where: {
+      userId,
+      status: "ACTIVE",
+      order: { orderStatus: "PENDING_PAYMENT" },
+      ...(exceptOrderId ? { orderId: { not: exceptOrderId } } : {}),
+    },
+    select: { id: true, productId: true, hostelId: true, quantity: true },
+  });
+  return restoreReservations(tx, reservations, "RELEASED");
+};
+
+/**
+ * Called whenever payment starts (including retries): extends the order's live holds and re-takes
+ * stock for any that already expired. Returns when the holds end, or null for pre-hostel orders.
+ */
+export const extendOrClaimReservations = async (tx: Tx, order: OrderStockTarget) => {
+  if (!order.hostelId) return null;
+  const expiresAt = reservationExpiry();
+
+  await tx.inventoryReservation.updateMany({
+    where: { orderId: order.id, status: "ACTIVE" },
+    data: { expiresAt },
+  });
+  const active = await tx.inventoryReservation.findMany({
+    where: { orderId: order.id, status: "ACTIVE" },
+    select: { productId: true, quantity: true },
+  });
+  const held = new Map<string, number>();
+  for (const reservation of active) {
+    held.set(reservation.productId, (held.get(reservation.productId) ?? 0) + reservation.quantity);
+  }
+
+  const missing = order.items
+    .map((item) => ({ ...item, quantity: item.quantity - (held.get(item.productId) ?? 0) }))
+    .filter((item) => item.quantity > 0);
+  if (missing.length > 0) {
+    await reserveOrderStock(tx, { userId: order.userId, orderId: order.id, hostelId: order.hostelId, items: missing, expiresAt });
+  }
+  return expiresAt;
+};
+
+/**
+ * Finalises stock for a paid order. Live holds become CONSUMED (their units were already taken).
+ * Units whose hold expired or was released are taken again; if the hostel no longer has them,
+ * as much as possible is taken and `shortfall` is reported. Call only once per order.
+ */
+export const consumeOrderReservations = async (tx: Tx, order: OrderStockTarget) => {
+  if (!order.hostelId) return { shortfall: false };
+
+  const active = await tx.inventoryReservation.findMany({
+    where: { orderId: order.id, status: "ACTIVE" },
+    select: { id: true, productId: true, quantity: true },
+  });
+  const covered = new Map<string, number>();
+  for (const reservation of active) {
+    const updated = await tx.inventoryReservation.updateMany({
+      where: { id: reservation.id, status: "ACTIVE" },
+      data: { status: "CONSUMED" },
+    });
+    if (updated.count === 1) {
+      covered.set(reservation.productId, (covered.get(reservation.productId) ?? 0) + reservation.quantity);
+    }
+  }
+
+  let shortfall = false;
+  const now = new Date();
+  for (const item of [...order.items].sort(byProductId)) {
+    const needed = item.quantity - (covered.get(item.productId) ?? 0);
+    if (needed <= 0) continue;
+    const taken = await takeUpTo(tx, item.productId, order.hostelId, needed);
+    if (taken < needed) shortfall = true;
+    if (taken > 0) {
+      // Audit record of stock taken after the original hold had lapsed.
+      await tx.inventoryReservation.create({
         data: {
-          stock: {
-            decrement: quantity,
-          },
+          userId: order.userId,
+          orderId: order.id,
+          hostelId: order.hostelId,
+          productId: item.productId,
+          quantity: taken,
+          status: "CONSUMED",
+          expiresAt: now,
         },
       });
-
-      if (updated.count !== 1) {
-        throw new Error(
-          `Product ${productId} is unavailable or has insufficient stock.`
-        );
-      }
-
-      reservations.push(
-        await tx.inventoryReservation.create({
-          data: {
-            userId,
-            productId,
-            quantity,
-            expiresAt: new Date(
-              Date.now() + lifetimeMinutes * 60 * 1000
-            ),
-          },
-        })
-      );
     }
-
-    return reservations;
-  });
+  }
+  return { shortfall };
 };
 
-// Consumes an active reservation without restoring its stock.
-export const consumeReservation = async (
-  reservationId: string,
-  userId: string
-) => {
-  return runSerializableTransaction(async (tx) => {
-    const now = new Date();
-
-    const updated = await tx.inventoryReservation.updateMany({
-      where: {
-        id: reservationId,
-        userId,
-        status: "ACTIVE",
-        expiresAt: {
-          gt: now,
-        },
-      },
-      data: {
-        status: "CONSUMED",
-      },
-    });
-
-    if (updated.count !== 1) {
-      throw new Error(
-        "Reservation not found, expired, or no longer active."
-      );
-    }
-
-    return tx.inventoryReservation.findUniqueOrThrow({
-      where: {
-        id: reservationId,
-      },
-    });
-  });
-};
-
-// Releases an active reservation and restores its stock atomically.
-export const releaseReservation = async (
-  reservationId: string,
-  userId: string
-) => {
-  return runSerializableTransaction(async (tx) => {
-    const updated = await tx.inventoryReservation.updateMany({
-      where: {
-        id: reservationId,
-        userId,
-        status: "ACTIVE",
-      },
-      data: {
-        status: "RELEASED",
-      },
-    });
-
-    if (updated.count !== 1) {
-      throw new Error("Reservation not found or no longer active.");
-    }
-
-    const reservation = await tx.inventoryReservation.findUniqueOrThrow({
-      where: {
-        id: reservationId,
-      },
-      select: {
-        id: true,
-        productId: true,
-        quantity: true,
-      },
-    });
-
-    await tx.product.update({
-      where: {
-        id: reservation.productId,
-      },
-      data: {
-        stock: {
-          increment: reservation.quantity,
-        },
-      },
-    });
-
-    return tx.inventoryReservation.findUniqueOrThrow({
-      where: {
-        id: reservationId,
-      },
-    });
-  });
-};
-
-// Expires overdue active reservations and restores their stock.
+/** Expires overdue holds and returns their units to stock. Safe to run concurrently. */
 export const expireReservations = async () => {
-  return runSerializableTransaction(async (tx) => {
-    const now = new Date();
-
-    const expiredReservations = await tx.inventoryReservation.findMany({
-      where: {
-        status: "ACTIVE",
-        expiresAt: {
-          lte: now,
-        },
-      },
-      select: {
-        id: true,
-        productId: true,
-        quantity: true,
-      },
-      orderBy: {
-        expiresAt: "asc",
-      },
-    });
-
-    let expiredCount = 0;
-
-    for (const reservation of expiredReservations) {
-      const updated = await tx.inventoryReservation.updateMany({
-        where: {
-          id: reservation.id,
-          status: "ACTIVE",
-          expiresAt: {
-            lte: now,
-          },
-        },
-        data: {
-          status: "EXPIRED",
-        },
-      });
-
-      if (updated.count !== 1) {
-        continue;
-      }
-
-      await tx.product.update({
-        where: {
-          id: reservation.productId,
-        },
-        data: {
-          stock: {
-            increment: reservation.quantity,
-          },
-        },
-      });
-
-      expiredCount += 1;
-    }
-
-    return {
-      expiredCount,
-    };
+  const now = new Date();
+  const overdue = await prisma.inventoryReservation.findMany({
+    where: { status: "ACTIVE", expiresAt: { lte: now } },
+    select: { id: true, productId: true, hostelId: true, quantity: true },
+    orderBy: { expiresAt: "asc" },
+    take: 500,
   });
+  if (overdue.length === 0) return { expiredCount: 0 };
+
+  // restoreReservations re-checks status and deadline per row, skipping holds consumed or extended meanwhile.
+  const expiredCount = await prisma.$transaction(async (tx) => {
+    const stillDue = await tx.inventoryReservation.findMany({
+      where: { id: { in: overdue.map((r) => r.id) }, status: "ACTIVE", expiresAt: { lte: now } },
+      select: { id: true, productId: true, hostelId: true, quantity: true },
+    });
+    return restoreReservations(tx, stillDue, "EXPIRED", now);
+  });
+  return { expiredCount };
+};
+
+/** Units currently held for unpaid orders, per product and hostel. */
+export const getActiveReservedQuantities = async (productIds?: string[]) => {
+  const groups = await prisma.inventoryReservation.groupBy({
+    by: ["productId", "hostelId"],
+    where: { status: "ACTIVE", hostelId: { not: null }, ...(productIds ? { productId: { in: productIds } } : {}) },
+    _sum: { quantity: true },
+  });
+  return new Map(groups.map((g) => [`${g.productId}:${g.hostelId}`, g._sum.quantity ?? 0]));
 };

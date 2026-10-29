@@ -1,5 +1,12 @@
 import { API_BASE_URL, apiConfigured } from './config';
-import type { Product, ProductInput, StoreSettings } from '../types/product';
+import type {
+  AdminProduct,
+  HostelStock,
+  HostelStockUpdateEntry,
+  Product,
+  ProductInput,
+  StoreSettings,
+} from '../types/product';
 import type { UpdateProfileInput, UserProfile } from '../types/user';
 import type {
   OrderRequest,
@@ -7,10 +14,17 @@ import type {
   AdminOrder,
   CustomerOrder,
   PaymentInitResponse,
+  GuestOrder,
+  GuestOrderRequest,
+  GuestPlacedOrder,
+  GuestValidateRequest,
   ValidateOrderResponse,
   VerifyPaymentRequest,
   VerifyPaymentResponse,
 } from '../types/order';
+
+/** Guest orders are reachable only with their secret checkout token, sent in this header. */
+const guestHeaders = (token: string) => ({ 'X-Guest-Order-Token': token });
 
 export class ApiError extends Error {
   status: number;
@@ -19,6 +33,9 @@ export class ApiError extends Error {
     this.status = status;
   }
 }
+
+export interface Hostel { id: string; name: string; }
+export interface AdminHostel extends Hostel { isActive: boolean; createdAt: string; updatedAt: string; }
 
 type TokenProvider = () => Promise<string | null>;
 let tokenProvider: TokenProvider = async () => null;
@@ -33,13 +50,14 @@ interface RequestOptions {
   body?: unknown;
   formData?: FormData;
   auth?: boolean;
+  headers?: Record<string, string>;
 }
 
 async function request<T>(path: string, opts: RequestOptions = {}): Promise<T> {
   if (!apiConfigured) {
     throw new ApiError('The backend URL is not configured. Set VITE_API_BASE_URL.', 0);
   }
-  const headers: Record<string, string> = {};
+  const headers: Record<string, string> = { ...opts.headers };
   if (opts.auth) {
     const token = await tokenProvider();
     if (!token) throw new ApiError('You need to sign in first.', 401);
@@ -126,9 +144,12 @@ function mapOrder(order: BackendOrder): OrderSummary {
 
 export const api = {
   // Public
-  getProducts: () => request<Product[]>('/api/products'),
-  getProduct: (id: string) => request<Product>(`/api/products/${encodeURIComponent(id)}`),
+  getProducts: (hostelId: string) =>
+    request<Product[]>(`/api/products?hostelId=${encodeURIComponent(hostelId)}`),
+  getProduct: (id: string, hostelId: string) =>
+    request<Product>(`/api/products/${encodeURIComponent(id)}?hostelId=${encodeURIComponent(hostelId)}`),
   getSettings: () => request<StoreSettings>('/api/settings'),
+  getHostels: () => request<Hostel[]>('/api/hostels'),
 
   // Customer
   getMe: () => request<UserProfile>('/api/users/me', { auth: true }),
@@ -165,6 +186,34 @@ export const api = {
       'payment',
     ),
 
+  // Guest checkout (no sign-in; each order is gated by its own secret token)
+  validateGuestOrder: (body: GuestValidateRequest) =>
+    request<ValidateOrderResponse>('/api/guest/checkout/validate', { method: 'POST', body }),
+  createGuestOrder: async (body: GuestOrderRequest) =>
+    envelopeValue<GuestPlacedOrder>(await request<unknown>('/api/guest/orders', { method: 'POST', body }), 'order'),
+  getGuestOrder: async (orderId: string, token: string) =>
+    envelopeValue<GuestOrder>(
+      await request<unknown>(`/api/guest/orders/${encodeURIComponent(orderId)}`, { headers: guestHeaders(token) }),
+      'order',
+    ),
+  initGuestPayment: async (orderId: string, token: string) =>
+    envelopeValue<PaymentInitResponse>(
+      await request<unknown>(`/api/guest/orders/${encodeURIComponent(orderId)}/payment`, {
+        method: 'POST',
+        headers: guestHeaders(token),
+      }),
+      'payment',
+    ),
+  verifyGuestPayment: async (orderId: string, token: string, body: VerifyPaymentRequest) =>
+    envelopeValue<VerifyPaymentResponse>(
+      await request<unknown>(`/api/guest/orders/${encodeURIComponent(orderId)}/payment/verify`, {
+        method: 'POST',
+        body,
+        headers: guestHeaders(token),
+      }),
+      'payment',
+    ),
+
   // Admin (backend enforces authorization)
   getAdminOrders: async () =>
     envelopeValue<AdminOrder[]>(await request<unknown>('/api/admin/orders', { auth: true }), 'orders'),
@@ -178,8 +227,23 @@ export const api = {
       'order',
     ),
   getAdminSettings: () => request<StoreSettings>('/api/admin/settings', { auth: true }),
+  getAdminHostels: () => request<AdminHostel[]>('/api/admin/hostels', { auth: true }),
+  createHostel: (name: string) => request<AdminHostel>('/api/admin/hostels', { method: 'POST', body: { name }, auth: true }),
+  activateHostel: (id: string) => request<AdminHostel>(`/api/admin/hostels/${encodeURIComponent(id)}/activate`, { method: 'PATCH', auth: true }),
+  deactivateHostel: (id: string) => request<AdminHostel>(`/api/admin/hostels/${encodeURIComponent(id)}/deactivate`, { method: 'PATCH', auth: true }),
+  permanentlyDeleteHostel: (id: string) =>
+    request<void>(`/api/admin/hostels/${encodeURIComponent(id)}/permanent`, { method: 'DELETE', auth: true }),
   updateAdminSettings: (body: StoreSettings) =>
     request<StoreSettings>('/api/admin/settings', { method: 'PUT', body, auth: true }),
+  getAdminProducts: () => request<AdminProduct[]>('/api/admin/products', { auth: true }),
+  getHostelStock: (hostelId: string) =>
+    request<HostelStock>(`/api/admin/hostels/${encodeURIComponent(hostelId)}/inventory`, { auth: true }),
+  updateHostelStock: (hostelId: string, entries: HostelStockUpdateEntry[]) =>
+    request<HostelStock>(`/api/admin/hostels/${encodeURIComponent(hostelId)}/inventory`, {
+      method: 'PUT',
+      body: { entries },
+      auth: true,
+    }),
   createProduct: (body: ProductInput) =>
     request<Product>('/api/admin/products', { method: 'POST', body, auth: true }),
   updateProduct: (id: string, body: ProductInput) =>

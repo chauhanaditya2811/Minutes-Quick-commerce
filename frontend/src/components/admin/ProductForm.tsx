@@ -1,12 +1,22 @@
 import { useState, type FormEvent } from 'react';
 import { api } from '../../services/api';
-import type { Product, ProductInput } from '../../types/product';
+import type { ProductInput } from '../../types/product';
 import Field from '../ui/Field';
 import Notice from '../ui/Notice';
 
+/** The catalogue fields the form edits. Stock is managed per hostel, not here. */
+export interface EditableProduct {
+  id: string;
+  name: string;
+  price: number;
+  unit: string;
+  description: string | null;
+  imageUrl: string;
+}
+
 interface Props {
-  product: Product | null; // null = add
-  onSaved: () => void;
+  product: EditableProduct | null; // null = add
+  onSaved: (saved: { id: string }, created: boolean) => void;
   onCancel: () => void;
 }
 
@@ -15,7 +25,6 @@ export default function ProductForm({ product, onSaved, onCancel }: Props) {
     name: product?.name ?? '',
     price: product ? String(product.price) : '',
     unit: product?.unit ?? '',
-    stock: product ? String(product.stock) : '0',
     description: product?.description ?? '',
     imageUrl: product?.imageUrl ?? '',
   });
@@ -43,20 +52,14 @@ export default function ProductForm({ product, onSaved, onCancel }: Props) {
   const submit = async (e: FormEvent) => {
     e.preventDefault();
     const price = Number(form.price);
-    const stock = Number(form.stock);
     if (!Number.isSafeInteger(price) || price < 0 || price > 2_147_483_647) {
       setError('Price must be a whole number between 0 and 2,147,483,647.');
-      return;
-    }
-    if (!Number.isSafeInteger(stock) || stock < 0 || stock > 2_147_483_647) {
-      setError('Stock must be a whole number between 0 and 2,147,483,647.');
       return;
     }
     const body: ProductInput = {
       name: form.name.trim(),
       price,
       unit: form.unit.trim(),
-      stock,
       description: form.description.trim() || null,
       imageUrl: form.imageUrl.trim(),
     };
@@ -64,9 +67,8 @@ export default function ProductForm({ product, onSaved, onCancel }: Props) {
     setBusy(true);
     setError(null);
     try {
-      if (product) await api.updateProduct(product.id, body);
-      else await api.createProduct(body);
-      onSaved();
+      const saved = product ? await api.updateProduct(product.id, body) : await api.createProduct(body);
+      onSaved(saved, !product);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Could not save the product.');
     } finally {
@@ -82,7 +84,9 @@ export default function ProductForm({ product, onSaved, onCancel }: Props) {
         <Field label="Price (₹)" type="number" min={0} step="1" inputMode="numeric" value={form.price} onChange={set('price')} required />
         <Field label="Unit" value={form.unit} onChange={set('unit')} required placeholder="e.g. 500 ml" />
       </div>
-      <Field label="Stock" type="number" min={0} step="1" value={form.stock} onChange={set('stock')} required hint="Set to 0 to mark the product out of stock. Stock is managed manually." />
+      <Notice tone="info">
+        Stock is managed per hostel. {product ? 'Use “Manage stock” in the product list.' : 'After saving, set availability and quantity for each hostel.'}
+      </Notice>
       <div className="field">
         <label htmlFor="desc">Description</label>
         <textarea id="desc" rows={3} value={form.description} onChange={set('description')} />
