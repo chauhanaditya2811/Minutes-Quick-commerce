@@ -2,6 +2,7 @@ import { Router } from "express";
 
 import {
   createOrderController,
+  getMyOrderController,
   getMyOrdersController,
   validateCheckoutController,
 } from "../controllers/order.controller.js";
@@ -17,6 +18,9 @@ const router = Router();
 
 // Customer order history must be registered before order-ID routes.
 router.get("/my", authenticateFirebaseToken, getMyOrdersController);
+
+// One of the signed-in customer's own orders (confirmation screen).
+router.get("/:orderId", authenticateFirebaseToken, getMyOrderController);
 
 // Create a Minutes order.
 router.post("/", authenticateFirebaseToken, createOrderController);

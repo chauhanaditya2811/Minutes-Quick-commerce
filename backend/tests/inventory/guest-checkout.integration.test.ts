@@ -398,6 +398,53 @@ describe("secure guest checkout (minutes_test)", () => {
     expect((await call("POST", "/api/guest/orders", { checkoutToken: "bad" }, { "x-forwarded-for": "10.99.0.2" })).status).toBe(400);
   });
 
+  it("records confirmedAt once on confirmation and never resets it", async () => {
+    const placed = await placeGuestOrder();
+    const headers = { "x-guest-order-token": placed.token };
+    const pending = await call("GET", `/api/guest/orders/${placed.body.order.id}`, undefined, headers);
+    expect(pending.body.order.confirmedAt).toBeNull();
+    expect(Date.parse(pending.body.serverTime)).not.toBeNaN();
+
+    const { cashfreeOrderId } = (await startPayment(placed.body.order.id, placed.token)).body.payment;
+    const before = Date.now();
+    await webhook(cashfreeOrderId, 45, "cf-confirmed-at", `evt-${randomUUID()}`);
+    const first = (await prisma.order.findUniqueOrThrow({ where: { id: placed.body.order.id } })).confirmedAt;
+    expect(first).toBeInstanceOf(Date);
+    expect(first!.getTime()).toBeGreaterThanOrEqual(before - 1000);
+
+    // A duplicate webhook and a later verification must not move the countdown's start.
+    await new Promise((resolve) => setTimeout(resolve, 20));
+    await webhook(cashfreeOrderId, 45, "cf-confirmed-at", `evt-${randomUUID()}`);
+    payments.set(cashfreeOrderId, [{ cf_payment_id: "cf-confirmed-at", payment_status: "SUCCESS", payment_amount: 45, payment_currency: "INR", order_id: cashfreeOrderId }]);
+    await call("POST", `/api/guest/orders/${placed.body.order.id}/payment/verify`, { cashfree_order_id: cashfreeOrderId }, headers);
+
+    const confirmed = await call("GET", `/api/guest/orders/${placed.body.order.id}`, undefined, headers);
+    expect(confirmed.body.order.orderStatus).toBe("CONFIRMED");
+    expect(confirmed.body.order.confirmedAt).toBe(first!.toISOString());
+  });
+
+  it("returns a signed-in customer's own order with confirmedAt, and nobody else's", async () => {
+    const owner = await prisma.user.create({
+      data: { firebaseUid: "customer-x", email: `owner-${randomUUID()}@example.test`, name: "Owner", phone: "9876543210", hostelId: hostelA, floor: 1, room: "11" },
+    });
+    fx.ids.users.push(owner.id);
+    const mine = await createOrder("customer-x", { hostelId: hostelA, items: [{ productId: maggi, quantity: 1 }] });
+    fx.trackOrder(mine.id);
+    const guest = await placeGuestOrder();
+
+    const response = await call("GET", `/api/orders/${mine.id}`, undefined, { authorization: "Bearer customer" });
+    expect(response.status).toBe(200);
+    expect(response.body.order).toMatchObject({ id: mine.id, orderStatus: "PENDING_PAYMENT", confirmedAt: null, customerPhone: "••••••3210" });
+    expect(response.body.order).not.toHaveProperty("userId");
+    expect(Date.parse(response.body.serverTime)).not.toBeNaN();
+
+    // Not signed in, someone else's order, or a guest order: all "not found" or unauthorised.
+    expect((await call("GET", `/api/orders/${mine.id}`)).status).toBe(401);
+    expect((await call("GET", `/api/orders/${guest.body.order.id}`, undefined, { authorization: "Bearer customer" })).status).toBe(404);
+    // The order-history route still resolves before the order-ID route.
+    expect((await call("GET", "/api/orders/my", undefined, { authorization: "Bearer customer" })).status).toBe(200);
+  });
+
   it("keeps signed-in checkout working and every order owned by a user or a guest token", async () => {
     const customer = await fx.customer(hostelA);
     const order = await createOrder(customer.firebaseUid, { hostelId: hostelA, items: [{ productId: maggi, quantity: 1 }] });

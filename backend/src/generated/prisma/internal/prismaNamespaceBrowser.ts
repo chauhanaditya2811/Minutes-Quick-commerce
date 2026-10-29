@@ -158,6 +158,7 @@ export const OrderScalarFieldEnum = {
   customerFloor: 'customerFloor',
   customerRoom: 'customerRoom',
   createdAt: 'createdAt',
+  confirmedAt: 'confirmedAt',
   deliveredAt: 'deliveredAt'
 } as const
 
@@ -233,6 +234,7 @@ export const SettingScalarFieldEnum = {
   deliveryFee: 'deliveryFee',
   minimumOrder: 'minimumOrder',
   supportEmail: 'supportEmail',
+  storePhone: 'storePhone',
   updatedAt: 'updatedAt'
 } as const
 

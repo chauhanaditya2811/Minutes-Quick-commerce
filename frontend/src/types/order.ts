@@ -168,7 +168,10 @@ export interface GuestPlacedOrder {
   items: { productId: string; productName: string; price: number; unit: string; quantity: number; subtotal: number }[];
 }
 
-/** GET /api/guest/orders/:orderId — the guest's own order (phone masked). */
+/**
+ * A customer's own order for the confirmation screen (phone masked): from
+ * GET /api/guest/orders/:orderId (guests) or GET /api/orders/:orderId (signed in).
+ */
 export interface GuestOrder {
   id: string;
   orderNumber: string;
@@ -178,6 +181,8 @@ export interface GuestOrder {
   deliveryFee: number;
   total: number;
   createdAt: string;
+  /** When payment was verified; the 10-minute delivery countdown runs from here. */
+  confirmedAt: string | null;
   deliveredAt: string | null;
   customerName: string;
   customerPhone: string;
@@ -185,4 +190,12 @@ export interface GuestOrder {
   customerFloor: number;
   customerRoom: string;
   items: { productName: string; price: number; unit: string; quantity: number; subtotal: number }[];
+}
+
+export type OrderDetail = GuestOrder;
+
+/** An order detail plus the server's clock, used to correct the countdown for device clock skew. */
+export interface OrderDetailResponse {
+  order: OrderDetail;
+  serverTime: string;
 }
