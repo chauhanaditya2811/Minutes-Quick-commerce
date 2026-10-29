@@ -101,7 +101,8 @@ export const getGuestOrderController = async (req: Request, res: Response): Prom
   }
   try {
     const order = await getGuestOrder(orderId, req.get(GUEST_TOKEN_HEADER));
-    res.status(200).json({ order });
+    // serverTime lets the client correct for a wrong device clock in the delivery countdown.
+    res.status(200).json({ order, serverTime: new Date().toISOString() });
   } catch (error) {
     sendGuestError(error, res, "Unable to retrieve this order.");
   }

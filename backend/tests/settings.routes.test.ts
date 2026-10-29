@@ -35,6 +35,7 @@ const STORE_SETTINGS = {
   deliveryFee: 25,
   minimumOrder: 100,
   supportEmail: "support@example.test",
+  storePhone: "+919876543210",
 };
 
 describe("store settings routes", () => {
@@ -104,6 +105,7 @@ describe("store settings routes", () => {
         deliveryFee: 0,
         minimumOrder: 0,
         supportEmail: null,
+        storePhone: null,
       },
       update: {},
       select: {
@@ -111,6 +113,7 @@ describe("store settings routes", () => {
         deliveryFee: true,
         minimumOrder: true,
         supportEmail: true,
+        storePhone: true,
       },
     });
   });
@@ -172,8 +175,46 @@ describe("store settings routes", () => {
         deliveryFee: true,
         minimumOrder: true,
         supportEmail: true,
+        storePhone: true,
       },
     });
+  });
+
+  it.each([
+    ["98765 43210", "+919876543210"],
+    ["098765-43210", "+919876543210"],
+    ["91 98765 43210", "+919876543210"],
+    ["+91 (98765) 43210", "+919876543210"],
+    ["0172 271 2345", "+911722712345"],
+    ["+44 20 7946 0958", "+442079460958"],
+  ])("normalises the store phone %s to %s", async (input, expected) => {
+    const response = await fetch(`${baseUrl}/api/admin/settings`, {
+      method: "PUT",
+      headers: { authorization: "Bearer admin-token", "content-type": "application/json" },
+      body: JSON.stringify({ ...STORE_SETTINGS, storePhone: input }),
+    });
+
+    expect(response.status).toBe(200);
+    expect(mocks.settingUpsert).toHaveBeenCalledWith(
+      expect.objectContaining({ update: expect.objectContaining({ storePhone: expected }) })
+    );
+  });
+
+  it("keeps the saved store phone when an older admin page omits it, and clears it with null", async () => {
+    const { storePhone: _omitted, ...withoutPhone } = STORE_SETTINGS;
+    await fetch(`${baseUrl}/api/admin/settings`, {
+      method: "PUT",
+      headers: { authorization: "Bearer admin-token", "content-type": "application/json" },
+      body: JSON.stringify(withoutPhone),
+    });
+    expect(mocks.settingUpsert.mock.calls[0][0].update).not.toHaveProperty("storePhone");
+
+    await fetch(`${baseUrl}/api/admin/settings`, {
+      method: "PUT",
+      headers: { authorization: "Bearer admin-token", "content-type": "application/json" },
+      body: JSON.stringify({ ...STORE_SETTINGS, storePhone: "" }),
+    });
+    expect(mocks.settingUpsert.mock.calls[1][0].update).toMatchObject({ storePhone: null });
   });
 
   it.each([
@@ -192,6 +233,10 @@ describe("store settings routes", () => {
       { ...STORE_SETTINGS, minimumOrder: 2_147_483_648 },
     ],
     ["invalid support email", { ...STORE_SETTINGS, supportEmail: "not-an-email" }],
+    ["a store phone with letters", { ...STORE_SETTINGS, storePhone: "call-me-now" }],
+    ["a too-short store phone", { ...STORE_SETTINGS, storePhone: "12345" }],
+    ["a store phone starting with 0 after +", { ...STORE_SETTINGS, storePhone: "+0123456789" }],
+    ["a non-string store phone", { ...STORE_SETTINGS, storePhone: 9876543210 }],
   ])("rejects %s without writing settings", async (_name, body) => {
     const response = await fetch(`${baseUrl}/api/admin/settings`, {
       method: "PUT",

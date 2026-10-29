@@ -42,6 +42,7 @@ export type SettingMinAggregateOutputType = {
   deliveryFee: number | null
   minimumOrder: number | null
   supportEmail: string | null
+  storePhone: string | null
   updatedAt: Date | null
 }
 
@@ -51,6 +52,7 @@ export type SettingMaxAggregateOutputType = {
   deliveryFee: number | null
   minimumOrder: number | null
   supportEmail: string | null
+  storePhone: string | null
   updatedAt: Date | null
 }
 
@@ -60,6 +62,7 @@ export type SettingCountAggregateOutputType = {
   deliveryFee: number
   minimumOrder: number
   supportEmail: number
+  storePhone: number
   updatedAt: number
   _all: number
 }
@@ -81,6 +84,7 @@ export type SettingMinAggregateInputType = {
   deliveryFee?: true
   minimumOrder?: true
   supportEmail?: true
+  storePhone?: true
   updatedAt?: true
 }
 
@@ -90,6 +94,7 @@ export type SettingMaxAggregateInputType = {
   deliveryFee?: true
   minimumOrder?: true
   supportEmail?: true
+  storePhone?: true
   updatedAt?: true
 }
 
@@ -99,6 +104,7 @@ export type SettingCountAggregateInputType = {
   deliveryFee?: true
   minimumOrder?: true
   supportEmail?: true
+  storePhone?: true
   updatedAt?: true
   _all?: true
 }
@@ -195,6 +201,7 @@ export type SettingGroupByOutputType = {
   deliveryFee: number
   minimumOrder: number
   supportEmail: string | null
+  storePhone: string | null
   updatedAt: Date
   _count: SettingCountAggregateOutputType | null
   _avg: SettingAvgAggregateOutputType | null
@@ -227,6 +234,7 @@ export type SettingWhereInput = {
   deliveryFee?: Prisma.IntFilter<"Setting"> | number
   minimumOrder?: Prisma.IntFilter<"Setting"> | number
   supportEmail?: Prisma.StringNullableFilter<"Setting"> | string | null
+  storePhone?: Prisma.StringNullableFilter<"Setting"> | string | null
   updatedAt?: Prisma.DateTimeFilter<"Setting"> | Date | string
 }
 
@@ -236,6 +244,7 @@ export type SettingOrderByWithRelationInput = {
   deliveryFee?: Prisma.SortOrder
   minimumOrder?: Prisma.SortOrder
   supportEmail?: Prisma.SortOrderInput | Prisma.SortOrder
+  storePhone?: Prisma.SortOrderInput | Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
 }
 
@@ -248,6 +257,7 @@ export type SettingWhereUniqueInput = Prisma.AtLeast<{
   deliveryFee?: Prisma.IntFilter<"Setting"> | number
   minimumOrder?: Prisma.IntFilter<"Setting"> | number
   supportEmail?: Prisma.StringNullableFilter<"Setting"> | string | null
+  storePhone?: Prisma.StringNullableFilter<"Setting"> | string | null
   updatedAt?: Prisma.DateTimeFilter<"Setting"> | Date | string
 }, "id">
 
@@ -257,6 +267,7 @@ export type SettingOrderByWithAggregationInput = {
   deliveryFee?: Prisma.SortOrder
   minimumOrder?: Prisma.SortOrder
   supportEmail?: Prisma.SortOrderInput | Prisma.SortOrder
+  storePhone?: Prisma.SortOrderInput | Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
   _count?: Prisma.SettingCountOrderByAggregateInput
   _avg?: Prisma.SettingAvgOrderByAggregateInput
@@ -274,6 +285,7 @@ export type SettingScalarWhereWithAggregatesInput = {
   deliveryFee?: Prisma.IntWithAggregatesFilter<"Setting"> | number
   minimumOrder?: Prisma.IntWithAggregatesFilter<"Setting"> | number
   supportEmail?: Prisma.StringNullableWithAggregatesFilter<"Setting"> | string | null
+  storePhone?: Prisma.StringNullableWithAggregatesFilter<"Setting"> | string | null
   updatedAt?: Prisma.DateTimeWithAggregatesFilter<"Setting"> | Date | string
 }
 
@@ -283,6 +295,7 @@ export type SettingCreateInput = {
   deliveryFee?: number
   minimumOrder?: number
   supportEmail?: string | null
+  storePhone?: string | null
   updatedAt?: Date | string
 }
 
@@ -292,6 +305,7 @@ export type SettingUncheckedCreateInput = {
   deliveryFee?: number
   minimumOrder?: number
   supportEmail?: string | null
+  storePhone?: string | null
   updatedAt?: Date | string
 }
 
@@ -301,6 +315,7 @@ export type SettingUpdateInput = {
   deliveryFee?: Prisma.IntFieldUpdateOperationsInput | number
   minimumOrder?: Prisma.IntFieldUpdateOperationsInput | number
   supportEmail?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  storePhone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
 
@@ -310,6 +325,7 @@ export type SettingUncheckedUpdateInput = {
   deliveryFee?: Prisma.IntFieldUpdateOperationsInput | number
   minimumOrder?: Prisma.IntFieldUpdateOperationsInput | number
   supportEmail?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  storePhone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
 
@@ -319,6 +335,7 @@ export type SettingCreateManyInput = {
   deliveryFee?: number
   minimumOrder?: number
   supportEmail?: string | null
+  storePhone?: string | null
   updatedAt?: Date | string
 }
 
@@ -328,6 +345,7 @@ export type SettingUpdateManyMutationInput = {
   deliveryFee?: Prisma.IntFieldUpdateOperationsInput | number
   minimumOrder?: Prisma.IntFieldUpdateOperationsInput | number
   supportEmail?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  storePhone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
 
@@ -337,6 +355,7 @@ export type SettingUncheckedUpdateManyInput = {
   deliveryFee?: Prisma.IntFieldUpdateOperationsInput | number
   minimumOrder?: Prisma.IntFieldUpdateOperationsInput | number
   supportEmail?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  storePhone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
 
@@ -346,6 +365,7 @@ export type SettingCountOrderByAggregateInput = {
   deliveryFee?: Prisma.SortOrder
   minimumOrder?: Prisma.SortOrder
   supportEmail?: Prisma.SortOrder
+  storePhone?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
 }
 
@@ -360,6 +380,7 @@ export type SettingMaxOrderByAggregateInput = {
   deliveryFee?: Prisma.SortOrder
   minimumOrder?: Prisma.SortOrder
   supportEmail?: Prisma.SortOrder
+  storePhone?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
 }
 
@@ -369,6 +390,7 @@ export type SettingMinOrderByAggregateInput = {
   deliveryFee?: Prisma.SortOrder
   minimumOrder?: Prisma.SortOrder
   supportEmail?: Prisma.SortOrder
+  storePhone?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
 }
 
@@ -385,6 +407,7 @@ export type SettingSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs 
   deliveryFee?: boolean
   minimumOrder?: boolean
   supportEmail?: boolean
+  storePhone?: boolean
   updatedAt?: boolean
 }, ExtArgs["result"]["setting"]>
 
@@ -394,6 +417,7 @@ export type SettingSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Exten
   deliveryFee?: boolean
   minimumOrder?: boolean
   supportEmail?: boolean
+  storePhone?: boolean
   updatedAt?: boolean
 }, ExtArgs["result"]["setting"]>
 
@@ -403,6 +427,7 @@ export type SettingSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Exten
   deliveryFee?: boolean
   minimumOrder?: boolean
   supportEmail?: boolean
+  storePhone?: boolean
   updatedAt?: boolean
 }, ExtArgs["result"]["setting"]>
 
@@ -412,10 +437,11 @@ export type SettingSelectScalar = {
   deliveryFee?: boolean
   minimumOrder?: boolean
   supportEmail?: boolean
+  storePhone?: boolean
   updatedAt?: boolean
 }
 
-export type SettingOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "storeOpen" | "deliveryFee" | "minimumOrder" | "supportEmail" | "updatedAt", ExtArgs["result"]["setting"]>
+export type SettingOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "storeOpen" | "deliveryFee" | "minimumOrder" | "supportEmail" | "storePhone" | "updatedAt", ExtArgs["result"]["setting"]>
 
 export type $SettingPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   name: "Setting"
@@ -426,6 +452,7 @@ export type $SettingPayload<ExtArgs extends runtime.Types.Extensions.InternalArg
     deliveryFee: number
     minimumOrder: number
     supportEmail: string | null
+    storePhone: string | null
     updatedAt: Date
   }, ExtArgs["result"]["setting"]>
   composites: {}
@@ -855,6 +882,7 @@ export interface SettingFieldRefs {
   readonly deliveryFee: Prisma.FieldRef<"Setting", 'Int'>
   readonly minimumOrder: Prisma.FieldRef<"Setting", 'Int'>
   readonly supportEmail: Prisma.FieldRef<"Setting", 'String'>
+  readonly storePhone: Prisma.FieldRef<"Setting", 'String'>
   readonly updatedAt: Prisma.FieldRef<"Setting", 'DateTime'>
 }
     

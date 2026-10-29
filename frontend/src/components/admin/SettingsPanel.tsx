@@ -11,6 +11,7 @@ export default function SettingsPanel() {
   const [deliveryFee, setDeliveryFee] = useState('0');
   const [minimumOrder, setMinimumOrder] = useState('0');
   const [supportEmail, setSupportEmail] = useState('');
+  const [storePhone, setStorePhone] = useState('');
   const [busy, setBusy] = useState(false);
   const [msg, setMsg] = useState<{ tone: 'success' | 'error'; text: string } | null>(null);
 
@@ -23,6 +24,7 @@ export default function SettingsPanel() {
         setDeliveryFee(String(s.deliveryFee));
         setMinimumOrder(String(s.minimumOrder));
         setSupportEmail(s.supportEmail ?? '');
+        setStorePhone(s.storePhone ?? '');
       })
       .catch((e: unknown) => setMsg({ tone: 'error', text: e instanceof Error ? e.message : 'Could not load settings.' }))
       .finally(() => setLoading(false));
@@ -33,12 +35,15 @@ export default function SettingsPanel() {
     setBusy(true);
     setMsg(null);
     try {
-      await api.updateAdminSettings({
+      const saved = await api.updateAdminSettings({
         storeOpen,
         deliveryFee: Number(deliveryFee),
         minimumOrder: Number(minimumOrder),
         supportEmail: supportEmail.trim() || null,
+        storePhone: storePhone.trim() || null,
       });
+      // Show the number as saved (normalised to +91… form by the server).
+      setStorePhone(saved.storePhone ?? '');
       setMsg({ tone: 'success', text: 'Settings saved.' });
     } catch (err) {
       setMsg({ tone: 'error', text: err instanceof Error ? err.message : 'Could not save settings.' });
@@ -62,6 +67,16 @@ export default function SettingsPanel() {
         <Field label="Minimum order (₹)" type="number" min={0} step="1" value={minimumOrder} onChange={(e) => setMinimumOrder(e.target.value)} required />
       </div>
       <Field label="Support email" type="email" value={supportEmail} onChange={(e) => setSupportEmail(e.target.value)} />
+      <Field
+        label="Store phone"
+        type="tel"
+        inputMode="tel"
+        autoComplete="tel"
+        placeholder="e.g. 98728 08122"
+        value={storePhone}
+        onChange={(e) => setStorePhone(e.target.value)}
+        hint="Customers can tap “Call Store” on their order confirmation once the 10-minute delivery timer ends. Indian numbers are saved as +91…; leave empty to hide the call option."
+      />
       {msg && <Notice tone={msg.tone}>{msg.text}</Notice>}
       <div className="form__actions">
         <button type="submit" className="btn btn--blue" disabled={busy || previewMode}>{busy ? 'Saving…' : 'Save settings'}</button>

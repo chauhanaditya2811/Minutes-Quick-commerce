@@ -6,6 +6,7 @@ import { findGuestOrder, loadPendingCheckout, rememberGuestOrder, savePendingChe
 import type { GuestOrder, OrderStatus } from '../../types/order';
 import { formatDate, formatINR } from '../../utils/format';
 import EmptyState from '../../components/ui/EmptyState';
+import OrderSuccess from '../../components/orders/OrderSuccess';
 import Loading from '../../components/Loading';
 import Notice from '../../components/ui/Notice';
 
@@ -32,6 +33,8 @@ export default function GuestOrderPage() {
   const { clearCart } = useCart();
   const [token] = useState(() => readToken(orderId));
   const [order, setOrder] = useState<GuestOrder | null>(null);
+  // serverTime − device time, captured with each load; keeps the countdown right on a wrong clock.
+  const [serverOffsetMs, setServerOffsetMs] = useState(0);
   const [loading, setLoading] = useState(Boolean(token));
   const [error, setError] = useState<string | null>(null);
   const [checking, setChecking] = useState(false);
@@ -43,7 +46,9 @@ export default function GuestOrderPage() {
   const load = useCallback(async () => {
     if (!token) return null;
     try {
-      const fresh = await api.getGuestOrder(orderId, token);
+      const { order: fresh, serverTime } = await api.getGuestOrder(orderId, token);
+      const offset = Date.parse(serverTime) - Date.now();
+      if (!Number.isNaN(offset)) setServerOffsetMs(offset);
       setOrder(fresh);
       setError(null);
       rememberGuestOrder({ orderId, token, orderNumber: fresh.orderNumber });
@@ -135,6 +140,22 @@ export default function GuestOrderPage() {
     }
   };
 
+  const privateLink = (
+    <div className="guest-order__link">
+      <p className="small"><strong>Save your private order link</strong> to check this order later or on another device. Anyone with the link can see this order, so keep it to yourself.</p>
+      <button type="button" className="btn btn--outline btn--sm" onClick={() => void copyLink()}>{copied ? 'Link copied' : 'Copy order link'}</button>
+    </div>
+  );
+
+  // Only a payment the server has verified shows the confirmation (and its celebration).
+  if (paid && order.orderStatus !== 'CANCELLED') {
+    return (
+      <div className="page">
+        <OrderSuccess order={order} serverOffsetMs={serverOffsetMs}>{privateLink}</OrderSuccess>
+      </div>
+    );
+  }
+
   return (
     <div className="page page--narrow">
       <section className="panel guest-order">
@@ -203,10 +224,7 @@ export default function GuestOrderPage() {
           <div className="totals__final"><dt>{paid ? 'Total paid' : 'Total'}</dt><dd>{formatINR(order.total)}</dd></div>
         </dl>
 
-        <div className="guest-order__link">
-          <p className="small"><strong>Save your private order link</strong> to check this order later or on another device. Anyone with the link can see this order, so keep it to yourself.</p>
-          <button type="button" className="btn btn--outline btn--sm" onClick={() => void copyLink()}>{copied ? 'Link copied' : 'Copy order link'}</button>
-        </div>
+        {privateLink}
 
         <Link to="/" className="btn btn--yellow btn--block">Continue shopping</Link>
       </section>

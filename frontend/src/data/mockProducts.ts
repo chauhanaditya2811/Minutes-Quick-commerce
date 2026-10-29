@@ -52,4 +52,5 @@ export const mockSettings: StoreSettings = {
   deliveryFee: 10,
   minimumOrder: 49,
   supportEmail: 'support@example.com',
+  storePhone: '+919876543210',
 };
