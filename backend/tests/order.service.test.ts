@@ -66,7 +66,7 @@ const customer = {
   profileImage: null,
   phone: "9876543210",
   hostelId: "hostel-1",
-  floor: 2,
+  floor: "2",
   room: "204",
 };
 
@@ -329,7 +329,7 @@ describe("checkout validation service", () => {
         customerName: "Test Student",
         customerPhone: "9876543210",
         customerHostel: "Hostel A",
-        customerFloor: 2,
+        customerFloor: "2",
         customerRoom: "204",
         items: {
           create: [

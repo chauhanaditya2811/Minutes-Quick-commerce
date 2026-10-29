@@ -1,6 +1,7 @@
 import { createHash, randomUUID } from "node:crypto";
 import type { Prisma } from "../generated/prisma/client.js";
 import { prisma } from "../config/database.js";
+import { BLOCK_FLOOR_MESSAGE, parseBlockFloor } from "../utils/blockFloor.js";
 import {
   InventoryReservationError,
   consumeOrderReservations,
@@ -104,13 +105,13 @@ export interface GuestOrderInput extends GuestCheckoutInput {
 export interface GuestCustomer {
   name: string;
   phone: string;
-  floor: number;
+  /** Block and floor, e.g. "A/2". */
+  floor: string;
   room: string;
 }
 
 // Same rules as the signed-in profile: Indian 10-digit mobile numbers starting 6-9.
 const PHONE_PATTERN = /^[6-9]\d{9}$/;
-const MAX_FLOOR = 200;
 
 const parseGuestCustomer = (input: unknown): GuestCustomer => {
   if (!isRecord(input)) {
@@ -127,9 +128,9 @@ const parseGuestCustomer = (input: unknown): GuestCustomer => {
     throw new CheckoutError("Phone must be exactly 10 digits and start with 6-9.", 400);
   }
 
-  const floor = input.floor;
-  if (typeof floor !== "number" || !Number.isSafeInteger(floor) || floor < 0 || floor > MAX_FLOOR) {
-    throw new CheckoutError(`Floor must be a whole number from 0 to ${MAX_FLOOR}.`, 400);
+  const floor = parseBlockFloor(input.floor);
+  if (floor === null) {
+    throw new CheckoutError(BLOCK_FLOOR_MESSAGE, 400);
   }
 
   const room = typeof input.room === "string" ? input.room.trim() : "";
@@ -304,9 +305,7 @@ const validateCheckoutWithClient = async (
     !user.name?.trim() ||
     !user.phone?.trim() ||
     !user.hostelId ||
-    user.floor === null ||
-    !Number.isInteger(user.floor) ||
-    user.floor < 0 ||
+    !user.floor?.trim() ||
     !user.room?.trim()
   ) {
     throw new CheckoutError(

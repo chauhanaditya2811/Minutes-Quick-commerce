@@ -5,6 +5,7 @@ import {
   updateUserProfile,
 } from "../services/user.service.js";
 import { getHostelById } from "../services/hostel.service.js";
+import { BLOCK_FLOOR_MESSAGE, parseBlockFloor } from "../utils/blockFloor.js";
 
 const userResponse = (user: Awaited<ReturnType<typeof getOrCreateUser>>) => ({
   id: user.id,
@@ -55,7 +56,7 @@ export const updateCurrentUser = async (
       return;
     }
 
-    const { name, phone, hostelId, floor, room } = req.body;
+    const { name, phone, hostelId, room } = req.body;
 
     if (
       typeof name !== "string" ||
@@ -81,9 +82,10 @@ export const updateCurrentUser = async (
       return;
     }
 
-    if (!Number.isInteger(floor) || floor < 0) {
+    const floor = parseBlockFloor(req.body.floor);
+    if (floor === null) {
       res.status(400).json({
-        message: "Floor must be an integer greater than or equal to 0.",
+        message: BLOCK_FLOOR_MESSAGE,
       });
       return;
     }

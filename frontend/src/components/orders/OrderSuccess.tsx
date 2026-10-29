@@ -4,6 +4,7 @@ import { useStoreSettings } from '../../hooks/useStoreSettings';
 import { DELIVERY_WINDOW_MS, formatCountdown, useDeliveryCountdown } from '../../hooks/useDeliveryCountdown';
 import { claimCelebration } from '../../services/celebration';
 import type { OrderDetail } from '../../types/order';
+import { deliveryAddress } from '../../utils/blockFloor';
 import { formatDate, formatINR } from '../../utils/format';
 import CallStoreButton from './CallStoreButton';
 
@@ -125,7 +126,7 @@ export default function OrderSuccess({ order, serverOffsetMs, children }: Props)
         </section>
 
         <dl className="order-success__details">
-          <div><dt>Deliver to</dt><dd>{order.customerName} · {order.customerPhone}<br />{order.customerHostel}, Floor {order.customerFloor}, Room {order.customerRoom}</dd></div>
+          <div><dt>Deliver to</dt><dd>{order.customerName} · {order.customerPhone}<br />{deliveryAddress(order.customerHostel, order.customerFloor, order.customerRoom)}</dd></div>
           <div><dt>Order ID</dt><dd className="order-success__id">{order.orderNumber}</dd></div>
           <div><dt>Placed</dt><dd>{formatDate(order.createdAt)}</dd></div>
           <div><dt>Payment</dt><dd>Paid</dd></div>

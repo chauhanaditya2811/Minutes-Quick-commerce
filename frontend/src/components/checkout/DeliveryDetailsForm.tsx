@@ -2,6 +2,7 @@ import { useEffect, useState, type FormEvent } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import { previewMode } from '../../services/config';
 import Field from '../ui/Field';
+import { BLOCK_FLOOR_MAX_LENGTH, BLOCK_FLOOR_MESSAGE, parseBlockFloor } from '../../utils/blockFloor';
 import Notice from '../ui/Notice';
 import SelectField from '../ui/SelectField';
 import type { Hostel } from '../../services/api';
@@ -29,7 +30,7 @@ export default function DeliveryDetailsForm({ submitLabel, onSaved, lockedHostel
         name: profile.name ?? '',
         phone: profile.phone ?? '',
         hostelId: profile.hostelId ?? '',
-        floor: profile.floor === null ? '' : String(profile.floor),
+        floor: profile.floor ?? '',
         room: profile.room ?? '',
       });
     }
@@ -49,9 +50,9 @@ export default function DeliveryDetailsForm({ submitLabel, onSaved, lockedHostel
     setSaving(true);
     setError(null);
     try {
-      const floor = Number(form.floor);
-      if (!Number.isSafeInteger(floor) || floor < 0) {
-        setError('Floor must be a whole number greater than or equal to 0.');
+      const floor = parseBlockFloor(form.floor);
+      if (floor === null) {
+        setError(BLOCK_FLOOR_MESSAGE);
         return;
       }
       const phone = form.phone.trim();
@@ -110,7 +111,7 @@ export default function DeliveryDetailsForm({ submitLabel, onSaved, lockedHostel
         </Notice>
       )}
       <div className="form__row">
-        <Field label="Floor" type="number" min={0} step={1} inputMode="numeric" value={form.floor} onChange={set('floor')} required placeholder="e.g. 2" />
+        <Field label="Block/Floor" autoCapitalize="characters" autoComplete="off" maxLength={BLOCK_FLOOR_MAX_LENGTH} value={form.floor} onChange={set('floor')} required placeholder="e.g. A/2" />
         <Field label="Room" value={form.room} onChange={set('room')} required placeholder="e.g. 214" />
       </div>
       {error && <Notice tone="error">{error}</Notice>}
