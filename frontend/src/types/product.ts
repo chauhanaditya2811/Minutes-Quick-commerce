@@ -9,6 +9,8 @@ export interface Product {
   stock: number; // stock at the selected hostel: 0 = out of stock
   isDeleted: boolean;
   hostelId?: string;
+  /** One of this hostel's top sellers over the last 30 days (catalogue list only). */
+  popular?: boolean;
 }
 
 /** Mirrors GET /api/settings and GET /api/admin/settings. */

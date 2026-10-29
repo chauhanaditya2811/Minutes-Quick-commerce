@@ -13,6 +13,7 @@ const mocks = vi.hoisted(() => ({
   inventoryCreate: vi.fn(),
   transaction: vi.fn(),
   reservationGroupBy: vi.fn(),
+  orderItemGroupBy: vi.fn(),
 }));
 
 const { productInventory } = vi.hoisted(() => ({
@@ -33,6 +34,7 @@ vi.mock("../src/config/database.js", () => ({
     product: { findFirst: mocks.productFindFirst, findMany: mocks.productFindMany },
     productInventory,
     inventoryReservation: { groupBy: mocks.reservationGroupBy },
+    orderItem: { groupBy: mocks.orderItemGroupBy },
     $transaction: mocks.transaction,
   },
 }));
@@ -49,6 +51,7 @@ import {
   updateHostelInventory,
   updateProductInventory,
 } from "../src/services/product-inventory.service.js";
+import { clearPopularityCache } from "../src/services/product-popularity.service.js";
 
 const hostelA = { id: "hostel-a", name: "Hostel A", isActive: true };
 const hostelB = { id: "hostel-b", name: "Hostel B", isActive: false };
@@ -60,12 +63,15 @@ const maggi = {
   price: 15,
   unit: "pack",
   isDeleted: false,
+  createdAt: new Date("2026-01-01T00:00:00Z"),
 };
 
 describe("hostel catalogue", () => {
   beforeEach(() => {
     vi.resetAllMocks();
+    clearPopularityCache();
     mocks.reservationGroupBy.mockResolvedValue([]);
+    mocks.orderItemGroupBy.mockResolvedValue([]);
     mocks.hostelFindUnique.mockResolvedValue(hostelA);
   });
 
@@ -73,7 +79,7 @@ describe("hostel catalogue", () => {
     mocks.inventoryFindMany.mockResolvedValue([{ quantity: 30, product: maggi }]);
 
     await expect(getHostelCatalog("hostel-a")).resolves.toEqual([
-      { ...maggi, stock: 30, hostelId: "hostel-a" },
+      { ...maggi, stock: 30, hostelId: "hostel-a", popular: false },
     ]);
     expect(mocks.inventoryFindMany).toHaveBeenCalledWith(
       expect.objectContaining({

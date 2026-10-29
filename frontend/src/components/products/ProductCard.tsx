@@ -14,7 +14,11 @@ export default function ProductCard({ product, storeOpen = true }: { product: Pr
     <article className="card">
       <Link to={`/products/${product.id}`} className="card__media" aria-label={`View ${product.name}`}>
         <img src={product.imageUrl} alt={product.name} loading="lazy" />
-        {soldOut && <span className="badge badge--out">Out of stock</span>}
+        {soldOut ? (
+          <span className="badge badge--out">Out of stock</span>
+        ) : (
+          product.popular && <span className="badge badge--popular">Popular</span>
+        )}
       </Link>
       <div className="card__body">
         <h3 className="card__title">
