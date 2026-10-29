@@ -404,6 +404,8 @@ describe("secure guest checkout (minutes_test)", () => {
     const pending = await call("GET", `/api/guest/orders/${placed.body.order.id}`, undefined, headers);
     expect(pending.body.order.confirmedAt).toBeNull();
     expect(Date.parse(pending.body.serverTime)).not.toBeNaN();
+    // Each item carries only its product photo for the confirmation screen, nothing else.
+    expect(pending.body.order.items[0].product).toEqual({ imageUrl: expect.any(String) });
 
     const { cashfreeOrderId } = (await startPayment(placed.body.order.id, placed.token)).body.payment;
     const before = Date.now();

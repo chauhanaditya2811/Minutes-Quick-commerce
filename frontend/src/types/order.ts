@@ -189,7 +189,15 @@ export interface GuestOrder {
   customerHostel: string;
   customerFloor: number;
   customerRoom: string;
-  items: { productName: string; price: number; unit: string; quantity: number; subtotal: number }[];
+  items: {
+    productName: string;
+    price: number;
+    unit: string;
+    quantity: number;
+    subtotal: number;
+    /** Current product photo, for the confirmation screen. */
+    product?: { imageUrl: string } | null;
+  }[];
 }
 
 export type OrderDetail = GuestOrder;

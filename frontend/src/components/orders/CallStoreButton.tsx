@@ -28,16 +28,24 @@ export default function CallStoreButton({ ready, storePhone }: Props) {
   return (
     <div className="call-store">
       {canCall ? (
-        <a className="btn btn--lg call-store__btn" href={`tel:${phone}`} aria-describedby={helpId}>
-          <span aria-hidden="true">📞</span> Call Store
+        <a className="btn call-store__btn" href={`tel:${phone}`} aria-describedby={helpId}>
+          <PhoneIcon /> Call Store
         </a>
       ) : (
-        <button type="button" className="btn btn--lg call-store__btn" disabled aria-describedby={helpId}>
-          <span aria-hidden="true">📞</span> Call Store
+        <button type="button" className="btn call-store__btn" disabled aria-describedby={helpId}>
+          <PhoneIcon /> Call Store
         </button>
       )}
       {/* Announced when the button unlocks at 00:00. */}
-      <p id={helpId} className="call-store__help small" aria-live="polite">{help}</p>
+      <p id={helpId} className="call-store__help" aria-live="polite">{help}</p>
     </div>
+  );
+}
+
+function PhoneIcon() {
+  return (
+    <svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true" focusable="false">
+      <path d="M6.6 10.8a15.1 15.1 0 006.6 6.6l2.2-2.2a1 1 0 011-.25 11.4 11.4 0 003.6.57 1 1 0 011 1V20a1 1 0 01-1 1A17 17 0 013 4a1 1 0 011-1h3.5a1 1 0 011 1c0 1.25.2 2.45.57 3.57a1 1 0 01-.25 1z" fill="currentColor" />
+    </svg>
   );
 }

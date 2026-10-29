@@ -13,8 +13,6 @@ const PartyPopperCelebration = lazy(() => import('../celebration/PartyPopperCele
 const prefersReducedMotion = () =>
   typeof window !== 'undefined' && window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
 
-const RING = 2 * Math.PI * 54;
-
 interface Props {
   /** A server-confirmed order (paymentStatus SUCCESS). */
   order: OrderDetail;
@@ -25,8 +23,9 @@ interface Props {
 }
 
 /**
- * The confirmed-order screen shared by guest and signed-in checkout: a one-time full-screen
- * celebration, the 10-minute delivery countdown and the Call Store button.
+ * The confirmed-order screen shared by guest and signed-in checkout: what was ordered first, then
+ * the 10-minute delivery countdown with the Call Store button, then delivery and order details.
+ * A one-time full-screen celebration plays behind it right after confirmation.
  */
 export default function OrderSuccess({ order, serverOffsetMs, children }: Props) {
   const { data: settings, reload: reloadSettings } = useStoreSettings();
@@ -51,12 +50,13 @@ export default function OrderSuccess({ order, serverOffsetMs, children }: Props)
     wasReady.current = ready;
   }, [ready, reloadSettings]);
 
-  const progress = delivered ? 0 : Math.min(1, remaining / DELIVERY_WINDOW_MS);
+  const elapsed = delivered ? 1 : 1 - Math.min(1, remaining / DELIVERY_WINDOW_MS);
   const time = delivered ? '00:00' : formatCountdown(remaining);
   const [minutes, seconds] = time.split(':').map(Number);
+  const itemCount = order.items.reduce((sum, item) => sum + item.quantity, 0);
 
   return (
-    <div className="order-success-page">
+    <div className={`order-success-page${celebrating ? ' order-success-page--celebrating' : ''}`}>
       {celebrating && !reducedMotion && (
         <Suspense fallback={null}>
           <PartyPopperCelebration onDone={() => setCelebrating(false)} />
@@ -64,81 +64,86 @@ export default function OrderSuccess({ order, serverOffsetMs, children }: Props)
       )}
 
       <section className={`panel order-success${celebrating ? ' order-success--celebrating' : ''}`} aria-labelledby="order-success-title">
-        <div className="order-success__hero">
-          <span className={`order-success__badge${celebrating ? ' order-success__badge--pop' : ''}`} aria-hidden="true">✓</span>
-          <h1 id="order-success-title">{delivered ? '✅ Order Delivered!' : '🎉 Order Confirmed!'}</h1>
-          <p className="order-success__lead">
-            {delivered ? 'Your order has been delivered. Enjoy!' : 'Your order has been placed successfully!'}
-          </p>
-          {!delivered && (
-            <p className="order-success__promise">
-              <span aria-hidden="true">💛</span> Sit back and relax. Your order will be delivered to your doorstep within 10 minutes.
-            </p>
-          )}
-        </div>
+        <header className="order-success__head">
+          <span className={`order-success__check${celebrating ? ' order-success__check--pop' : ''}`} aria-hidden="true">
+            <svg viewBox="0 0 24 24" width="20" height="20"><path d="M5 12.5l4.2 4.2L19 7" fill="none" stroke="currentColor" strokeWidth="2.6" strokeLinecap="round" strokeLinejoin="round" /></svg>
+          </span>
+          <div>
+            <h1 id="order-success-title">{delivered ? 'Order Delivered' : 'Order Confirmed'}</h1>
+            <p>{delivered ? 'Your order has been delivered. Enjoy!' : 'Your order has been placed successfully.'}</p>
+          </div>
+        </header>
 
-        <div className="delivery-timer">
+        <section className="order-success__block" aria-labelledby="order-success-items">
+          <div className="order-success__block-head">
+            <h2 id="order-success-items">Your order</h2>
+            <span>{itemCount} {itemCount === 1 ? 'item' : 'items'}</span>
+          </div>
+          <ul className="order-items">
+            {order.items.map((item, index) => (
+              <li key={`${item.productName}-${index}`} className="order-items__row">
+                <ItemThumb name={item.productName} src={item.product?.imageUrl} />
+                <span className="order-items__name">
+                  {item.productName}
+                  <small>{item.unit} · {formatINR(item.price)}</small>
+                </span>
+                <span className="order-items__qty">×{item.quantity}</span>
+                <span className="order-items__price">{formatINR(item.subtotal)}</span>
+              </li>
+            ))}
+          </ul>
+          <dl className="order-success__totals">
+            <div><dt>Item total</dt><dd>{formatINR(order.subtotal)}</dd></div>
+            <div><dt>Delivery</dt><dd>{order.deliveryFee === 0 ? 'Free' : formatINR(order.deliveryFee)}</dd></div>
+            <div className="order-success__total"><dt>Total paid</dt><dd>{formatINR(order.total)}</dd></div>
+          </dl>
+        </section>
+
+        <section className="order-success__block delivery-timer" aria-label="Delivery">
           {!delivered && (
-            <div
-              className="delivery-timer__clock"
-              role="timer"
-              aria-live="off"
-              aria-label={`Estimated delivery in ${minutes} minutes ${seconds} seconds`}
-            >
-              <svg viewBox="0 0 120 120" className="delivery-timer__ring" aria-hidden="true">
-                <circle cx="60" cy="60" r="54" className="delivery-timer__track" />
-                <circle
-                  cx="60"
-                  cy="60"
-                  r="54"
-                  className="delivery-timer__progress"
-                  strokeDasharray={RING}
-                  strokeDashoffset={RING * (1 - progress)}
-                />
-              </svg>
-              <span className="delivery-timer__label">Estimated delivery</span>
-              <span className={`delivery-timer__time${ready ? ' delivery-timer__time--done' : ''}`}>{time}</span>
-            </div>
-          )}
-          {!delivered && (
-            <p className="delivery-timer__note">
-              {ready ? 'Your order should be with you any moment now.' : 'Your order will be delivered within 10 minutes.'}
-            </p>
+            <>
+              <div className="delivery-timer__row">
+                <div>
+                  <p className="delivery-timer__label">{ready ? 'Arriving now' : 'Arriving in'}</p>
+                  <p className="delivery-timer__note">Sit back and relax. Your order will be delivered to your doorstep within 10 minutes.</p>
+                </div>
+                <span
+                  className={`delivery-timer__time${ready ? ' delivery-timer__time--done' : ''}`}
+                  role="timer"
+                  aria-live="off"
+                  aria-label={`Estimated delivery in ${minutes} minutes ${seconds} seconds`}
+                >
+                  {time}
+                </span>
+              </div>
+              <div className="delivery-timer__bar" aria-hidden="true">
+                <span style={{ transform: `scaleX(${elapsed})` }} />
+              </div>
+            </>
           )}
           <CallStoreButton ready={ready} storePhone={settings?.storePhone} />
-        </div>
+        </section>
 
-        <dl className="guest-order__meta order-success__meta">
-          <div><dt>Order number</dt><dd>{order.orderNumber}</dd></div>
+        <dl className="order-success__details">
+          <div><dt>Deliver to</dt><dd>{order.customerName} · {order.customerPhone}<br />{order.customerHostel}, Floor {order.customerFloor}, Room {order.customerRoom}</dd></div>
+          <div><dt>Order ID</dt><dd className="order-success__id">{order.orderNumber}</dd></div>
           <div><dt>Placed</dt><dd>{formatDate(order.createdAt)}</dd></div>
-          <div><dt>Status</dt><dd>{delivered ? 'Delivered' : 'Confirmed'} · Paid</dd></div>
-        </dl>
-
-        <h2 className="guest-order__section">Delivery</h2>
-        <p className="guest-order__address">
-          <strong>{order.customerName}</strong> · {order.customerPhone}<br />
-          {order.customerHostel}, Floor {order.customerFloor}, Room {order.customerRoom}
-        </p>
-
-        <h2 className="guest-order__section">Items</h2>
-        <ul className="summary-list">
-          {order.items.map((item, index) => (
-            <li key={`${item.productName}-${index}`}>
-              <span className="summary-list__name">{item.productName}<small>{item.quantity} × {formatINR(item.price)} · {item.unit}</small></span>
-              <span>{formatINR(item.subtotal)}</span>
-            </li>
-          ))}
-        </ul>
-        <dl className="totals">
-          <div><dt>Items</dt><dd>{formatINR(order.subtotal)}</dd></div>
-          <div><dt>Delivery</dt><dd>{formatINR(order.deliveryFee)}</dd></div>
-          <div className="totals__final"><dt>Total paid</dt><dd>{formatINR(order.total)}</dd></div>
+          <div><dt>Payment</dt><dd>Paid</dd></div>
         </dl>
 
         {children}
 
-        <Link to="/" className="btn btn--yellow btn--block">Continue shopping</Link>
+        <Link to="/" className="btn btn--yellow btn--block order-success__continue">Continue shopping</Link>
       </section>
     </div>
   );
+}
+
+/** Product photo, or a neutral initial tile when the photo is missing or fails to load. */
+function ItemThumb({ name, src }: { name: string; src?: string }) {
+  const [failed, setFailed] = useState(false);
+  if (!src || failed) {
+    return <span className="order-items__thumb order-items__thumb--empty" aria-hidden="true">{name.trim().charAt(0).toUpperCase()}</span>;
+  }
+  return <img className="order-items__thumb" src={src} alt="" loading="lazy" decoding="async" width={44} height={44} onError={() => setFailed(true)} />;
 }

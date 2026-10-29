@@ -554,7 +554,14 @@ const orderDetailSelection = {
   customerFloor: true,
   customerRoom: true,
   items: {
-    select: { productName: true, price: true, unit: true, quantity: true, subtotal: true },
+    select: {
+      productName: true,
+      price: true,
+      unit: true,
+      quantity: true,
+      subtotal: true,
+      product: { select: { imageUrl: true } },
+    },
   },
 } as const;
 

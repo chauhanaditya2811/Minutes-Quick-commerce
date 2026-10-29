@@ -11,6 +11,19 @@ const ANTICIPATE = 0.22; // s: brief pull-back before the first shot
 const FADE_START = 4.1;
 const FADE_END = 4.9;
 
+/** Frames slower than this on average (about 40 fps) switch the engine to its lite tier. */
+const SLOW_FRAME_MS = 25;
+const SAMPLE_FRAMES = 18;
+
+/**
+ * Low-end or data-saving devices start in the lite tier at 1x resolution. Anything this misses is
+ * caught at run time: if frames start dropping, the engine degrades itself mid-animation.
+ */
+const startsLite = () => {
+  const nav = navigator as Navigator & { deviceMemory?: number; connection?: { saveData?: boolean } };
+  return (nav.hardwareConcurrency ?? 8) <= 4 || (nav.deviceMemory ?? 8) <= 4 || nav.connection?.saveData === true;
+};
+
 const popperSize = (w: number, h: number) => Math.round(Math.min(136, Math.max(78, Math.min(w, h) * 0.2)));
 
 const mouthsFor = (w: number, h: number): Mouths => {
@@ -73,6 +86,7 @@ export default function PartyPopperCelebration({ onDone }: Props) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const leftRef = useRef<HTMLDivElement>(null);
   const rightRef = useRef<HTMLDivElement>(null);
+  const layerRef = useRef<HTMLDivElement>(null);
   const doneRef = useRef(onDone);
   doneRef.current = onDone;
 
@@ -84,12 +98,15 @@ export default function PartyPopperCelebration({ onDone }: Props) {
       return;
     }
 
+    let lite = startsLite();
     let width = window.innerWidth;
     let height = window.innerHeight;
+    let dpr = 1;
     const fit = () => {
       width = window.innerWidth;
       height = window.innerHeight;
-      const dpr = Math.min(window.devicePixelRatio || 1, 2);
+      // Confetti is small and fast-moving, so extra resolution buys little and costs a lot of fill.
+      dpr = Math.min(window.devicePixelRatio || 1, lite ? 1 : 1.5);
       canvas.width = Math.round(width * dpr);
       canvas.height = Math.round(height * dpr);
       canvas.style.width = `${width}px`;
@@ -105,11 +122,19 @@ export default function PartyPopperCelebration({ onDone }: Props) {
     };
     fit();
 
-    const engine = new ConfettiEngine(width, height, mouthsFor(width, height));
+    const engine = new ConfettiEngine(width, height, mouthsFor(width, height), lite);
+    engine.resize(width, height, mouthsFor(width, height), dpr);
     const onResize = () => {
       fit();
-      engine.resize(width, height, mouthsFor(width, height));
+      engine.resize(width, height, mouthsFor(width, height), dpr);
     };
+    const goLite = () => {
+      lite = true;
+      engine.degrade();
+      layerRef.current?.classList.add('celebration--lite');
+      onResize();
+    };
+    if (lite) layerRef.current?.classList.add('celebration--lite');
     window.addEventListener('resize', onResize);
 
     const applyPose = (el: HTMLDivElement | null, side: Side, t: number) => {
@@ -127,10 +152,22 @@ export default function PartyPopperCelebration({ onDone }: Props) {
     let frame = 0;
     let last: number | null = null;
     let finished = false;
+    let slowSum = 0;
+    let slowCount = 0;
     const tick = (now: number) => {
+      const raw = last === null ? 0 : now - last;
       // Clamp the step so a backgrounded tab resumes smoothly instead of jumping ahead.
-      const dt = last === null ? 0 : Math.min(0.05, (now - last) / 1000);
+      const dt = Math.min(0.05, raw / 1000);
       last = now;
+      // Watch real frame times once the first burst is in the air; downgrade if the device struggles.
+      if (!lite && engine.time > 0.3 && raw > 0 && raw < 250) {
+        slowSum += raw;
+        if (++slowCount === SAMPLE_FRAMES) {
+          if (slowSum / slowCount > SLOW_FRAME_MS) goLite();
+          slowSum = 0;
+          slowCount = 0;
+        }
+      }
       engine.step(dt);
       engine.draw(ctx);
       applyPose(leftRef.current, 'left', engine.time);
@@ -160,7 +197,7 @@ export default function PartyPopperCelebration({ onDone }: Props) {
       <div className="celebration" aria-hidden="true">
         <canvas className="celebration__canvas" ref={canvasRef} />
       </div>
-      <div className="celebration celebration--poppers" aria-hidden="true">
+      <div className="celebration celebration--poppers" aria-hidden="true" ref={layerRef}>
         <div className="celebration__popper celebration__popper--left" ref={leftRef}><Popper /></div>
         <div className="celebration__popper celebration__popper--right" ref={rightRef}><Popper /></div>
       </div>
