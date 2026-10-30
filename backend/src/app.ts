@@ -12,6 +12,7 @@ import adminOrderRoutes from "./routes/admin-order.routes.js";
 import cashfreeWebhookRoutes from "./routes/cashfree-webhook.routes.js";
 import hostelRoutes from "./routes/hostel.routes.js";
 import adminHostelRoutes from "./routes/admin-hostel.routes.js";
+import adminStockGroupRoutes from "./routes/admin-stock-group.routes.js";
 import guestRoutes from "./routes/guest.routes.js";
 import feedbackRoutes from "./routes/feedback.routes.js";
 import adminFeedbackRoutes from "./routes/admin-feedback.routes.js";
@@ -40,6 +41,8 @@ app.use("/api/users", userRoutes);
 app.use("/api/products", productRoutes);
 app.use("/api/hostels", hostelRoutes);
 app.use("/api/admin/hostels", adminHostelRoutes);
+// Shared stock: which hostels sell from which stock, and each group's product stock.
+app.use("/api/admin/stock-groups", adminStockGroupRoutes);
 app.use("/api/admin", adminProductRoutes);
 app.use("/api/admin", adminOrderRoutes);
 // Public store settings.

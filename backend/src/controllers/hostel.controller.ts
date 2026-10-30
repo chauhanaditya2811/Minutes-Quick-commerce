@@ -33,7 +33,8 @@ export const createHostelController = async (req: Request, res: Response): Promi
     res.status(400).json({ message: "A non-empty hostel name is required." });
     return;
   }
-  try { res.status(201).json(await createHostel(req.body.name)); }
+  const stockGroupId = typeof req.body.stockGroupId === "string" && req.body.stockGroupId.trim() ? req.body.stockGroupId.trim() : undefined;
+  try { res.status(201).json(await createHostel(req.body.name, stockGroupId)); }
   catch (error) { handleError(error, res, "Unable to create hostel right now. Please try again later."); }
 };
 

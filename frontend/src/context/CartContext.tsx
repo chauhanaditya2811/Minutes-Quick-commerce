@@ -22,11 +22,15 @@ interface CartContextValue {
 }
 
 interface StoredCart {
+  /**
+   * The stock the cart was filled from: the hostel's stock group (stored under the old
+   * "hostelId" name; a hostel's first group shares its id, so older carts keep working).
+   */
   hostelId: string | null;
   lines: CartLine[];
 }
 
-// v2 binds the cart to one hostel. v1 carts held global stock snapshots and are discarded.
+// v2 binds the cart to one stock. v1 carts held global stock snapshots and are discarded.
 const STORAGE_KEY = 'minutes.cart.v2';
 const CartContext = createContext<CartContextValue | null>(null);
 
@@ -47,9 +51,10 @@ const clamp = (qty: number, product: Product) => Math.max(0, Math.min(qty, produ
 
 export function CartProvider({ children }: { children: ReactNode }) {
   const { selectedHostel } = useHostel();
-  const hostelId = selectedHostel?.id ?? null;
+  // Hostels sharing a stock group share a cart: switching between them keeps it.
+  const hostelId = selectedHostel ? (selectedHostel.stockGroupId ?? selectedHostel.id) : null;
   const [cart, setCart] = useState<StoredCart>(load);
-  // A cart never carries items from one hostel into another.
+  // A cart never carries items from one stock into another.
   const lines = useMemo(() => (cart.hostelId === hostelId ? cart.lines : []), [cart, hostelId]);
 
   useEffect(() => {

@@ -95,8 +95,8 @@ describe("most ordered first (minutes_test)", () => {
     await fx.cleanup();
   });
 
-  it("counts paid orders from the last 30 days at that hostel only, one per order", async () => {
-    const counts = await getRecentOrderCounts(hostelA);
+  it("counts paid orders from the last 30 days in that hostel's stock group only, one per order", async () => {
+    const counts = await getRecentOrderCounts(await fx.groupOf(hostelA));
     expect(counts.get(p.maggi)).toBe(5);
     expect(counts.get(p.water)).toBe(3);
     expect(counts.get(p.chips)).toBe(2);

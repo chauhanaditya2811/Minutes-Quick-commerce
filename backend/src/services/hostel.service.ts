@@ -10,13 +10,21 @@ export class HostelServiceError extends Error {
 export const getActiveHostels = () =>
   prisma.hostel.findMany({ where: { isActive: true }, orderBy: { name: "asc" } });
 
+/** Every hostel with the stock group it sells from, for the admin. */
 export const getAllHostels = () =>
-  prisma.hostel.findMany({ orderBy: { name: "asc" } });
+  prisma.hostel.findMany({ orderBy: { name: "asc" }, include: { stockGroup: { select: { id: true, name: true } } } });
 
 export const getHostelById = (id: string) => prisma.hostel.findUnique({ where: { id } });
 
-export const createHostel = async (name: string) => {
+/**
+ * Creates a hostel. With `stockGroupId` it sells from that existing group's stock; otherwise it
+ * gets a stock group of its own, named after it.
+ */
+export const createHostel = async (name: string, stockGroupId?: string) => {
   const normalizedName = name.trim();
+  if (stockGroupId && !(await prisma.stockGroup.findUnique({ where: { id: stockGroupId } }))) {
+    throw new HostelServiceError("That stock group no longer exists.", 400);
+  }
   const existing = await prisma.hostel.findFirst({
     where: { name: { equals: normalizedName, mode: "insensitive" } },
   });
@@ -28,7 +36,12 @@ export const createHostel = async (name: string) => {
     return prisma.hostel.update({ where: { id: existing.id }, data: { isActive: true, name: normalizedName } });
   }
   try {
-    return await prisma.hostel.create({ data: { name: normalizedName } });
+    return await prisma.hostel.create({
+      data: {
+        name: normalizedName,
+        stockGroup: stockGroupId ? { connect: { id: stockGroupId } } : { create: { name: normalizedName } },
+      },
+    });
   } catch (error) {
     // The database's lower-case unique index also protects against a concurrent create.
     if (
@@ -82,7 +95,12 @@ export const permanentlyDeleteHostel = async (id: string) => {
   }
 
   try {
-    await prisma.hostel.delete({ where: { id } });
+    await prisma.$transaction(async (tx) => {
+      await tx.hostel.delete({ where: { id } });
+      // Its stock group goes too if no other hostel sells from it (taking its stock counts with it).
+      const others = await tx.hostel.count({ where: { stockGroupId: hostel.stockGroupId } });
+      if (others === 0) await tx.stockGroup.delete({ where: { id: hostel.stockGroupId } });
+    });
   } catch (error) {
     if (
       typeof error === "object" &&

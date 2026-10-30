@@ -53,6 +53,7 @@ export const AnyNull = runtime.AnyNull
 export const ModelName = {
   User: 'User',
   Hostel: 'Hostel',
+  StockGroup: 'StockGroup',
   Product: 'Product',
   ProductInventory: 'ProductInventory',
   Order: 'Order',
@@ -106,10 +107,21 @@ export const HostelScalarFieldEnum = {
   isActive: 'isActive',
   requestsResetAt: 'requestsResetAt',
   createdAt: 'createdAt',
-  updatedAt: 'updatedAt'
+  updatedAt: 'updatedAt',
+  stockGroupId: 'stockGroupId'
 } as const
 
 export type HostelScalarFieldEnum = (typeof HostelScalarFieldEnum)[keyof typeof HostelScalarFieldEnum]
+
+
+export const StockGroupScalarFieldEnum = {
+  id: 'id',
+  name: 'name',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type StockGroupScalarFieldEnum = (typeof StockGroupScalarFieldEnum)[keyof typeof StockGroupScalarFieldEnum]
 
 
 export const ProductScalarFieldEnum = {
@@ -131,7 +143,7 @@ export type ProductScalarFieldEnum = (typeof ProductScalarFieldEnum)[keyof typeo
 export const ProductInventoryScalarFieldEnum = {
   id: 'id',
   productId: 'productId',
-  hostelId: 'hostelId',
+  stockGroupId: 'stockGroupId',
   quantity: 'quantity',
   isAvailable: 'isAvailable',
   createdAt: 'createdAt',
@@ -222,6 +234,7 @@ export const InventoryReservationScalarFieldEnum = {
   userId: 'userId',
   orderId: 'orderId',
   hostelId: 'hostelId',
+  stockGroupId: 'stockGroupId',
   quantity: 'quantity',
   status: 'status',
   expiresAt: 'expiresAt',

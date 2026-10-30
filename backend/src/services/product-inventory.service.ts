@@ -2,6 +2,9 @@ import { prisma } from "../config/database.js";
 import { getActiveReservedQuantities } from "./inventory.service.js";
 import { getRecentOrderCounts, rankByPopularity } from "./product-popularity.service.js";
 
+// Stock is counted per stock group: one shelf that serves one or more hostels. Customers shop
+// at a hostel and see its group's stock; admins edit stock per group.
+
 export const MAX_INVENTORY_QUANTITY = 2_147_483_647;
 const MAX_INVENTORY_ENTRIES = 500;
 
@@ -13,24 +16,24 @@ export class InventoryServiceError extends Error {
 }
 
 export interface InventoryUpdateEntry {
-  hostelId: string;
+  stockGroupId: string;
   isAvailable: boolean;
   quantity: number;
   // When present, the save only applies if the stored quantity still matches.
   expectedQuantity?: number;
 }
 
-export interface HostelInventoryUpdateEntry {
+export interface GroupInventoryUpdateEntry {
   productId: string;
   isAvailable: boolean;
   quantity: number;
   expectedQuantity?: number;
 }
 
-// One product/hostel row to save; `label` names it in conflict messages.
+// One product/group row to save; `label` names it in conflict messages.
 interface InventoryWrite {
   productId: string;
-  hostelId: string;
+  stockGroupId: string;
   isAvailable: boolean;
   quantity: number;
   expectedQuantity?: number;
@@ -47,6 +50,11 @@ const catalogProductSelection = {
   isDeleted: true,
   createdAt: true,
   updatedAt: true,
+} as const;
+
+const groupHostelSelection = {
+  select: { id: true, name: true, isActive: true },
+  orderBy: { name: "asc" },
 } as const;
 
 const isRecord = (value: unknown): value is Record<string, unknown> =>
@@ -67,16 +75,16 @@ const requireActiveHostel = async (hostelId: string) => {
 };
 
 // Returns the customer catalogue for one active hostel, most ordered first (see rankByPopularity).
-// `stock` is that hostel's quantity; `popular` marks its top sellers.
+// `stock` is the quantity in the hostel's stock group; `popular` marks the group's top sellers.
 export const getHostelCatalog = async (hostelId: string) => {
-  await requireActiveHostel(hostelId);
+  const { stockGroupId } = await requireActiveHostel(hostelId);
 
   const [rows, counts] = await Promise.all([
     prisma.productInventory.findMany({
-      where: { hostelId, isAvailable: true, product: { isDeleted: false } },
+      where: { stockGroupId, isAvailable: true, product: { isDeleted: false } },
       select: { quantity: true, product: { select: catalogProductSelection } },
     }),
-    getRecentOrderCounts(hostelId),
+    getRecentOrderCounts(stockGroupId),
   ]);
 
   return rankByPopularity(
@@ -85,19 +93,19 @@ export const getHostelCatalog = async (hostelId: string) => {
   );
 };
 
-// Returns one product if it is enabled at the given active hostel.
+// Returns one product if it is enabled in the stock group of the given active hostel.
 export const getHostelProduct = async (hostelId: string, productId: string) => {
-  await requireActiveHostel(hostelId);
+  const { stockGroupId } = await requireActiveHostel(hostelId);
 
   const row = await prisma.productInventory.findFirst({
-    where: { hostelId, productId, isAvailable: true, product: { isDeleted: false } },
+    where: { stockGroupId, productId, isAvailable: true, product: { isDeleted: false } },
     select: { quantity: true, product: { select: catalogProductSelection } },
   });
 
   return row ? { ...row.product, stock: row.quantity, hostelId } : null;
 };
 
-// Returns every active product with its per-hostel inventory for the admin table.
+// Returns every active product with its per-group inventory for the admin table.
 // `quantity` is stock available now; `reserved` is held for payments in progress.
 export const getAdminProductsWithInventory = async () => {
   const [products, reserved] = await Promise.all([
@@ -105,7 +113,7 @@ export const getAdminProductsWithInventory = async () => {
       where: { isDeleted: false },
       orderBy: { createdAt: "desc" },
       include: {
-        inventories: { select: { hostelId: true, quantity: true, isAvailable: true } },
+        inventories: { select: { stockGroupId: true, quantity: true, isAvailable: true } },
       },
     }),
     getActiveReservedQuantities(),
@@ -116,7 +124,7 @@ export const getAdminProductsWithInventory = async () => {
     legacyStock: stock,
     inventories: inventories.map((row) => ({
       ...row,
-      reserved: reserved.get(`${product.id}:${row.hostelId}`) ?? 0,
+      reserved: reserved.get(`${product.id}:${row.stockGroupId}`) ?? 0,
     })),
   }));
 };
@@ -130,29 +138,35 @@ const findActiveProduct = async (productId: string) => {
   return product;
 };
 
-// Returns one row per hostel (including inactive ones) for a product.
+/** A group is live for customers when at least one of its hostels is active. */
+const groupSummary = (group: { id: string; name: string; hostels: { id: string; name: string; isActive: boolean }[] }) => ({
+  stockGroupId: group.id,
+  name: group.name,
+  hostels: group.hostels,
+  active: group.hostels.some((hostel) => hostel.isActive),
+});
+
+// Returns one row per stock group for a product.
 export const getProductInventory = async (productId: string) => {
   const product = await findActiveProduct(productId);
-  const [hostels, rows, reserved] = await Promise.all([
-    prisma.hostel.findMany({ orderBy: { name: "asc" } }),
+  const [groups, rows, reserved] = await Promise.all([
+    prisma.stockGroup.findMany({ orderBy: { name: "asc" }, include: { hostels: groupHostelSelection } }),
     prisma.productInventory.findMany({ where: { productId } }),
     getActiveReservedQuantities([productId]),
   ]);
-  const rowsByHostel = new Map(rows.map((row) => [row.hostelId, row]));
+  const rowsByGroup = new Map(rows.map((row) => [row.stockGroupId, row]));
 
   return {
     productId: product.id,
     productName: product.name,
     legacyStock: product.stock,
-    hostels: hostels.map((hostel) => {
-      const row = rowsByHostel.get(hostel.id);
+    groups: groups.map((group) => {
+      const row = rowsByGroup.get(group.id);
       return {
-        hostelId: hostel.id,
-        hostelName: hostel.name,
-        hostelActive: hostel.isActive,
+        ...groupSummary(group),
         isAvailable: row?.isAvailable ?? false,
         quantity: row?.quantity ?? 0,
-        reserved: reserved.get(`${product.id}:${hostel.id}`) ?? 0,
+        reserved: reserved.get(`${product.id}:${group.id}`) ?? 0,
         exists: Boolean(row),
         updatedAt: row?.updatedAt ?? null,
       };
@@ -160,8 +174,8 @@ export const getProductInventory = async (productId: string) => {
   };
 };
 
-// Validates an admin inventory payload keyed by hostel or by product, without touching the database.
-const parseEntries = (input: unknown, key: "hostelId" | "productId", noun: string) => {
+// Validates an admin inventory payload keyed by stock group or by product, without touching the database.
+const parseEntries = (input: unknown, key: "stockGroupId" | "productId", noun: string) => {
   if (!Array.isArray(input) || input.length === 0) {
     throw new InventoryServiceError(`Provide at least one ${noun} inventory entry.`, 400);
   }
@@ -202,12 +216,12 @@ const parseEntries = (input: unknown, key: "hostelId" | "productId", noun: strin
 };
 
 export const parseInventoryEntries = (input: unknown): InventoryUpdateEntry[] =>
-  parseEntries(input, "hostelId", "hostel").map(({ id, ...entry }) => ({ hostelId: id, ...entry }));
+  parseEntries(input, "stockGroupId", "stock group").map(({ id, ...entry }) => ({ stockGroupId: id, ...entry }));
 
-export const parseHostelInventoryEntries = (input: unknown): HostelInventoryUpdateEntry[] =>
+export const parseGroupInventoryEntries = (input: unknown): GroupInventoryUpdateEntry[] =>
   parseEntries(input, "productId", "product").map(({ id, ...entry }) => ({ productId: id, ...entry }));
 
-// Saving can race another admin creating the same product/hostel row at the same moment.
+// Saving can race another admin creating the same product/group row at the same moment.
 const saveOrReportConflict = async (writes: InventoryWrite[]) => {
   try {
     await saveInventoryWrites(writes);
@@ -222,56 +236,57 @@ const saveOrReportConflict = async (writes: InventoryWrite[]) => {
   }
 };
 
-// Saves several hostel inventory rows for one product atomically.
+// Saves several stock group rows for one product atomically.
 export const updateProductInventory = async (productId: string, input: unknown) => {
   const entries = parseInventoryEntries(input);
   await findActiveProduct(productId);
 
-  const hostels = await prisma.hostel.findMany({
-    where: { id: { in: entries.map(({ hostelId }) => hostelId) } },
+  const groups = await prisma.stockGroup.findMany({
+    where: { id: { in: entries.map(({ stockGroupId }) => stockGroupId) } },
     select: { id: true, name: true },
   });
-  const hostelNames = new Map(hostels.map((hostel) => [hostel.id, hostel.name]));
-  const unknown = entries.filter(({ hostelId }) => !hostelNames.has(hostelId));
+  const groupNames = new Map(groups.map((group) => [group.id, group.name]));
+  const unknown = entries.filter(({ stockGroupId }) => !groupNames.has(stockGroupId));
   if (unknown.length > 0) {
     throw new InventoryServiceError(
-      `Unknown hostel ID(s): ${unknown.map(({ hostelId }) => hostelId).join(", ")}.`,
+      `Unknown stock group ID(s): ${unknown.map(({ stockGroupId }) => stockGroupId).join(", ")}.`,
       400
     );
   }
 
   await saveOrReportConflict(
-    entries.map((entry) => ({ ...entry, productId, label: hostelNames.get(entry.hostelId) ?? entry.hostelId }))
+    entries.map((entry) => ({ ...entry, productId, label: groupNames.get(entry.stockGroupId) ?? entry.stockGroupId }))
   );
 
   return getProductInventory(productId);
 };
 
-const findHostel = async (hostelId: string) => {
-  const hostel = await prisma.hostel.findUnique({ where: { id: hostelId } });
-  if (!hostel) throw new InventoryServiceError("Hostel not found.", 404);
-  return hostel;
+const findStockGroup = async (stockGroupId: string) => {
+  const group = await prisma.stockGroup.findUnique({
+    where: { id: stockGroupId },
+    include: { hostels: groupHostelSelection },
+  });
+  if (!group) throw new InventoryServiceError("Stock group not found.", 404);
+  return group;
 };
 
-// Returns every non-deleted product with its stock at one hostel (active or inactive).
+// Returns every non-deleted product with its stock in one group, with the hostels it serves.
 // Products with no stock row yet are listed as unavailable with quantity 0 and `exists: false`.
-export const getHostelInventory = async (hostelId: string) => {
-  const hostel = await findHostel(hostelId);
+export const getStockGroupInventory = async (stockGroupId: string) => {
+  const group = await findStockGroup(stockGroupId);
   const products = await prisma.product.findMany({
     where: { isDeleted: false },
     orderBy: { name: "asc" },
     select: { id: true, name: true, imageUrl: true, unit: true, price: true },
   });
   const [rows, reserved] = await Promise.all([
-    prisma.productInventory.findMany({ where: { hostelId } }),
+    prisma.productInventory.findMany({ where: { stockGroupId } }),
     getActiveReservedQuantities(products.map((product) => product.id)),
   ]);
   const rowsByProduct = new Map(rows.map((row) => [row.productId, row]));
 
   return {
-    hostelId: hostel.id,
-    hostelName: hostel.name,
-    hostelActive: hostel.isActive,
+    ...groupSummary(group),
     products: products.map((product) => {
       const row = rowsByProduct.get(product.id);
       return {
@@ -282,7 +297,7 @@ export const getHostelInventory = async (hostelId: string) => {
         price: product.price,
         isAvailable: row?.isAvailable ?? false,
         quantity: row?.quantity ?? 0,
-        reserved: reserved.get(`${product.id}:${hostel.id}`) ?? 0,
+        reserved: reserved.get(`${product.id}:${group.id}`) ?? 0,
         exists: Boolean(row),
         updatedAt: row?.updatedAt ?? null,
       };
@@ -290,11 +305,11 @@ export const getHostelInventory = async (hostelId: string) => {
   };
 };
 
-// Saves stock for several products at one hostel atomically. Only `quantity` and
+// Saves stock for several products in one group atomically. Only `quantity` and
 // `isAvailable` change; reservations for payments in progress are never touched.
-export const updateHostelInventory = async (hostelId: string, input: unknown) => {
-  const entries = parseHostelInventoryEntries(input);
-  await findHostel(hostelId);
+export const updateStockGroupInventory = async (stockGroupId: string, input: unknown) => {
+  const entries = parseGroupInventoryEntries(input);
+  await findStockGroup(stockGroupId);
 
   const products = await prisma.product.findMany({
     where: { id: { in: entries.map(({ productId }) => productId) }, isDeleted: false },
@@ -310,41 +325,41 @@ export const updateHostelInventory = async (hostelId: string, input: unknown) =>
   }
 
   await saveOrReportConflict(
-    entries.map((entry) => ({ ...entry, hostelId, label: productNames.get(entry.productId) ?? entry.productId }))
+    entries.map((entry) => ({ ...entry, stockGroupId, label: productNames.get(entry.productId) ?? entry.productId }))
   );
 
-  return getHostelInventory(hostelId);
+  return getStockGroupInventory(stockGroupId);
 };
 
 // Writes rows in one transaction; any conflict rolls back every row.
 const saveInventoryWrites = (writes: InventoryWrite[]) =>
   prisma.$transaction(async (tx) => {
     for (const entry of writes) {
-      const { productId } = entry;
+      const { productId, stockGroupId } = entry;
       const data = { isAvailable: entry.isAvailable, quantity: entry.quantity };
 
       if (entry.expectedQuantity === undefined) {
         await tx.productInventory.upsert({
-          where: { productId_hostelId: { productId, hostelId: entry.hostelId } },
-          create: { productId, hostelId: entry.hostelId, ...data },
+          where: { productId_stockGroupId: { productId, stockGroupId } },
+          create: { productId, stockGroupId, ...data },
           update: data,
         });
         continue;
       }
 
       const updated = await tx.productInventory.updateMany({
-        where: { productId, hostelId: entry.hostelId, quantity: entry.expectedQuantity },
+        where: { productId, stockGroupId, quantity: entry.expectedQuantity },
         data,
       });
       if (updated.count === 1) continue;
 
       const existing = await tx.productInventory.findUnique({
-        where: { productId_hostelId: { productId, hostelId: entry.hostelId } },
+        where: { productId_stockGroupId: { productId, stockGroupId } },
         select: { id: true },
       });
       // A missing row has an implicit quantity of 0.
       if (!existing && entry.expectedQuantity === 0) {
-        await tx.productInventory.create({ data: { productId, hostelId: entry.hostelId, ...data } });
+        await tx.productInventory.create({ data: { productId, stockGroupId, ...data } });
         continue;
       }
 

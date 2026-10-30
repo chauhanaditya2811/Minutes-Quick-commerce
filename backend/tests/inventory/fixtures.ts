@@ -23,11 +23,20 @@ export const createInventoryFixture = async () => {
     update: { storeOpen: true, minimumOrder: 0 },
   });
 
-  const hostel = async (name: string) => {
-    const row = await prisma.hostel.create({ data: { name: `${name} ${tag}` } });
+  // Each hostel gets its own stock group, as in production; tests can then share one.
+  const hostel = async (name: string, stockGroupId?: string) => {
+    const row = await prisma.hostel.create({
+      data: {
+        name: `${name} ${tag}`,
+        stockGroup: stockGroupId ? { connect: { id: stockGroupId } } : { create: { name: `${name} ${tag}` } },
+      },
+    });
     ids.hostels.push(row.id);
     return row;
   };
+
+  const groupOf = async (hostelId: string) =>
+    (await prisma.hostel.findUniqueOrThrow({ where: { id: hostelId }, select: { stockGroupId: true } })).stockGroupId;
 
   const product = async (name: string, price = 20) => {
     const row = await prisma.product.create({
@@ -54,15 +63,20 @@ export const createInventoryFixture = async () => {
     return row;
   };
 
-  const setStock = (productId: string, hostelId: string, quantity: number, isAvailable = true) =>
-    prisma.productInventory.upsert({
-      where: { productId_hostelId: { productId, hostelId } },
-      create: { productId, hostelId, quantity, isAvailable },
+  // Stock is per stock group; these take a hostel and use whichever group it sells from.
+  const setStock = async (productId: string, hostelId: string, quantity: number, isAvailable = true) => {
+    const stockGroupId = await groupOf(hostelId);
+    return prisma.productInventory.upsert({
+      where: { productId_stockGroupId: { productId, stockGroupId } },
+      create: { productId, stockGroupId, quantity, isAvailable },
       update: { quantity, isAvailable },
     });
+  };
 
-  const stock = async (productId: string, hostelId: string) =>
-    (await prisma.productInventory.findUnique({ where: { productId_hostelId: { productId, hostelId } } }))?.quantity ?? null;
+  const stock = async (productId: string, hostelId: string) => {
+    const stockGroupId = await groupOf(hostelId);
+    return (await prisma.productInventory.findUnique({ where: { productId_stockGroupId: { productId, stockGroupId } } }))?.quantity ?? null;
+  };
 
   // A bare PENDING_PAYMENT order, for service-level tests that don't go through checkout.
   const pendingOrder = async (userId: string, hostelId: string | null, items: { productId: string; quantity: number }[]) => {
@@ -116,8 +130,10 @@ export const createInventoryFixture = async () => {
     await prisma.productInventory.deleteMany({ where: { productId: { in: ids.products } } });
     await prisma.product.deleteMany({ where: { id: { in: ids.products } } });
     await prisma.user.deleteMany({ where: { id: { in: ids.users } } });
+    const groups = await prisma.hostel.findMany({ where: { id: { in: ids.hostels } }, select: { stockGroupId: true } });
     await prisma.hostel.deleteMany({ where: { id: { in: ids.hostels } } });
+    await prisma.stockGroup.deleteMany({ where: { OR: [{ id: { in: groups.map((g) => g.stockGroupId) } }, { name: { endsWith: tag } }] } });
   };
 
-  return { tag, ids, hostel, product, customer, setStock, stock, pendingOrder, trackOrder, cleanup };
+  return { tag, ids, hostel, groupOf, product, customer, setStock, stock, pendingOrder, trackOrder, cleanup };
 };

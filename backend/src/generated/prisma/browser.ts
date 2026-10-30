@@ -28,6 +28,11 @@ export type User = Prisma.UserModel
  */
 export type Hostel = Prisma.HostelModel
 /**
+ * Model StockGroup
+ * 
+ */
+export type StockGroup = Prisma.StockGroupModel
+/**
  * Model Product
  * 
  */

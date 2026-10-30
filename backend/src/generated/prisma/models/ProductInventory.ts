@@ -37,7 +37,7 @@ export type ProductInventorySumAggregateOutputType = {
 export type ProductInventoryMinAggregateOutputType = {
   id: string | null
   productId: string | null
-  hostelId: string | null
+  stockGroupId: string | null
   quantity: number | null
   isAvailable: boolean | null
   createdAt: Date | null
@@ -47,7 +47,7 @@ export type ProductInventoryMinAggregateOutputType = {
 export type ProductInventoryMaxAggregateOutputType = {
   id: string | null
   productId: string | null
-  hostelId: string | null
+  stockGroupId: string | null
   quantity: number | null
   isAvailable: boolean | null
   createdAt: Date | null
@@ -57,7 +57,7 @@ export type ProductInventoryMaxAggregateOutputType = {
 export type ProductInventoryCountAggregateOutputType = {
   id: number
   productId: number
-  hostelId: number
+  stockGroupId: number
   quantity: number
   isAvailable: number
   createdAt: number
@@ -77,7 +77,7 @@ export type ProductInventorySumAggregateInputType = {
 export type ProductInventoryMinAggregateInputType = {
   id?: true
   productId?: true
-  hostelId?: true
+  stockGroupId?: true
   quantity?: true
   isAvailable?: true
   createdAt?: true
@@ -87,7 +87,7 @@ export type ProductInventoryMinAggregateInputType = {
 export type ProductInventoryMaxAggregateInputType = {
   id?: true
   productId?: true
-  hostelId?: true
+  stockGroupId?: true
   quantity?: true
   isAvailable?: true
   createdAt?: true
@@ -97,7 +97,7 @@ export type ProductInventoryMaxAggregateInputType = {
 export type ProductInventoryCountAggregateInputType = {
   id?: true
   productId?: true
-  hostelId?: true
+  stockGroupId?: true
   quantity?: true
   isAvailable?: true
   createdAt?: true
@@ -194,7 +194,7 @@ export type ProductInventoryGroupByArgs<ExtArgs extends runtime.Types.Extensions
 export type ProductInventoryGroupByOutputType = {
   id: string
   productId: string
-  hostelId: string
+  stockGroupId: string
   quantity: number
   isAvailable: boolean
   createdAt: Date
@@ -227,47 +227,47 @@ export type ProductInventoryWhereInput = {
   NOT?: Prisma.ProductInventoryWhereInput | Prisma.ProductInventoryWhereInput[]
   id?: Prisma.StringFilter<"ProductInventory"> | string
   productId?: Prisma.StringFilter<"ProductInventory"> | string
-  hostelId?: Prisma.StringFilter<"ProductInventory"> | string
+  stockGroupId?: Prisma.StringFilter<"ProductInventory"> | string
   quantity?: Prisma.IntFilter<"ProductInventory"> | number
   isAvailable?: Prisma.BoolFilter<"ProductInventory"> | boolean
   createdAt?: Prisma.DateTimeFilter<"ProductInventory"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"ProductInventory"> | Date | string
   product?: Prisma.XOR<Prisma.ProductScalarRelationFilter, Prisma.ProductWhereInput>
-  hostel?: Prisma.XOR<Prisma.HostelScalarRelationFilter, Prisma.HostelWhereInput>
+  stockGroup?: Prisma.XOR<Prisma.StockGroupScalarRelationFilter, Prisma.StockGroupWhereInput>
 }
 
 export type ProductInventoryOrderByWithRelationInput = {
   id?: Prisma.SortOrder
   productId?: Prisma.SortOrder
-  hostelId?: Prisma.SortOrder
+  stockGroupId?: Prisma.SortOrder
   quantity?: Prisma.SortOrder
   isAvailable?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
   product?: Prisma.ProductOrderByWithRelationInput
-  hostel?: Prisma.HostelOrderByWithRelationInput
+  stockGroup?: Prisma.StockGroupOrderByWithRelationInput
 }
 
 export type ProductInventoryWhereUniqueInput = Prisma.AtLeast<{
   id?: string
-  productId_hostelId?: Prisma.ProductInventoryProductIdHostelIdCompoundUniqueInput
+  productId_stockGroupId?: Prisma.ProductInventoryProductIdStockGroupIdCompoundUniqueInput
   AND?: Prisma.ProductInventoryWhereInput | Prisma.ProductInventoryWhereInput[]
   OR?: Prisma.ProductInventoryWhereInput[]
   NOT?: Prisma.ProductInventoryWhereInput | Prisma.ProductInventoryWhereInput[]
   productId?: Prisma.StringFilter<"ProductInventory"> | string
-  hostelId?: Prisma.StringFilter<"ProductInventory"> | string
+  stockGroupId?: Prisma.StringFilter<"ProductInventory"> | string
   quantity?: Prisma.IntFilter<"ProductInventory"> | number
   isAvailable?: Prisma.BoolFilter<"ProductInventory"> | boolean
   createdAt?: Prisma.DateTimeFilter<"ProductInventory"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"ProductInventory"> | Date | string
   product?: Prisma.XOR<Prisma.ProductScalarRelationFilter, Prisma.ProductWhereInput>
-  hostel?: Prisma.XOR<Prisma.HostelScalarRelationFilter, Prisma.HostelWhereInput>
-}, "id" | "productId_hostelId">
+  stockGroup?: Prisma.XOR<Prisma.StockGroupScalarRelationFilter, Prisma.StockGroupWhereInput>
+}, "id" | "productId_stockGroupId">
 
 export type ProductInventoryOrderByWithAggregationInput = {
   id?: Prisma.SortOrder
   productId?: Prisma.SortOrder
-  hostelId?: Prisma.SortOrder
+  stockGroupId?: Prisma.SortOrder
   quantity?: Prisma.SortOrder
   isAvailable?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
@@ -285,7 +285,7 @@ export type ProductInventoryScalarWhereWithAggregatesInput = {
   NOT?: Prisma.ProductInventoryScalarWhereWithAggregatesInput | Prisma.ProductInventoryScalarWhereWithAggregatesInput[]
   id?: Prisma.StringWithAggregatesFilter<"ProductInventory"> | string
   productId?: Prisma.StringWithAggregatesFilter<"ProductInventory"> | string
-  hostelId?: Prisma.StringWithAggregatesFilter<"ProductInventory"> | string
+  stockGroupId?: Prisma.StringWithAggregatesFilter<"ProductInventory"> | string
   quantity?: Prisma.IntWithAggregatesFilter<"ProductInventory"> | number
   isAvailable?: Prisma.BoolWithAggregatesFilter<"ProductInventory"> | boolean
   createdAt?: Prisma.DateTimeWithAggregatesFilter<"ProductInventory"> | Date | string
@@ -299,13 +299,13 @@ export type ProductInventoryCreateInput = {
   createdAt?: Date | string
   updatedAt?: Date | string
   product: Prisma.ProductCreateNestedOneWithoutInventoriesInput
-  hostel: Prisma.HostelCreateNestedOneWithoutInventoriesInput
+  stockGroup: Prisma.StockGroupCreateNestedOneWithoutInventoriesInput
 }
 
 export type ProductInventoryUncheckedCreateInput = {
   id?: string
   productId: string
-  hostelId: string
+  stockGroupId: string
   quantity?: number
   isAvailable?: boolean
   createdAt?: Date | string
@@ -319,13 +319,13 @@ export type ProductInventoryUpdateInput = {
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   product?: Prisma.ProductUpdateOneRequiredWithoutInventoriesNestedInput
-  hostel?: Prisma.HostelUpdateOneRequiredWithoutInventoriesNestedInput
+  stockGroup?: Prisma.StockGroupUpdateOneRequiredWithoutInventoriesNestedInput
 }
 
 export type ProductInventoryUncheckedUpdateInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   productId?: Prisma.StringFieldUpdateOperationsInput | string
-  hostelId?: Prisma.StringFieldUpdateOperationsInput | string
+  stockGroupId?: Prisma.StringFieldUpdateOperationsInput | string
   quantity?: Prisma.IntFieldUpdateOperationsInput | number
   isAvailable?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -335,7 +335,7 @@ export type ProductInventoryUncheckedUpdateInput = {
 export type ProductInventoryCreateManyInput = {
   id?: string
   productId: string
-  hostelId: string
+  stockGroupId: string
   quantity?: number
   isAvailable?: boolean
   createdAt?: Date | string
@@ -353,7 +353,7 @@ export type ProductInventoryUpdateManyMutationInput = {
 export type ProductInventoryUncheckedUpdateManyInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   productId?: Prisma.StringFieldUpdateOperationsInput | string
-  hostelId?: Prisma.StringFieldUpdateOperationsInput | string
+  stockGroupId?: Prisma.StringFieldUpdateOperationsInput | string
   quantity?: Prisma.IntFieldUpdateOperationsInput | number
   isAvailable?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -370,15 +370,15 @@ export type ProductInventoryOrderByRelationAggregateInput = {
   _count?: Prisma.SortOrder
 }
 
-export type ProductInventoryProductIdHostelIdCompoundUniqueInput = {
+export type ProductInventoryProductIdStockGroupIdCompoundUniqueInput = {
   productId: string
-  hostelId: string
+  stockGroupId: string
 }
 
 export type ProductInventoryCountOrderByAggregateInput = {
   id?: Prisma.SortOrder
   productId?: Prisma.SortOrder
-  hostelId?: Prisma.SortOrder
+  stockGroupId?: Prisma.SortOrder
   quantity?: Prisma.SortOrder
   isAvailable?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
@@ -392,7 +392,7 @@ export type ProductInventoryAvgOrderByAggregateInput = {
 export type ProductInventoryMaxOrderByAggregateInput = {
   id?: Prisma.SortOrder
   productId?: Prisma.SortOrder
-  hostelId?: Prisma.SortOrder
+  stockGroupId?: Prisma.SortOrder
   quantity?: Prisma.SortOrder
   isAvailable?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
@@ -402,7 +402,7 @@ export type ProductInventoryMaxOrderByAggregateInput = {
 export type ProductInventoryMinOrderByAggregateInput = {
   id?: Prisma.SortOrder
   productId?: Prisma.SortOrder
-  hostelId?: Prisma.SortOrder
+  stockGroupId?: Prisma.SortOrder
   quantity?: Prisma.SortOrder
   isAvailable?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
@@ -413,45 +413,45 @@ export type ProductInventorySumOrderByAggregateInput = {
   quantity?: Prisma.SortOrder
 }
 
-export type ProductInventoryCreateNestedManyWithoutHostelInput = {
-  create?: Prisma.XOR<Prisma.ProductInventoryCreateWithoutHostelInput, Prisma.ProductInventoryUncheckedCreateWithoutHostelInput> | Prisma.ProductInventoryCreateWithoutHostelInput[] | Prisma.ProductInventoryUncheckedCreateWithoutHostelInput[]
-  connectOrCreate?: Prisma.ProductInventoryCreateOrConnectWithoutHostelInput | Prisma.ProductInventoryCreateOrConnectWithoutHostelInput[]
-  createMany?: Prisma.ProductInventoryCreateManyHostelInputEnvelope
+export type ProductInventoryCreateNestedManyWithoutStockGroupInput = {
+  create?: Prisma.XOR<Prisma.ProductInventoryCreateWithoutStockGroupInput, Prisma.ProductInventoryUncheckedCreateWithoutStockGroupInput> | Prisma.ProductInventoryCreateWithoutStockGroupInput[] | Prisma.ProductInventoryUncheckedCreateWithoutStockGroupInput[]
+  connectOrCreate?: Prisma.ProductInventoryCreateOrConnectWithoutStockGroupInput | Prisma.ProductInventoryCreateOrConnectWithoutStockGroupInput[]
+  createMany?: Prisma.ProductInventoryCreateManyStockGroupInputEnvelope
   connect?: Prisma.ProductInventoryWhereUniqueInput | Prisma.ProductInventoryWhereUniqueInput[]
 }
 
-export type ProductInventoryUncheckedCreateNestedManyWithoutHostelInput = {
-  create?: Prisma.XOR<Prisma.ProductInventoryCreateWithoutHostelInput, Prisma.ProductInventoryUncheckedCreateWithoutHostelInput> | Prisma.ProductInventoryCreateWithoutHostelInput[] | Prisma.ProductInventoryUncheckedCreateWithoutHostelInput[]
-  connectOrCreate?: Prisma.ProductInventoryCreateOrConnectWithoutHostelInput | Prisma.ProductInventoryCreateOrConnectWithoutHostelInput[]
-  createMany?: Prisma.ProductInventoryCreateManyHostelInputEnvelope
+export type ProductInventoryUncheckedCreateNestedManyWithoutStockGroupInput = {
+  create?: Prisma.XOR<Prisma.ProductInventoryCreateWithoutStockGroupInput, Prisma.ProductInventoryUncheckedCreateWithoutStockGroupInput> | Prisma.ProductInventoryCreateWithoutStockGroupInput[] | Prisma.ProductInventoryUncheckedCreateWithoutStockGroupInput[]
+  connectOrCreate?: Prisma.ProductInventoryCreateOrConnectWithoutStockGroupInput | Prisma.ProductInventoryCreateOrConnectWithoutStockGroupInput[]
+  createMany?: Prisma.ProductInventoryCreateManyStockGroupInputEnvelope
   connect?: Prisma.ProductInventoryWhereUniqueInput | Prisma.ProductInventoryWhereUniqueInput[]
 }
 
-export type ProductInventoryUpdateManyWithoutHostelNestedInput = {
-  create?: Prisma.XOR<Prisma.ProductInventoryCreateWithoutHostelInput, Prisma.ProductInventoryUncheckedCreateWithoutHostelInput> | Prisma.ProductInventoryCreateWithoutHostelInput[] | Prisma.ProductInventoryUncheckedCreateWithoutHostelInput[]
-  connectOrCreate?: Prisma.ProductInventoryCreateOrConnectWithoutHostelInput | Prisma.ProductInventoryCreateOrConnectWithoutHostelInput[]
-  upsert?: Prisma.ProductInventoryUpsertWithWhereUniqueWithoutHostelInput | Prisma.ProductInventoryUpsertWithWhereUniqueWithoutHostelInput[]
-  createMany?: Prisma.ProductInventoryCreateManyHostelInputEnvelope
+export type ProductInventoryUpdateManyWithoutStockGroupNestedInput = {
+  create?: Prisma.XOR<Prisma.ProductInventoryCreateWithoutStockGroupInput, Prisma.ProductInventoryUncheckedCreateWithoutStockGroupInput> | Prisma.ProductInventoryCreateWithoutStockGroupInput[] | Prisma.ProductInventoryUncheckedCreateWithoutStockGroupInput[]
+  connectOrCreate?: Prisma.ProductInventoryCreateOrConnectWithoutStockGroupInput | Prisma.ProductInventoryCreateOrConnectWithoutStockGroupInput[]
+  upsert?: Prisma.ProductInventoryUpsertWithWhereUniqueWithoutStockGroupInput | Prisma.ProductInventoryUpsertWithWhereUniqueWithoutStockGroupInput[]
+  createMany?: Prisma.ProductInventoryCreateManyStockGroupInputEnvelope
   set?: Prisma.ProductInventoryWhereUniqueInput | Prisma.ProductInventoryWhereUniqueInput[]
   disconnect?: Prisma.ProductInventoryWhereUniqueInput | Prisma.ProductInventoryWhereUniqueInput[]
   delete?: Prisma.ProductInventoryWhereUniqueInput | Prisma.ProductInventoryWhereUniqueInput[]
   connect?: Prisma.ProductInventoryWhereUniqueInput | Prisma.ProductInventoryWhereUniqueInput[]
-  update?: Prisma.ProductInventoryUpdateWithWhereUniqueWithoutHostelInput | Prisma.ProductInventoryUpdateWithWhereUniqueWithoutHostelInput[]
-  updateMany?: Prisma.ProductInventoryUpdateManyWithWhereWithoutHostelInput | Prisma.ProductInventoryUpdateManyWithWhereWithoutHostelInput[]
+  update?: Prisma.ProductInventoryUpdateWithWhereUniqueWithoutStockGroupInput | Prisma.ProductInventoryUpdateWithWhereUniqueWithoutStockGroupInput[]
+  updateMany?: Prisma.ProductInventoryUpdateManyWithWhereWithoutStockGroupInput | Prisma.ProductInventoryUpdateManyWithWhereWithoutStockGroupInput[]
   deleteMany?: Prisma.ProductInventoryScalarWhereInput | Prisma.ProductInventoryScalarWhereInput[]
 }
 
-export type ProductInventoryUncheckedUpdateManyWithoutHostelNestedInput = {
-  create?: Prisma.XOR<Prisma.ProductInventoryCreateWithoutHostelInput, Prisma.ProductInventoryUncheckedCreateWithoutHostelInput> | Prisma.ProductInventoryCreateWithoutHostelInput[] | Prisma.ProductInventoryUncheckedCreateWithoutHostelInput[]
-  connectOrCreate?: Prisma.ProductInventoryCreateOrConnectWithoutHostelInput | Prisma.ProductInventoryCreateOrConnectWithoutHostelInput[]
-  upsert?: Prisma.ProductInventoryUpsertWithWhereUniqueWithoutHostelInput | Prisma.ProductInventoryUpsertWithWhereUniqueWithoutHostelInput[]
-  createMany?: Prisma.ProductInventoryCreateManyHostelInputEnvelope
+export type ProductInventoryUncheckedUpdateManyWithoutStockGroupNestedInput = {
+  create?: Prisma.XOR<Prisma.ProductInventoryCreateWithoutStockGroupInput, Prisma.ProductInventoryUncheckedCreateWithoutStockGroupInput> | Prisma.ProductInventoryCreateWithoutStockGroupInput[] | Prisma.ProductInventoryUncheckedCreateWithoutStockGroupInput[]
+  connectOrCreate?: Prisma.ProductInventoryCreateOrConnectWithoutStockGroupInput | Prisma.ProductInventoryCreateOrConnectWithoutStockGroupInput[]
+  upsert?: Prisma.ProductInventoryUpsertWithWhereUniqueWithoutStockGroupInput | Prisma.ProductInventoryUpsertWithWhereUniqueWithoutStockGroupInput[]
+  createMany?: Prisma.ProductInventoryCreateManyStockGroupInputEnvelope
   set?: Prisma.ProductInventoryWhereUniqueInput | Prisma.ProductInventoryWhereUniqueInput[]
   disconnect?: Prisma.ProductInventoryWhereUniqueInput | Prisma.ProductInventoryWhereUniqueInput[]
   delete?: Prisma.ProductInventoryWhereUniqueInput | Prisma.ProductInventoryWhereUniqueInput[]
   connect?: Prisma.ProductInventoryWhereUniqueInput | Prisma.ProductInventoryWhereUniqueInput[]
-  update?: Prisma.ProductInventoryUpdateWithWhereUniqueWithoutHostelInput | Prisma.ProductInventoryUpdateWithWhereUniqueWithoutHostelInput[]
-  updateMany?: Prisma.ProductInventoryUpdateManyWithWhereWithoutHostelInput | Prisma.ProductInventoryUpdateManyWithWhereWithoutHostelInput[]
+  update?: Prisma.ProductInventoryUpdateWithWhereUniqueWithoutStockGroupInput | Prisma.ProductInventoryUpdateWithWhereUniqueWithoutStockGroupInput[]
+  updateMany?: Prisma.ProductInventoryUpdateManyWithWhereWithoutStockGroupInput | Prisma.ProductInventoryUpdateManyWithWhereWithoutStockGroupInput[]
   deleteMany?: Prisma.ProductInventoryScalarWhereInput | Prisma.ProductInventoryScalarWhereInput[]
 }
 
@@ -497,7 +497,7 @@ export type ProductInventoryUncheckedUpdateManyWithoutProductNestedInput = {
   deleteMany?: Prisma.ProductInventoryScalarWhereInput | Prisma.ProductInventoryScalarWhereInput[]
 }
 
-export type ProductInventoryCreateWithoutHostelInput = {
+export type ProductInventoryCreateWithoutStockGroupInput = {
   id?: string
   quantity?: number
   isAvailable?: boolean
@@ -506,7 +506,7 @@ export type ProductInventoryCreateWithoutHostelInput = {
   product: Prisma.ProductCreateNestedOneWithoutInventoriesInput
 }
 
-export type ProductInventoryUncheckedCreateWithoutHostelInput = {
+export type ProductInventoryUncheckedCreateWithoutStockGroupInput = {
   id?: string
   productId: string
   quantity?: number
@@ -515,30 +515,30 @@ export type ProductInventoryUncheckedCreateWithoutHostelInput = {
   updatedAt?: Date | string
 }
 
-export type ProductInventoryCreateOrConnectWithoutHostelInput = {
+export type ProductInventoryCreateOrConnectWithoutStockGroupInput = {
   where: Prisma.ProductInventoryWhereUniqueInput
-  create: Prisma.XOR<Prisma.ProductInventoryCreateWithoutHostelInput, Prisma.ProductInventoryUncheckedCreateWithoutHostelInput>
+  create: Prisma.XOR<Prisma.ProductInventoryCreateWithoutStockGroupInput, Prisma.ProductInventoryUncheckedCreateWithoutStockGroupInput>
 }
 
-export type ProductInventoryCreateManyHostelInputEnvelope = {
-  data: Prisma.ProductInventoryCreateManyHostelInput | Prisma.ProductInventoryCreateManyHostelInput[]
+export type ProductInventoryCreateManyStockGroupInputEnvelope = {
+  data: Prisma.ProductInventoryCreateManyStockGroupInput | Prisma.ProductInventoryCreateManyStockGroupInput[]
   skipDuplicates?: boolean
 }
 
-export type ProductInventoryUpsertWithWhereUniqueWithoutHostelInput = {
+export type ProductInventoryUpsertWithWhereUniqueWithoutStockGroupInput = {
   where: Prisma.ProductInventoryWhereUniqueInput
-  update: Prisma.XOR<Prisma.ProductInventoryUpdateWithoutHostelInput, Prisma.ProductInventoryUncheckedUpdateWithoutHostelInput>
-  create: Prisma.XOR<Prisma.ProductInventoryCreateWithoutHostelInput, Prisma.ProductInventoryUncheckedCreateWithoutHostelInput>
+  update: Prisma.XOR<Prisma.ProductInventoryUpdateWithoutStockGroupInput, Prisma.ProductInventoryUncheckedUpdateWithoutStockGroupInput>
+  create: Prisma.XOR<Prisma.ProductInventoryCreateWithoutStockGroupInput, Prisma.ProductInventoryUncheckedCreateWithoutStockGroupInput>
 }
 
-export type ProductInventoryUpdateWithWhereUniqueWithoutHostelInput = {
+export type ProductInventoryUpdateWithWhereUniqueWithoutStockGroupInput = {
   where: Prisma.ProductInventoryWhereUniqueInput
-  data: Prisma.XOR<Prisma.ProductInventoryUpdateWithoutHostelInput, Prisma.ProductInventoryUncheckedUpdateWithoutHostelInput>
+  data: Prisma.XOR<Prisma.ProductInventoryUpdateWithoutStockGroupInput, Prisma.ProductInventoryUncheckedUpdateWithoutStockGroupInput>
 }
 
-export type ProductInventoryUpdateManyWithWhereWithoutHostelInput = {
+export type ProductInventoryUpdateManyWithWhereWithoutStockGroupInput = {
   where: Prisma.ProductInventoryScalarWhereInput
-  data: Prisma.XOR<Prisma.ProductInventoryUpdateManyMutationInput, Prisma.ProductInventoryUncheckedUpdateManyWithoutHostelInput>
+  data: Prisma.XOR<Prisma.ProductInventoryUpdateManyMutationInput, Prisma.ProductInventoryUncheckedUpdateManyWithoutStockGroupInput>
 }
 
 export type ProductInventoryScalarWhereInput = {
@@ -547,7 +547,7 @@ export type ProductInventoryScalarWhereInput = {
   NOT?: Prisma.ProductInventoryScalarWhereInput | Prisma.ProductInventoryScalarWhereInput[]
   id?: Prisma.StringFilter<"ProductInventory"> | string
   productId?: Prisma.StringFilter<"ProductInventory"> | string
-  hostelId?: Prisma.StringFilter<"ProductInventory"> | string
+  stockGroupId?: Prisma.StringFilter<"ProductInventory"> | string
   quantity?: Prisma.IntFilter<"ProductInventory"> | number
   isAvailable?: Prisma.BoolFilter<"ProductInventory"> | boolean
   createdAt?: Prisma.DateTimeFilter<"ProductInventory"> | Date | string
@@ -560,12 +560,12 @@ export type ProductInventoryCreateWithoutProductInput = {
   isAvailable?: boolean
   createdAt?: Date | string
   updatedAt?: Date | string
-  hostel: Prisma.HostelCreateNestedOneWithoutInventoriesInput
+  stockGroup: Prisma.StockGroupCreateNestedOneWithoutInventoriesInput
 }
 
 export type ProductInventoryUncheckedCreateWithoutProductInput = {
   id?: string
-  hostelId: string
+  stockGroupId: string
   quantity?: number
   isAvailable?: boolean
   createdAt?: Date | string
@@ -598,7 +598,7 @@ export type ProductInventoryUpdateManyWithWhereWithoutProductInput = {
   data: Prisma.XOR<Prisma.ProductInventoryUpdateManyMutationInput, Prisma.ProductInventoryUncheckedUpdateManyWithoutProductInput>
 }
 
-export type ProductInventoryCreateManyHostelInput = {
+export type ProductInventoryCreateManyStockGroupInput = {
   id?: string
   productId: string
   quantity?: number
@@ -607,7 +607,7 @@ export type ProductInventoryCreateManyHostelInput = {
   updatedAt?: Date | string
 }
 
-export type ProductInventoryUpdateWithoutHostelInput = {
+export type ProductInventoryUpdateWithoutStockGroupInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   quantity?: Prisma.IntFieldUpdateOperationsInput | number
   isAvailable?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -616,7 +616,7 @@ export type ProductInventoryUpdateWithoutHostelInput = {
   product?: Prisma.ProductUpdateOneRequiredWithoutInventoriesNestedInput
 }
 
-export type ProductInventoryUncheckedUpdateWithoutHostelInput = {
+export type ProductInventoryUncheckedUpdateWithoutStockGroupInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   productId?: Prisma.StringFieldUpdateOperationsInput | string
   quantity?: Prisma.IntFieldUpdateOperationsInput | number
@@ -625,7 +625,7 @@ export type ProductInventoryUncheckedUpdateWithoutHostelInput = {
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
 
-export type ProductInventoryUncheckedUpdateManyWithoutHostelInput = {
+export type ProductInventoryUncheckedUpdateManyWithoutStockGroupInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   productId?: Prisma.StringFieldUpdateOperationsInput | string
   quantity?: Prisma.IntFieldUpdateOperationsInput | number
@@ -636,7 +636,7 @@ export type ProductInventoryUncheckedUpdateManyWithoutHostelInput = {
 
 export type ProductInventoryCreateManyProductInput = {
   id?: string
-  hostelId: string
+  stockGroupId: string
   quantity?: number
   isAvailable?: boolean
   createdAt?: Date | string
@@ -649,12 +649,12 @@ export type ProductInventoryUpdateWithoutProductInput = {
   isAvailable?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  hostel?: Prisma.HostelUpdateOneRequiredWithoutInventoriesNestedInput
+  stockGroup?: Prisma.StockGroupUpdateOneRequiredWithoutInventoriesNestedInput
 }
 
 export type ProductInventoryUncheckedUpdateWithoutProductInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
-  hostelId?: Prisma.StringFieldUpdateOperationsInput | string
+  stockGroupId?: Prisma.StringFieldUpdateOperationsInput | string
   quantity?: Prisma.IntFieldUpdateOperationsInput | number
   isAvailable?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -663,7 +663,7 @@ export type ProductInventoryUncheckedUpdateWithoutProductInput = {
 
 export type ProductInventoryUncheckedUpdateManyWithoutProductInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
-  hostelId?: Prisma.StringFieldUpdateOperationsInput | string
+  stockGroupId?: Prisma.StringFieldUpdateOperationsInput | string
   quantity?: Prisma.IntFieldUpdateOperationsInput | number
   isAvailable?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -675,73 +675,73 @@ export type ProductInventoryUncheckedUpdateManyWithoutProductInput = {
 export type ProductInventorySelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   id?: boolean
   productId?: boolean
-  hostelId?: boolean
+  stockGroupId?: boolean
   quantity?: boolean
   isAvailable?: boolean
   createdAt?: boolean
   updatedAt?: boolean
   product?: boolean | Prisma.ProductDefaultArgs<ExtArgs>
-  hostel?: boolean | Prisma.HostelDefaultArgs<ExtArgs>
+  stockGroup?: boolean | Prisma.StockGroupDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["productInventory"]>
 
 export type ProductInventorySelectCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   id?: boolean
   productId?: boolean
-  hostelId?: boolean
+  stockGroupId?: boolean
   quantity?: boolean
   isAvailable?: boolean
   createdAt?: boolean
   updatedAt?: boolean
   product?: boolean | Prisma.ProductDefaultArgs<ExtArgs>
-  hostel?: boolean | Prisma.HostelDefaultArgs<ExtArgs>
+  stockGroup?: boolean | Prisma.StockGroupDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["productInventory"]>
 
 export type ProductInventorySelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   id?: boolean
   productId?: boolean
-  hostelId?: boolean
+  stockGroupId?: boolean
   quantity?: boolean
   isAvailable?: boolean
   createdAt?: boolean
   updatedAt?: boolean
   product?: boolean | Prisma.ProductDefaultArgs<ExtArgs>
-  hostel?: boolean | Prisma.HostelDefaultArgs<ExtArgs>
+  stockGroup?: boolean | Prisma.StockGroupDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["productInventory"]>
 
 export type ProductInventorySelectScalar = {
   id?: boolean
   productId?: boolean
-  hostelId?: boolean
+  stockGroupId?: boolean
   quantity?: boolean
   isAvailable?: boolean
   createdAt?: boolean
   updatedAt?: boolean
 }
 
-export type ProductInventoryOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "productId" | "hostelId" | "quantity" | "isAvailable" | "createdAt" | "updatedAt", ExtArgs["result"]["productInventory"]>
+export type ProductInventoryOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "productId" | "stockGroupId" | "quantity" | "isAvailable" | "createdAt" | "updatedAt", ExtArgs["result"]["productInventory"]>
 export type ProductInventoryInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   product?: boolean | Prisma.ProductDefaultArgs<ExtArgs>
-  hostel?: boolean | Prisma.HostelDefaultArgs<ExtArgs>
+  stockGroup?: boolean | Prisma.StockGroupDefaultArgs<ExtArgs>
 }
 export type ProductInventoryIncludeCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   product?: boolean | Prisma.ProductDefaultArgs<ExtArgs>
-  hostel?: boolean | Prisma.HostelDefaultArgs<ExtArgs>
+  stockGroup?: boolean | Prisma.StockGroupDefaultArgs<ExtArgs>
 }
 export type ProductInventoryIncludeUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   product?: boolean | Prisma.ProductDefaultArgs<ExtArgs>
-  hostel?: boolean | Prisma.HostelDefaultArgs<ExtArgs>
+  stockGroup?: boolean | Prisma.StockGroupDefaultArgs<ExtArgs>
 }
 
 export type $ProductInventoryPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   name: "ProductInventory"
   objects: {
     product: Prisma.$ProductPayload<ExtArgs>
-    hostel: Prisma.$HostelPayload<ExtArgs>
+    stockGroup: Prisma.$StockGroupPayload<ExtArgs>
   }
   scalars: runtime.Types.Extensions.GetPayloadResult<{
     id: string
     productId: string
-    hostelId: string
+    stockGroupId: string
     quantity: number
     isAvailable: boolean
     createdAt: Date
@@ -1141,7 +1141,7 @@ readonly fields: ProductInventoryFieldRefs;
 export interface Prisma__ProductInventoryClient<T, Null = never, ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
   readonly [Symbol.toStringTag]: "PrismaPromise"
   product<T extends Prisma.ProductDefaultArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.ProductDefaultArgs<ExtArgs>>): Prisma.Prisma__ProductClient<runtime.Types.Result.GetResult<Prisma.$ProductPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
-  hostel<T extends Prisma.HostelDefaultArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.HostelDefaultArgs<ExtArgs>>): Prisma.Prisma__HostelClient<runtime.Types.Result.GetResult<Prisma.$HostelPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
+  stockGroup<T extends Prisma.StockGroupDefaultArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.StockGroupDefaultArgs<ExtArgs>>): Prisma.Prisma__StockGroupClient<runtime.Types.Result.GetResult<Prisma.$StockGroupPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
   /**
    * Attaches callbacks for the resolution and/or rejection of the Promise.
    * @param onfulfilled The callback to execute when the Promise is resolved.
@@ -1173,7 +1173,7 @@ export interface Prisma__ProductInventoryClient<T, Null = never, ExtArgs extends
 export interface ProductInventoryFieldRefs {
   readonly id: Prisma.FieldRef<"ProductInventory", 'String'>
   readonly productId: Prisma.FieldRef<"ProductInventory", 'String'>
-  readonly hostelId: Prisma.FieldRef<"ProductInventory", 'String'>
+  readonly stockGroupId: Prisma.FieldRef<"ProductInventory", 'String'>
   readonly quantity: Prisma.FieldRef<"ProductInventory", 'Int'>
   readonly isAvailable: Prisma.FieldRef<"ProductInventory", 'Boolean'>
   readonly createdAt: Prisma.FieldRef<"ProductInventory", 'DateTime'>

@@ -3,9 +3,18 @@ import express from "express";
 import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
 
 const mocks = vi.hoisted(() => ({
-  hostelFindMany: vi.fn(), hostelFindFirst: vi.fn(), hostelCreate: vi.fn(), hostelUpdate: vi.fn(), hostelUpdateMany: vi.fn(), hostelFindUnique: vi.fn(), hostelDelete: vi.fn(), userFindFirst: vi.fn(), orderFindFirst: vi.fn(), verifyIdToken: vi.fn(),
+  hostelFindMany: vi.fn(), hostelFindFirst: vi.fn(), hostelCreate: vi.fn(), hostelUpdate: vi.fn(), hostelUpdateMany: vi.fn(), hostelFindUnique: vi.fn(), hostelDelete: vi.fn(), hostelCount: vi.fn(), groupFindUnique: vi.fn(), groupDelete: vi.fn(), userFindFirst: vi.fn(), orderFindFirst: vi.fn(), verifyIdToken: vi.fn(),
 }));
-vi.mock("../src/config/database.js", () => ({ prisma: { hostel: { findMany: mocks.hostelFindMany, findFirst: mocks.hostelFindFirst, create: mocks.hostelCreate, update: mocks.hostelUpdate, updateMany: mocks.hostelUpdateMany, findUnique: mocks.hostelFindUnique, delete: mocks.hostelDelete }, user: { findFirst: mocks.userFindFirst }, order: { findFirst: mocks.orderFindFirst } } }));
+vi.mock("../src/config/database.js", () => {
+  const prisma = {
+    hostel: { findMany: mocks.hostelFindMany, findFirst: mocks.hostelFindFirst, create: mocks.hostelCreate, update: mocks.hostelUpdate, updateMany: mocks.hostelUpdateMany, findUnique: mocks.hostelFindUnique, delete: mocks.hostelDelete, count: mocks.hostelCount },
+    stockGroup: { findUnique: mocks.groupFindUnique, delete: mocks.groupDelete },
+    user: { findFirst: mocks.userFindFirst },
+    order: { findFirst: mocks.orderFindFirst },
+    $transaction: (callback: (tx: unknown) => Promise<unknown>) => callback(prisma),
+  };
+  return { prisma };
+});
 vi.mock("../src/config/firebase.js", () => ({ default: {} }));
 vi.mock("firebase-admin/auth", () => ({ getAuth: () => ({ verifyIdToken: mocks.verifyIdToken }) }));
 
@@ -35,7 +44,7 @@ describe("hostel routes", () => {
     expect((await fetch(`${baseUrl}/api/admin/hostels`, { method: "POST", headers: { authorization: "Bearer customer", "content-type": "application/json" }, body: JSON.stringify({ name: "Block A" }) })).status).toBe(403);
   });
   it("creates a hostel and rejects blank names", async () => {
-    const created = await fetch(`${baseUrl}/api/admin/hostels`, { method: "POST", headers: { authorization: "Bearer admin", "content-type": "application/json" }, body: JSON.stringify({ name: " Block A " }) }); expect(created.status).toBe(201); expect(mocks.hostelCreate).toHaveBeenCalledWith({ data: { name: "Block A" } });
+    const created = await fetch(`${baseUrl}/api/admin/hostels`, { method: "POST", headers: { authorization: "Bearer admin", "content-type": "application/json" }, body: JSON.stringify({ name: " Block A " }) }); expect(created.status).toBe(201); expect(mocks.hostelCreate).toHaveBeenCalledWith({ data: { name: "Block A", stockGroup: { create: { name: "Block A" } } } });
     const blank = await fetch(`${baseUrl}/api/admin/hostels`, { method: "POST", headers: { authorization: "Bearer admin", "content-type": "application/json" }, body: JSON.stringify({ name: " " }) }); expect(blank.status).toBe(400);
   });
   it("rejects duplicate active names and reactivates an inactive name", async () => {
@@ -60,12 +69,44 @@ describe("hostel routes", () => {
     expect(mocks.hostelUpdateMany).toHaveBeenCalledWith({ where: { id: "h1" }, data: { isActive: true } });
     expect((await fetch(`${baseUrl}/api/admin/hostels/h1/activate`, { method: "PATCH" })).status).toBe(401);
   });
-  it("permanently deletes an unused hostel", async () => {
+  it("permanently deletes an unused hostel and its now-unused stock group", async () => {
+    mocks.hostelFindUnique.mockResolvedValue({ id: "h1", name: "Block A", isActive: false, stockGroupId: "g1" });
+    mocks.hostelCount.mockResolvedValue(0);
     const response = await fetch(`${baseUrl}/api/admin/hostels/h1/permanent`, { method: "DELETE", headers: { authorization: "Bearer admin" } });
     expect(response.status).toBe(204);
     expect(mocks.hostelFindUnique).toHaveBeenCalledWith({ where: { id: "h1" } });
     expect(mocks.userFindFirst).toHaveBeenCalledWith({ where: { hostelId: "h1" }, select: { id: true } });
     expect(mocks.hostelDelete).toHaveBeenCalledWith({ where: { id: "h1" } });
+    expect(mocks.groupDelete).toHaveBeenCalledWith({ where: { id: "g1" } });
+  });
+
+  it("keeps a shared stock group when other hostels still sell from it", async () => {
+    mocks.hostelFindUnique.mockResolvedValue({ id: "h1", name: "Block A", isActive: false, stockGroupId: "g1" });
+    mocks.hostelCount.mockResolvedValue(3);
+    const response = await fetch(`${baseUrl}/api/admin/hostels/h1/permanent`, { method: "DELETE", headers: { authorization: "Bearer admin" } });
+    expect(response.status).toBe(204);
+    expect(mocks.groupDelete).not.toHaveBeenCalled();
+  });
+
+  it("moves a hostel to another pool for admins only", async () => {
+    const path = `${baseUrl}/api/admin/hostels/h1/pool`;
+    const body = JSON.stringify({ stockGroupId: "boys" });
+    expect((await fetch(path, { method: "PATCH", headers: { "content-type": "application/json" }, body })).status).toBe(401);
+    expect((await fetch(path, { method: "PATCH", headers: { authorization: "Bearer customer", "content-type": "application/json" }, body })).status).toBe(403);
+
+    mocks.hostelFindUnique.mockResolvedValue({ id: "h1", name: "BH-1", isActive: true, stockGroupId: "h1" });
+    mocks.groupFindUnique.mockResolvedValue({ id: "boys", name: "Boys' pool" });
+    mocks.hostelUpdate.mockResolvedValue({ id: "h1", name: "BH-1", stockGroupId: "boys", stockGroup: { id: "boys", name: "Boys' pool" } });
+    const moved = await fetch(path, { method: "PATCH", headers: { authorization: "Bearer admin", "content-type": "application/json" }, body });
+    expect(moved.status).toBe(200);
+    expect(mocks.hostelUpdate).toHaveBeenCalledWith(expect.objectContaining({ where: { id: "h1" }, data: { stockGroupId: "boys" } }));
+  });
+
+  it("creates a hostel inside an existing stock group", async () => {
+    mocks.groupFindUnique.mockResolvedValue({ id: "boys", name: "Boys' store" });
+    const created = await fetch(`${baseUrl}/api/admin/hostels`, { method: "POST", headers: { authorization: "Bearer admin", "content-type": "application/json" }, body: JSON.stringify({ name: "BH-4", stockGroupId: "boys" }) });
+    expect(created.status).toBe(201);
+    expect(mocks.hostelCreate).toHaveBeenCalledWith({ data: { name: "BH-4", stockGroup: { connect: { id: "boys" } } } });
   });
   it("rejects permanent deletion when a user references the hostel", async () => {
     mocks.userFindFirst.mockResolvedValue({ id: "user-1" });

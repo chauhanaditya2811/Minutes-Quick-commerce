@@ -33,7 +33,6 @@ model Hostel {
   name            String                 @unique
   isActive        Boolean                @default(true)
   users           User[]
-  inventories     ProductInventory[]
   orders          Order[]
   reservations    InventoryReservation[]
   productRequests ProductRequest[]
@@ -43,7 +42,25 @@ model Hostel {
   createdAt       DateTime               @default(now())
   updatedAt       DateTime               @updatedAt
 
+  // Hostels in the same stock group sell from one shared stock (e.g. every boys' hostel).
+  stockGroupId String
+  stockGroup   StockGroup @relation(fields: [stockGroupId], references: [id], onDelete: Restrict)
+
+  @@index([stockGroupId])
   @@map("hostels")
+}
+
+// A shared stock: one shelf that serves one or more hostels. Stock is counted per group.
+model StockGroup {
+  id           String                 @id @default(cuid())
+  name         String
+  hostels      Hostel[]
+  inventories  ProductInventory[]
+  reservations InventoryReservation[]
+  createdAt    DateTime               @default(now())
+  updatedAt    DateTime               @updatedAt
+
+  @@map("stock_groups")
 }
 
 model Product {
@@ -76,8 +93,8 @@ model ProductInventory {
   productId String
   product   Product @relation(fields: [productId], references: [id], onDelete: Restrict)
 
-  hostelId String
-  hostel   Hostel @relation(fields: [hostelId], references: [id], onDelete: Cascade)
+  stockGroupId String
+  stockGroup   StockGroup @relation(fields: [stockGroupId], references: [id], onDelete: Cascade)
 
   // Guarded by a CHECK ("quantity" >= 0) constraint in the migration.
   quantity    Int     @default(0)
@@ -86,8 +103,8 @@ model ProductInventory {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  @@unique([productId, hostelId])
-  @@index([hostelId, isAvailable])
+  @@unique([productId, stockGroupId])
+  @@index([stockGroupId, isAvailable])
   @@map("product_inventories")
 }
 
@@ -223,9 +240,13 @@ model InventoryReservation {
   orderId String?
   order   Order?  @relation(fields: [orderId], references: [id])
 
-  // Hostel whose product_inventories row the units were taken from.
+  // Hostel the order delivers to.
   hostelId String?
   hostel   Hostel? @relation(fields: [hostelId], references: [id], onDelete: Restrict)
+
+  // Stock group whose product_inventories row the units were taken from (and go back to).
+  stockGroupId String?
+  stockGroup   StockGroup? @relation(fields: [stockGroupId], references: [id], onDelete: SetNull)
 
   quantity  Int
   status    ReservationStatus @default(ACTIVE)
@@ -240,6 +261,7 @@ model InventoryReservation {
   @@index([orderId])
   @@index([orderId, status])
   @@index([hostelId])
+  @@index([stockGroupId])
   @@map("inventory_reservations")
 }
 

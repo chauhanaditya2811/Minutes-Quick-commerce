@@ -31,6 +31,7 @@ export type HostelMinAggregateOutputType = {
   requestsResetAt: Date | null
   createdAt: Date | null
   updatedAt: Date | null
+  stockGroupId: string | null
 }
 
 export type HostelMaxAggregateOutputType = {
@@ -40,6 +41,7 @@ export type HostelMaxAggregateOutputType = {
   requestsResetAt: Date | null
   createdAt: Date | null
   updatedAt: Date | null
+  stockGroupId: string | null
 }
 
 export type HostelCountAggregateOutputType = {
@@ -49,6 +51,7 @@ export type HostelCountAggregateOutputType = {
   requestsResetAt: number
   createdAt: number
   updatedAt: number
+  stockGroupId: number
   _all: number
 }
 
@@ -60,6 +63,7 @@ export type HostelMinAggregateInputType = {
   requestsResetAt?: true
   createdAt?: true
   updatedAt?: true
+  stockGroupId?: true
 }
 
 export type HostelMaxAggregateInputType = {
@@ -69,6 +73,7 @@ export type HostelMaxAggregateInputType = {
   requestsResetAt?: true
   createdAt?: true
   updatedAt?: true
+  stockGroupId?: true
 }
 
 export type HostelCountAggregateInputType = {
@@ -78,6 +83,7 @@ export type HostelCountAggregateInputType = {
   requestsResetAt?: true
   createdAt?: true
   updatedAt?: true
+  stockGroupId?: true
   _all?: true
 }
 
@@ -160,6 +166,7 @@ export type HostelGroupByOutputType = {
   requestsResetAt: Date | null
   createdAt: Date
   updatedAt: Date
+  stockGroupId: string
   _count: HostelCountAggregateOutputType | null
   _min: HostelMinAggregateOutputType | null
   _max: HostelMaxAggregateOutputType | null
@@ -190,12 +197,13 @@ export type HostelWhereInput = {
   requestsResetAt?: Prisma.DateTimeNullableFilter<"Hostel"> | Date | string | null
   createdAt?: Prisma.DateTimeFilter<"Hostel"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"Hostel"> | Date | string
+  stockGroupId?: Prisma.StringFilter<"Hostel"> | string
   users?: Prisma.UserListRelationFilter
-  inventories?: Prisma.ProductInventoryListRelationFilter
   orders?: Prisma.OrderListRelationFilter
   reservations?: Prisma.InventoryReservationListRelationFilter
   productRequests?: Prisma.ProductRequestListRelationFilter
   feedback?: Prisma.FeedbackListRelationFilter
+  stockGroup?: Prisma.XOR<Prisma.StockGroupScalarRelationFilter, Prisma.StockGroupWhereInput>
 }
 
 export type HostelOrderByWithRelationInput = {
@@ -205,12 +213,13 @@ export type HostelOrderByWithRelationInput = {
   requestsResetAt?: Prisma.SortOrderInput | Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
+  stockGroupId?: Prisma.SortOrder
   users?: Prisma.UserOrderByRelationAggregateInput
-  inventories?: Prisma.ProductInventoryOrderByRelationAggregateInput
   orders?: Prisma.OrderOrderByRelationAggregateInput
   reservations?: Prisma.InventoryReservationOrderByRelationAggregateInput
   productRequests?: Prisma.ProductRequestOrderByRelationAggregateInput
   feedback?: Prisma.FeedbackOrderByRelationAggregateInput
+  stockGroup?: Prisma.StockGroupOrderByWithRelationInput
 }
 
 export type HostelWhereUniqueInput = Prisma.AtLeast<{
@@ -223,12 +232,13 @@ export type HostelWhereUniqueInput = Prisma.AtLeast<{
   requestsResetAt?: Prisma.DateTimeNullableFilter<"Hostel"> | Date | string | null
   createdAt?: Prisma.DateTimeFilter<"Hostel"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"Hostel"> | Date | string
+  stockGroupId?: Prisma.StringFilter<"Hostel"> | string
   users?: Prisma.UserListRelationFilter
-  inventories?: Prisma.ProductInventoryListRelationFilter
   orders?: Prisma.OrderListRelationFilter
   reservations?: Prisma.InventoryReservationListRelationFilter
   productRequests?: Prisma.ProductRequestListRelationFilter
   feedback?: Prisma.FeedbackListRelationFilter
+  stockGroup?: Prisma.XOR<Prisma.StockGroupScalarRelationFilter, Prisma.StockGroupWhereInput>
 }, "id" | "name">
 
 export type HostelOrderByWithAggregationInput = {
@@ -238,6 +248,7 @@ export type HostelOrderByWithAggregationInput = {
   requestsResetAt?: Prisma.SortOrderInput | Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
+  stockGroupId?: Prisma.SortOrder
   _count?: Prisma.HostelCountOrderByAggregateInput
   _max?: Prisma.HostelMaxOrderByAggregateInput
   _min?: Prisma.HostelMinOrderByAggregateInput
@@ -253,6 +264,7 @@ export type HostelScalarWhereWithAggregatesInput = {
   requestsResetAt?: Prisma.DateTimeNullableWithAggregatesFilter<"Hostel"> | Date | string | null
   createdAt?: Prisma.DateTimeWithAggregatesFilter<"Hostel"> | Date | string
   updatedAt?: Prisma.DateTimeWithAggregatesFilter<"Hostel"> | Date | string
+  stockGroupId?: Prisma.StringWithAggregatesFilter<"Hostel"> | string
 }
 
 export type HostelCreateInput = {
@@ -263,11 +275,11 @@ export type HostelCreateInput = {
   createdAt?: Date | string
   updatedAt?: Date | string
   users?: Prisma.UserCreateNestedManyWithoutHostelInput
-  inventories?: Prisma.ProductInventoryCreateNestedManyWithoutHostelInput
   orders?: Prisma.OrderCreateNestedManyWithoutHostelInput
   reservations?: Prisma.InventoryReservationCreateNestedManyWithoutHostelInput
   productRequests?: Prisma.ProductRequestCreateNestedManyWithoutHostelInput
   feedback?: Prisma.FeedbackCreateNestedManyWithoutHostelInput
+  stockGroup: Prisma.StockGroupCreateNestedOneWithoutHostelsInput
 }
 
 export type HostelUncheckedCreateInput = {
@@ -277,8 +289,8 @@ export type HostelUncheckedCreateInput = {
   requestsResetAt?: Date | string | null
   createdAt?: Date | string
   updatedAt?: Date | string
+  stockGroupId: string
   users?: Prisma.UserUncheckedCreateNestedManyWithoutHostelInput
-  inventories?: Prisma.ProductInventoryUncheckedCreateNestedManyWithoutHostelInput
   orders?: Prisma.OrderUncheckedCreateNestedManyWithoutHostelInput
   reservations?: Prisma.InventoryReservationUncheckedCreateNestedManyWithoutHostelInput
   productRequests?: Prisma.ProductRequestUncheckedCreateNestedManyWithoutHostelInput
@@ -293,11 +305,11 @@ export type HostelUpdateInput = {
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   users?: Prisma.UserUpdateManyWithoutHostelNestedInput
-  inventories?: Prisma.ProductInventoryUpdateManyWithoutHostelNestedInput
   orders?: Prisma.OrderUpdateManyWithoutHostelNestedInput
   reservations?: Prisma.InventoryReservationUpdateManyWithoutHostelNestedInput
   productRequests?: Prisma.ProductRequestUpdateManyWithoutHostelNestedInput
   feedback?: Prisma.FeedbackUpdateManyWithoutHostelNestedInput
+  stockGroup?: Prisma.StockGroupUpdateOneRequiredWithoutHostelsNestedInput
 }
 
 export type HostelUncheckedUpdateInput = {
@@ -307,8 +319,8 @@ export type HostelUncheckedUpdateInput = {
   requestsResetAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  stockGroupId?: Prisma.StringFieldUpdateOperationsInput | string
   users?: Prisma.UserUncheckedUpdateManyWithoutHostelNestedInput
-  inventories?: Prisma.ProductInventoryUncheckedUpdateManyWithoutHostelNestedInput
   orders?: Prisma.OrderUncheckedUpdateManyWithoutHostelNestedInput
   reservations?: Prisma.InventoryReservationUncheckedUpdateManyWithoutHostelNestedInput
   productRequests?: Prisma.ProductRequestUncheckedUpdateManyWithoutHostelNestedInput
@@ -322,6 +334,7 @@ export type HostelCreateManyInput = {
   requestsResetAt?: Date | string | null
   createdAt?: Date | string
   updatedAt?: Date | string
+  stockGroupId: string
 }
 
 export type HostelUpdateManyMutationInput = {
@@ -340,6 +353,7 @@ export type HostelUncheckedUpdateManyInput = {
   requestsResetAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  stockGroupId?: Prisma.StringFieldUpdateOperationsInput | string
 }
 
 export type HostelNullableScalarRelationFilter = {
@@ -354,6 +368,7 @@ export type HostelCountOrderByAggregateInput = {
   requestsResetAt?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
+  stockGroupId?: Prisma.SortOrder
 }
 
 export type HostelMaxOrderByAggregateInput = {
@@ -363,6 +378,7 @@ export type HostelMaxOrderByAggregateInput = {
   requestsResetAt?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
+  stockGroupId?: Prisma.SortOrder
 }
 
 export type HostelMinOrderByAggregateInput = {
@@ -372,6 +388,17 @@ export type HostelMinOrderByAggregateInput = {
   requestsResetAt?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
+  stockGroupId?: Prisma.SortOrder
+}
+
+export type HostelListRelationFilter = {
+  every?: Prisma.HostelWhereInput
+  some?: Prisma.HostelWhereInput
+  none?: Prisma.HostelWhereInput
+}
+
+export type HostelOrderByRelationAggregateInput = {
+  _count?: Prisma.SortOrder
 }
 
 export type HostelScalarRelationFilter = {
@@ -403,18 +430,46 @@ export type NullableDateTimeFieldUpdateOperationsInput = {
   set?: Date | string | null
 }
 
-export type HostelCreateNestedOneWithoutInventoriesInput = {
-  create?: Prisma.XOR<Prisma.HostelCreateWithoutInventoriesInput, Prisma.HostelUncheckedCreateWithoutInventoriesInput>
-  connectOrCreate?: Prisma.HostelCreateOrConnectWithoutInventoriesInput
-  connect?: Prisma.HostelWhereUniqueInput
+export type HostelCreateNestedManyWithoutStockGroupInput = {
+  create?: Prisma.XOR<Prisma.HostelCreateWithoutStockGroupInput, Prisma.HostelUncheckedCreateWithoutStockGroupInput> | Prisma.HostelCreateWithoutStockGroupInput[] | Prisma.HostelUncheckedCreateWithoutStockGroupInput[]
+  connectOrCreate?: Prisma.HostelCreateOrConnectWithoutStockGroupInput | Prisma.HostelCreateOrConnectWithoutStockGroupInput[]
+  createMany?: Prisma.HostelCreateManyStockGroupInputEnvelope
+  connect?: Prisma.HostelWhereUniqueInput | Prisma.HostelWhereUniqueInput[]
 }
 
-export type HostelUpdateOneRequiredWithoutInventoriesNestedInput = {
-  create?: Prisma.XOR<Prisma.HostelCreateWithoutInventoriesInput, Prisma.HostelUncheckedCreateWithoutInventoriesInput>
-  connectOrCreate?: Prisma.HostelCreateOrConnectWithoutInventoriesInput
-  upsert?: Prisma.HostelUpsertWithoutInventoriesInput
-  connect?: Prisma.HostelWhereUniqueInput
-  update?: Prisma.XOR<Prisma.XOR<Prisma.HostelUpdateToOneWithWhereWithoutInventoriesInput, Prisma.HostelUpdateWithoutInventoriesInput>, Prisma.HostelUncheckedUpdateWithoutInventoriesInput>
+export type HostelUncheckedCreateNestedManyWithoutStockGroupInput = {
+  create?: Prisma.XOR<Prisma.HostelCreateWithoutStockGroupInput, Prisma.HostelUncheckedCreateWithoutStockGroupInput> | Prisma.HostelCreateWithoutStockGroupInput[] | Prisma.HostelUncheckedCreateWithoutStockGroupInput[]
+  connectOrCreate?: Prisma.HostelCreateOrConnectWithoutStockGroupInput | Prisma.HostelCreateOrConnectWithoutStockGroupInput[]
+  createMany?: Prisma.HostelCreateManyStockGroupInputEnvelope
+  connect?: Prisma.HostelWhereUniqueInput | Prisma.HostelWhereUniqueInput[]
+}
+
+export type HostelUpdateManyWithoutStockGroupNestedInput = {
+  create?: Prisma.XOR<Prisma.HostelCreateWithoutStockGroupInput, Prisma.HostelUncheckedCreateWithoutStockGroupInput> | Prisma.HostelCreateWithoutStockGroupInput[] | Prisma.HostelUncheckedCreateWithoutStockGroupInput[]
+  connectOrCreate?: Prisma.HostelCreateOrConnectWithoutStockGroupInput | Prisma.HostelCreateOrConnectWithoutStockGroupInput[]
+  upsert?: Prisma.HostelUpsertWithWhereUniqueWithoutStockGroupInput | Prisma.HostelUpsertWithWhereUniqueWithoutStockGroupInput[]
+  createMany?: Prisma.HostelCreateManyStockGroupInputEnvelope
+  set?: Prisma.HostelWhereUniqueInput | Prisma.HostelWhereUniqueInput[]
+  disconnect?: Prisma.HostelWhereUniqueInput | Prisma.HostelWhereUniqueInput[]
+  delete?: Prisma.HostelWhereUniqueInput | Prisma.HostelWhereUniqueInput[]
+  connect?: Prisma.HostelWhereUniqueInput | Prisma.HostelWhereUniqueInput[]
+  update?: Prisma.HostelUpdateWithWhereUniqueWithoutStockGroupInput | Prisma.HostelUpdateWithWhereUniqueWithoutStockGroupInput[]
+  updateMany?: Prisma.HostelUpdateManyWithWhereWithoutStockGroupInput | Prisma.HostelUpdateManyWithWhereWithoutStockGroupInput[]
+  deleteMany?: Prisma.HostelScalarWhereInput | Prisma.HostelScalarWhereInput[]
+}
+
+export type HostelUncheckedUpdateManyWithoutStockGroupNestedInput = {
+  create?: Prisma.XOR<Prisma.HostelCreateWithoutStockGroupInput, Prisma.HostelUncheckedCreateWithoutStockGroupInput> | Prisma.HostelCreateWithoutStockGroupInput[] | Prisma.HostelUncheckedCreateWithoutStockGroupInput[]
+  connectOrCreate?: Prisma.HostelCreateOrConnectWithoutStockGroupInput | Prisma.HostelCreateOrConnectWithoutStockGroupInput[]
+  upsert?: Prisma.HostelUpsertWithWhereUniqueWithoutStockGroupInput | Prisma.HostelUpsertWithWhereUniqueWithoutStockGroupInput[]
+  createMany?: Prisma.HostelCreateManyStockGroupInputEnvelope
+  set?: Prisma.HostelWhereUniqueInput | Prisma.HostelWhereUniqueInput[]
+  disconnect?: Prisma.HostelWhereUniqueInput | Prisma.HostelWhereUniqueInput[]
+  delete?: Prisma.HostelWhereUniqueInput | Prisma.HostelWhereUniqueInput[]
+  connect?: Prisma.HostelWhereUniqueInput | Prisma.HostelWhereUniqueInput[]
+  update?: Prisma.HostelUpdateWithWhereUniqueWithoutStockGroupInput | Prisma.HostelUpdateWithWhereUniqueWithoutStockGroupInput[]
+  updateMany?: Prisma.HostelUpdateManyWithWhereWithoutStockGroupInput | Prisma.HostelUpdateManyWithWhereWithoutStockGroupInput[]
+  deleteMany?: Prisma.HostelScalarWhereInput | Prisma.HostelScalarWhereInput[]
 }
 
 export type HostelCreateNestedOneWithoutOrdersInput = {
@@ -486,11 +541,11 @@ export type HostelCreateWithoutUsersInput = {
   requestsResetAt?: Date | string | null
   createdAt?: Date | string
   updatedAt?: Date | string
-  inventories?: Prisma.ProductInventoryCreateNestedManyWithoutHostelInput
   orders?: Prisma.OrderCreateNestedManyWithoutHostelInput
   reservations?: Prisma.InventoryReservationCreateNestedManyWithoutHostelInput
   productRequests?: Prisma.ProductRequestCreateNestedManyWithoutHostelInput
   feedback?: Prisma.FeedbackCreateNestedManyWithoutHostelInput
+  stockGroup: Prisma.StockGroupCreateNestedOneWithoutHostelsInput
 }
 
 export type HostelUncheckedCreateWithoutUsersInput = {
@@ -500,7 +555,7 @@ export type HostelUncheckedCreateWithoutUsersInput = {
   requestsResetAt?: Date | string | null
   createdAt?: Date | string
   updatedAt?: Date | string
-  inventories?: Prisma.ProductInventoryUncheckedCreateNestedManyWithoutHostelInput
+  stockGroupId: string
   orders?: Prisma.OrderUncheckedCreateNestedManyWithoutHostelInput
   reservations?: Prisma.InventoryReservationUncheckedCreateNestedManyWithoutHostelInput
   productRequests?: Prisma.ProductRequestUncheckedCreateNestedManyWithoutHostelInput
@@ -530,11 +585,11 @@ export type HostelUpdateWithoutUsersInput = {
   requestsResetAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  inventories?: Prisma.ProductInventoryUpdateManyWithoutHostelNestedInput
   orders?: Prisma.OrderUpdateManyWithoutHostelNestedInput
   reservations?: Prisma.InventoryReservationUpdateManyWithoutHostelNestedInput
   productRequests?: Prisma.ProductRequestUpdateManyWithoutHostelNestedInput
   feedback?: Prisma.FeedbackUpdateManyWithoutHostelNestedInput
+  stockGroup?: Prisma.StockGroupUpdateOneRequiredWithoutHostelsNestedInput
 }
 
 export type HostelUncheckedUpdateWithoutUsersInput = {
@@ -544,14 +599,14 @@ export type HostelUncheckedUpdateWithoutUsersInput = {
   requestsResetAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  inventories?: Prisma.ProductInventoryUncheckedUpdateManyWithoutHostelNestedInput
+  stockGroupId?: Prisma.StringFieldUpdateOperationsInput | string
   orders?: Prisma.OrderUncheckedUpdateManyWithoutHostelNestedInput
   reservations?: Prisma.InventoryReservationUncheckedUpdateManyWithoutHostelNestedInput
   productRequests?: Prisma.ProductRequestUncheckedUpdateManyWithoutHostelNestedInput
   feedback?: Prisma.FeedbackUncheckedUpdateManyWithoutHostelNestedInput
 }
 
-export type HostelCreateWithoutInventoriesInput = {
+export type HostelCreateWithoutStockGroupInput = {
   id?: string
   name: string
   isActive?: boolean
@@ -565,7 +620,7 @@ export type HostelCreateWithoutInventoriesInput = {
   feedback?: Prisma.FeedbackCreateNestedManyWithoutHostelInput
 }
 
-export type HostelUncheckedCreateWithoutInventoriesInput = {
+export type HostelUncheckedCreateWithoutStockGroupInput = {
   id?: string
   name: string
   isActive?: boolean
@@ -579,48 +634,43 @@ export type HostelUncheckedCreateWithoutInventoriesInput = {
   feedback?: Prisma.FeedbackUncheckedCreateNestedManyWithoutHostelInput
 }
 
-export type HostelCreateOrConnectWithoutInventoriesInput = {
+export type HostelCreateOrConnectWithoutStockGroupInput = {
   where: Prisma.HostelWhereUniqueInput
-  create: Prisma.XOR<Prisma.HostelCreateWithoutInventoriesInput, Prisma.HostelUncheckedCreateWithoutInventoriesInput>
+  create: Prisma.XOR<Prisma.HostelCreateWithoutStockGroupInput, Prisma.HostelUncheckedCreateWithoutStockGroupInput>
 }
 
-export type HostelUpsertWithoutInventoriesInput = {
-  update: Prisma.XOR<Prisma.HostelUpdateWithoutInventoriesInput, Prisma.HostelUncheckedUpdateWithoutInventoriesInput>
-  create: Prisma.XOR<Prisma.HostelCreateWithoutInventoriesInput, Prisma.HostelUncheckedCreateWithoutInventoriesInput>
-  where?: Prisma.HostelWhereInput
+export type HostelCreateManyStockGroupInputEnvelope = {
+  data: Prisma.HostelCreateManyStockGroupInput | Prisma.HostelCreateManyStockGroupInput[]
+  skipDuplicates?: boolean
 }
 
-export type HostelUpdateToOneWithWhereWithoutInventoriesInput = {
-  where?: Prisma.HostelWhereInput
-  data: Prisma.XOR<Prisma.HostelUpdateWithoutInventoriesInput, Prisma.HostelUncheckedUpdateWithoutInventoriesInput>
+export type HostelUpsertWithWhereUniqueWithoutStockGroupInput = {
+  where: Prisma.HostelWhereUniqueInput
+  update: Prisma.XOR<Prisma.HostelUpdateWithoutStockGroupInput, Prisma.HostelUncheckedUpdateWithoutStockGroupInput>
+  create: Prisma.XOR<Prisma.HostelCreateWithoutStockGroupInput, Prisma.HostelUncheckedCreateWithoutStockGroupInput>
 }
 
-export type HostelUpdateWithoutInventoriesInput = {
-  id?: Prisma.StringFieldUpdateOperationsInput | string
-  name?: Prisma.StringFieldUpdateOperationsInput | string
-  isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  requestsResetAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  users?: Prisma.UserUpdateManyWithoutHostelNestedInput
-  orders?: Prisma.OrderUpdateManyWithoutHostelNestedInput
-  reservations?: Prisma.InventoryReservationUpdateManyWithoutHostelNestedInput
-  productRequests?: Prisma.ProductRequestUpdateManyWithoutHostelNestedInput
-  feedback?: Prisma.FeedbackUpdateManyWithoutHostelNestedInput
+export type HostelUpdateWithWhereUniqueWithoutStockGroupInput = {
+  where: Prisma.HostelWhereUniqueInput
+  data: Prisma.XOR<Prisma.HostelUpdateWithoutStockGroupInput, Prisma.HostelUncheckedUpdateWithoutStockGroupInput>
 }
 
-export type HostelUncheckedUpdateWithoutInventoriesInput = {
-  id?: Prisma.StringFieldUpdateOperationsInput | string
-  name?: Prisma.StringFieldUpdateOperationsInput | string
-  isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  requestsResetAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  users?: Prisma.UserUncheckedUpdateManyWithoutHostelNestedInput
-  orders?: Prisma.OrderUncheckedUpdateManyWithoutHostelNestedInput
-  reservations?: Prisma.InventoryReservationUncheckedUpdateManyWithoutHostelNestedInput
-  productRequests?: Prisma.ProductRequestUncheckedUpdateManyWithoutHostelNestedInput
-  feedback?: Prisma.FeedbackUncheckedUpdateManyWithoutHostelNestedInput
+export type HostelUpdateManyWithWhereWithoutStockGroupInput = {
+  where: Prisma.HostelScalarWhereInput
+  data: Prisma.XOR<Prisma.HostelUpdateManyMutationInput, Prisma.HostelUncheckedUpdateManyWithoutStockGroupInput>
+}
+
+export type HostelScalarWhereInput = {
+  AND?: Prisma.HostelScalarWhereInput | Prisma.HostelScalarWhereInput[]
+  OR?: Prisma.HostelScalarWhereInput[]
+  NOT?: Prisma.HostelScalarWhereInput | Prisma.HostelScalarWhereInput[]
+  id?: Prisma.StringFilter<"Hostel"> | string
+  name?: Prisma.StringFilter<"Hostel"> | string
+  isActive?: Prisma.BoolFilter<"Hostel"> | boolean
+  requestsResetAt?: Prisma.DateTimeNullableFilter<"Hostel"> | Date | string | null
+  createdAt?: Prisma.DateTimeFilter<"Hostel"> | Date | string
+  updatedAt?: Prisma.DateTimeFilter<"Hostel"> | Date | string
+  stockGroupId?: Prisma.StringFilter<"Hostel"> | string
 }
 
 export type HostelCreateWithoutOrdersInput = {
@@ -631,10 +681,10 @@ export type HostelCreateWithoutOrdersInput = {
   createdAt?: Date | string
   updatedAt?: Date | string
   users?: Prisma.UserCreateNestedManyWithoutHostelInput
-  inventories?: Prisma.ProductInventoryCreateNestedManyWithoutHostelInput
   reservations?: Prisma.InventoryReservationCreateNestedManyWithoutHostelInput
   productRequests?: Prisma.ProductRequestCreateNestedManyWithoutHostelInput
   feedback?: Prisma.FeedbackCreateNestedManyWithoutHostelInput
+  stockGroup: Prisma.StockGroupCreateNestedOneWithoutHostelsInput
 }
 
 export type HostelUncheckedCreateWithoutOrdersInput = {
@@ -644,8 +694,8 @@ export type HostelUncheckedCreateWithoutOrdersInput = {
   requestsResetAt?: Date | string | null
   createdAt?: Date | string
   updatedAt?: Date | string
+  stockGroupId: string
   users?: Prisma.UserUncheckedCreateNestedManyWithoutHostelInput
-  inventories?: Prisma.ProductInventoryUncheckedCreateNestedManyWithoutHostelInput
   reservations?: Prisma.InventoryReservationUncheckedCreateNestedManyWithoutHostelInput
   productRequests?: Prisma.ProductRequestUncheckedCreateNestedManyWithoutHostelInput
   feedback?: Prisma.FeedbackUncheckedCreateNestedManyWithoutHostelInput
@@ -675,10 +725,10 @@ export type HostelUpdateWithoutOrdersInput = {
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   users?: Prisma.UserUpdateManyWithoutHostelNestedInput
-  inventories?: Prisma.ProductInventoryUpdateManyWithoutHostelNestedInput
   reservations?: Prisma.InventoryReservationUpdateManyWithoutHostelNestedInput
   productRequests?: Prisma.ProductRequestUpdateManyWithoutHostelNestedInput
   feedback?: Prisma.FeedbackUpdateManyWithoutHostelNestedInput
+  stockGroup?: Prisma.StockGroupUpdateOneRequiredWithoutHostelsNestedInput
 }
 
 export type HostelUncheckedUpdateWithoutOrdersInput = {
@@ -688,8 +738,8 @@ export type HostelUncheckedUpdateWithoutOrdersInput = {
   requestsResetAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  stockGroupId?: Prisma.StringFieldUpdateOperationsInput | string
   users?: Prisma.UserUncheckedUpdateManyWithoutHostelNestedInput
-  inventories?: Prisma.ProductInventoryUncheckedUpdateManyWithoutHostelNestedInput
   reservations?: Prisma.InventoryReservationUncheckedUpdateManyWithoutHostelNestedInput
   productRequests?: Prisma.ProductRequestUncheckedUpdateManyWithoutHostelNestedInput
   feedback?: Prisma.FeedbackUncheckedUpdateManyWithoutHostelNestedInput
@@ -703,10 +753,10 @@ export type HostelCreateWithoutReservationsInput = {
   createdAt?: Date | string
   updatedAt?: Date | string
   users?: Prisma.UserCreateNestedManyWithoutHostelInput
-  inventories?: Prisma.ProductInventoryCreateNestedManyWithoutHostelInput
   orders?: Prisma.OrderCreateNestedManyWithoutHostelInput
   productRequests?: Prisma.ProductRequestCreateNestedManyWithoutHostelInput
   feedback?: Prisma.FeedbackCreateNestedManyWithoutHostelInput
+  stockGroup: Prisma.StockGroupCreateNestedOneWithoutHostelsInput
 }
 
 export type HostelUncheckedCreateWithoutReservationsInput = {
@@ -716,8 +766,8 @@ export type HostelUncheckedCreateWithoutReservationsInput = {
   requestsResetAt?: Date | string | null
   createdAt?: Date | string
   updatedAt?: Date | string
+  stockGroupId: string
   users?: Prisma.UserUncheckedCreateNestedManyWithoutHostelInput
-  inventories?: Prisma.ProductInventoryUncheckedCreateNestedManyWithoutHostelInput
   orders?: Prisma.OrderUncheckedCreateNestedManyWithoutHostelInput
   productRequests?: Prisma.ProductRequestUncheckedCreateNestedManyWithoutHostelInput
   feedback?: Prisma.FeedbackUncheckedCreateNestedManyWithoutHostelInput
@@ -747,10 +797,10 @@ export type HostelUpdateWithoutReservationsInput = {
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   users?: Prisma.UserUpdateManyWithoutHostelNestedInput
-  inventories?: Prisma.ProductInventoryUpdateManyWithoutHostelNestedInput
   orders?: Prisma.OrderUpdateManyWithoutHostelNestedInput
   productRequests?: Prisma.ProductRequestUpdateManyWithoutHostelNestedInput
   feedback?: Prisma.FeedbackUpdateManyWithoutHostelNestedInput
+  stockGroup?: Prisma.StockGroupUpdateOneRequiredWithoutHostelsNestedInput
 }
 
 export type HostelUncheckedUpdateWithoutReservationsInput = {
@@ -760,8 +810,8 @@ export type HostelUncheckedUpdateWithoutReservationsInput = {
   requestsResetAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  stockGroupId?: Prisma.StringFieldUpdateOperationsInput | string
   users?: Prisma.UserUncheckedUpdateManyWithoutHostelNestedInput
-  inventories?: Prisma.ProductInventoryUncheckedUpdateManyWithoutHostelNestedInput
   orders?: Prisma.OrderUncheckedUpdateManyWithoutHostelNestedInput
   productRequests?: Prisma.ProductRequestUncheckedUpdateManyWithoutHostelNestedInput
   feedback?: Prisma.FeedbackUncheckedUpdateManyWithoutHostelNestedInput
@@ -775,10 +825,10 @@ export type HostelCreateWithoutProductRequestsInput = {
   createdAt?: Date | string
   updatedAt?: Date | string
   users?: Prisma.UserCreateNestedManyWithoutHostelInput
-  inventories?: Prisma.ProductInventoryCreateNestedManyWithoutHostelInput
   orders?: Prisma.OrderCreateNestedManyWithoutHostelInput
   reservations?: Prisma.InventoryReservationCreateNestedManyWithoutHostelInput
   feedback?: Prisma.FeedbackCreateNestedManyWithoutHostelInput
+  stockGroup: Prisma.StockGroupCreateNestedOneWithoutHostelsInput
 }
 
 export type HostelUncheckedCreateWithoutProductRequestsInput = {
@@ -788,8 +838,8 @@ export type HostelUncheckedCreateWithoutProductRequestsInput = {
   requestsResetAt?: Date | string | null
   createdAt?: Date | string
   updatedAt?: Date | string
+  stockGroupId: string
   users?: Prisma.UserUncheckedCreateNestedManyWithoutHostelInput
-  inventories?: Prisma.ProductInventoryUncheckedCreateNestedManyWithoutHostelInput
   orders?: Prisma.OrderUncheckedCreateNestedManyWithoutHostelInput
   reservations?: Prisma.InventoryReservationUncheckedCreateNestedManyWithoutHostelInput
   feedback?: Prisma.FeedbackUncheckedCreateNestedManyWithoutHostelInput
@@ -819,10 +869,10 @@ export type HostelUpdateWithoutProductRequestsInput = {
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   users?: Prisma.UserUpdateManyWithoutHostelNestedInput
-  inventories?: Prisma.ProductInventoryUpdateManyWithoutHostelNestedInput
   orders?: Prisma.OrderUpdateManyWithoutHostelNestedInput
   reservations?: Prisma.InventoryReservationUpdateManyWithoutHostelNestedInput
   feedback?: Prisma.FeedbackUpdateManyWithoutHostelNestedInput
+  stockGroup?: Prisma.StockGroupUpdateOneRequiredWithoutHostelsNestedInput
 }
 
 export type HostelUncheckedUpdateWithoutProductRequestsInput = {
@@ -832,8 +882,8 @@ export type HostelUncheckedUpdateWithoutProductRequestsInput = {
   requestsResetAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  stockGroupId?: Prisma.StringFieldUpdateOperationsInput | string
   users?: Prisma.UserUncheckedUpdateManyWithoutHostelNestedInput
-  inventories?: Prisma.ProductInventoryUncheckedUpdateManyWithoutHostelNestedInput
   orders?: Prisma.OrderUncheckedUpdateManyWithoutHostelNestedInput
   reservations?: Prisma.InventoryReservationUncheckedUpdateManyWithoutHostelNestedInput
   feedback?: Prisma.FeedbackUncheckedUpdateManyWithoutHostelNestedInput
@@ -847,10 +897,10 @@ export type HostelCreateWithoutFeedbackInput = {
   createdAt?: Date | string
   updatedAt?: Date | string
   users?: Prisma.UserCreateNestedManyWithoutHostelInput
-  inventories?: Prisma.ProductInventoryCreateNestedManyWithoutHostelInput
   orders?: Prisma.OrderCreateNestedManyWithoutHostelInput
   reservations?: Prisma.InventoryReservationCreateNestedManyWithoutHostelInput
   productRequests?: Prisma.ProductRequestCreateNestedManyWithoutHostelInput
+  stockGroup: Prisma.StockGroupCreateNestedOneWithoutHostelsInput
 }
 
 export type HostelUncheckedCreateWithoutFeedbackInput = {
@@ -860,8 +910,8 @@ export type HostelUncheckedCreateWithoutFeedbackInput = {
   requestsResetAt?: Date | string | null
   createdAt?: Date | string
   updatedAt?: Date | string
+  stockGroupId: string
   users?: Prisma.UserUncheckedCreateNestedManyWithoutHostelInput
-  inventories?: Prisma.ProductInventoryUncheckedCreateNestedManyWithoutHostelInput
   orders?: Prisma.OrderUncheckedCreateNestedManyWithoutHostelInput
   reservations?: Prisma.InventoryReservationUncheckedCreateNestedManyWithoutHostelInput
   productRequests?: Prisma.ProductRequestUncheckedCreateNestedManyWithoutHostelInput
@@ -891,10 +941,10 @@ export type HostelUpdateWithoutFeedbackInput = {
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   users?: Prisma.UserUpdateManyWithoutHostelNestedInput
-  inventories?: Prisma.ProductInventoryUpdateManyWithoutHostelNestedInput
   orders?: Prisma.OrderUpdateManyWithoutHostelNestedInput
   reservations?: Prisma.InventoryReservationUpdateManyWithoutHostelNestedInput
   productRequests?: Prisma.ProductRequestUpdateManyWithoutHostelNestedInput
+  stockGroup?: Prisma.StockGroupUpdateOneRequiredWithoutHostelsNestedInput
 }
 
 export type HostelUncheckedUpdateWithoutFeedbackInput = {
@@ -904,11 +954,57 @@ export type HostelUncheckedUpdateWithoutFeedbackInput = {
   requestsResetAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  stockGroupId?: Prisma.StringFieldUpdateOperationsInput | string
   users?: Prisma.UserUncheckedUpdateManyWithoutHostelNestedInput
-  inventories?: Prisma.ProductInventoryUncheckedUpdateManyWithoutHostelNestedInput
   orders?: Prisma.OrderUncheckedUpdateManyWithoutHostelNestedInput
   reservations?: Prisma.InventoryReservationUncheckedUpdateManyWithoutHostelNestedInput
   productRequests?: Prisma.ProductRequestUncheckedUpdateManyWithoutHostelNestedInput
+}
+
+export type HostelCreateManyStockGroupInput = {
+  id?: string
+  name: string
+  isActive?: boolean
+  requestsResetAt?: Date | string | null
+  createdAt?: Date | string
+  updatedAt?: Date | string
+}
+
+export type HostelUpdateWithoutStockGroupInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  name?: Prisma.StringFieldUpdateOperationsInput | string
+  isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  requestsResetAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  users?: Prisma.UserUpdateManyWithoutHostelNestedInput
+  orders?: Prisma.OrderUpdateManyWithoutHostelNestedInput
+  reservations?: Prisma.InventoryReservationUpdateManyWithoutHostelNestedInput
+  productRequests?: Prisma.ProductRequestUpdateManyWithoutHostelNestedInput
+  feedback?: Prisma.FeedbackUpdateManyWithoutHostelNestedInput
+}
+
+export type HostelUncheckedUpdateWithoutStockGroupInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  name?: Prisma.StringFieldUpdateOperationsInput | string
+  isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  requestsResetAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  users?: Prisma.UserUncheckedUpdateManyWithoutHostelNestedInput
+  orders?: Prisma.OrderUncheckedUpdateManyWithoutHostelNestedInput
+  reservations?: Prisma.InventoryReservationUncheckedUpdateManyWithoutHostelNestedInput
+  productRequests?: Prisma.ProductRequestUncheckedUpdateManyWithoutHostelNestedInput
+  feedback?: Prisma.FeedbackUncheckedUpdateManyWithoutHostelNestedInput
+}
+
+export type HostelUncheckedUpdateManyWithoutStockGroupInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  name?: Prisma.StringFieldUpdateOperationsInput | string
+  isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  requestsResetAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
 
 
@@ -918,7 +1014,6 @@ export type HostelUncheckedUpdateWithoutFeedbackInput = {
 
 export type HostelCountOutputType = {
   users: number
-  inventories: number
   orders: number
   reservations: number
   productRequests: number
@@ -927,7 +1022,6 @@ export type HostelCountOutputType = {
 
 export type HostelCountOutputTypeSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   users?: boolean | HostelCountOutputTypeCountUsersArgs
-  inventories?: boolean | HostelCountOutputTypeCountInventoriesArgs
   orders?: boolean | HostelCountOutputTypeCountOrdersArgs
   reservations?: boolean | HostelCountOutputTypeCountReservationsArgs
   productRequests?: boolean | HostelCountOutputTypeCountProductRequestsArgs
@@ -949,13 +1043,6 @@ export type HostelCountOutputTypeDefaultArgs<ExtArgs extends runtime.Types.Exten
  */
 export type HostelCountOutputTypeCountUsersArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   where?: Prisma.UserWhereInput
-}
-
-/**
- * HostelCountOutputType without action
- */
-export type HostelCountOutputTypeCountInventoriesArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
-  where?: Prisma.ProductInventoryWhereInput
 }
 
 /**
@@ -994,12 +1081,13 @@ export type HostelSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs =
   requestsResetAt?: boolean
   createdAt?: boolean
   updatedAt?: boolean
+  stockGroupId?: boolean
   users?: boolean | Prisma.Hostel$usersArgs<ExtArgs>
-  inventories?: boolean | Prisma.Hostel$inventoriesArgs<ExtArgs>
   orders?: boolean | Prisma.Hostel$ordersArgs<ExtArgs>
   reservations?: boolean | Prisma.Hostel$reservationsArgs<ExtArgs>
   productRequests?: boolean | Prisma.Hostel$productRequestsArgs<ExtArgs>
   feedback?: boolean | Prisma.Hostel$feedbackArgs<ExtArgs>
+  stockGroup?: boolean | Prisma.StockGroupDefaultArgs<ExtArgs>
   _count?: boolean | Prisma.HostelCountOutputTypeDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["hostel"]>
 
@@ -1010,6 +1098,8 @@ export type HostelSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Extens
   requestsResetAt?: boolean
   createdAt?: boolean
   updatedAt?: boolean
+  stockGroupId?: boolean
+  stockGroup?: boolean | Prisma.StockGroupDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["hostel"]>
 
 export type HostelSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
@@ -1019,6 +1109,8 @@ export type HostelSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Extens
   requestsResetAt?: boolean
   createdAt?: boolean
   updatedAt?: boolean
+  stockGroupId?: boolean
+  stockGroup?: boolean | Prisma.StockGroupDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["hostel"]>
 
 export type HostelSelectScalar = {
@@ -1028,30 +1120,35 @@ export type HostelSelectScalar = {
   requestsResetAt?: boolean
   createdAt?: boolean
   updatedAt?: boolean
+  stockGroupId?: boolean
 }
 
-export type HostelOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "name" | "isActive" | "requestsResetAt" | "createdAt" | "updatedAt", ExtArgs["result"]["hostel"]>
+export type HostelOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "name" | "isActive" | "requestsResetAt" | "createdAt" | "updatedAt" | "stockGroupId", ExtArgs["result"]["hostel"]>
 export type HostelInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   users?: boolean | Prisma.Hostel$usersArgs<ExtArgs>
-  inventories?: boolean | Prisma.Hostel$inventoriesArgs<ExtArgs>
   orders?: boolean | Prisma.Hostel$ordersArgs<ExtArgs>
   reservations?: boolean | Prisma.Hostel$reservationsArgs<ExtArgs>
   productRequests?: boolean | Prisma.Hostel$productRequestsArgs<ExtArgs>
   feedback?: boolean | Prisma.Hostel$feedbackArgs<ExtArgs>
+  stockGroup?: boolean | Prisma.StockGroupDefaultArgs<ExtArgs>
   _count?: boolean | Prisma.HostelCountOutputTypeDefaultArgs<ExtArgs>
 }
-export type HostelIncludeCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {}
-export type HostelIncludeUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {}
+export type HostelIncludeCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  stockGroup?: boolean | Prisma.StockGroupDefaultArgs<ExtArgs>
+}
+export type HostelIncludeUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  stockGroup?: boolean | Prisma.StockGroupDefaultArgs<ExtArgs>
+}
 
 export type $HostelPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   name: "Hostel"
   objects: {
     users: Prisma.$UserPayload<ExtArgs>[]
-    inventories: Prisma.$ProductInventoryPayload<ExtArgs>[]
     orders: Prisma.$OrderPayload<ExtArgs>[]
     reservations: Prisma.$InventoryReservationPayload<ExtArgs>[]
     productRequests: Prisma.$ProductRequestPayload<ExtArgs>[]
     feedback: Prisma.$FeedbackPayload<ExtArgs>[]
+    stockGroup: Prisma.$StockGroupPayload<ExtArgs>
   }
   scalars: runtime.Types.Extensions.GetPayloadResult<{
     id: string
@@ -1060,6 +1157,7 @@ export type $HostelPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs
     requestsResetAt: Date | null
     createdAt: Date
     updatedAt: Date
+    stockGroupId: string
   }, ExtArgs["result"]["hostel"]>
   composites: {}
 }
@@ -1455,11 +1553,11 @@ readonly fields: HostelFieldRefs;
 export interface Prisma__HostelClient<T, Null = never, ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
   readonly [Symbol.toStringTag]: "PrismaPromise"
   users<T extends Prisma.Hostel$usersArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Hostel$usersArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$UserPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
-  inventories<T extends Prisma.Hostel$inventoriesArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Hostel$inventoriesArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$ProductInventoryPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   orders<T extends Prisma.Hostel$ordersArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Hostel$ordersArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$OrderPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   reservations<T extends Prisma.Hostel$reservationsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Hostel$reservationsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$InventoryReservationPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   productRequests<T extends Prisma.Hostel$productRequestsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Hostel$productRequestsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$ProductRequestPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   feedback<T extends Prisma.Hostel$feedbackArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Hostel$feedbackArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$FeedbackPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+  stockGroup<T extends Prisma.StockGroupDefaultArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.StockGroupDefaultArgs<ExtArgs>>): Prisma.Prisma__StockGroupClient<runtime.Types.Result.GetResult<Prisma.$StockGroupPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
   /**
    * Attaches callbacks for the resolution and/or rejection of the Promise.
    * @param onfulfilled The callback to execute when the Promise is resolved.
@@ -1495,6 +1593,7 @@ export interface HostelFieldRefs {
   readonly requestsResetAt: Prisma.FieldRef<"Hostel", 'DateTime'>
   readonly createdAt: Prisma.FieldRef<"Hostel", 'DateTime'>
   readonly updatedAt: Prisma.FieldRef<"Hostel", 'DateTime'>
+  readonly stockGroupId: Prisma.FieldRef<"Hostel", 'String'>
 }
     
 
@@ -1749,6 +1848,10 @@ export type HostelCreateManyAndReturnArgs<ExtArgs extends runtime.Types.Extensio
    */
   data: Prisma.HostelCreateManyInput | Prisma.HostelCreateManyInput[]
   skipDuplicates?: boolean
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.HostelIncludeCreateManyAndReturn<ExtArgs> | null
 }
 
 /**
@@ -1819,6 +1922,10 @@ export type HostelUpdateManyAndReturnArgs<ExtArgs extends runtime.Types.Extensio
    * Limit how many Hostels to update.
    */
   limit?: number
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.HostelIncludeUpdateManyAndReturn<ExtArgs> | null
 }
 
 /**
@@ -1909,30 +2016,6 @@ export type Hostel$usersArgs<ExtArgs extends runtime.Types.Extensions.InternalAr
   take?: number
   skip?: number
   distinct?: Prisma.UserScalarFieldEnum | Prisma.UserScalarFieldEnum[]
-}
-
-/**
- * Hostel.inventories
- */
-export type Hostel$inventoriesArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
-  /**
-   * Select specific fields to fetch from the ProductInventory
-   */
-  select?: Prisma.ProductInventorySelect<ExtArgs> | null
-  /**
-   * Omit specific fields from the ProductInventory
-   */
-  omit?: Prisma.ProductInventoryOmit<ExtArgs> | null
-  /**
-   * Choose, which related nodes to fetch as well
-   */
-  include?: Prisma.ProductInventoryInclude<ExtArgs> | null
-  where?: Prisma.ProductInventoryWhereInput
-  orderBy?: Prisma.ProductInventoryOrderByWithRelationInput | Prisma.ProductInventoryOrderByWithRelationInput[]
-  cursor?: Prisma.ProductInventoryWhereUniqueInput
-  take?: number
-  skip?: number
-  distinct?: Prisma.ProductInventoryScalarFieldEnum | Prisma.ProductInventoryScalarFieldEnum[]
 }
 
 /**

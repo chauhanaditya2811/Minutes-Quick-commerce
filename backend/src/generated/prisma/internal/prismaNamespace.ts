@@ -399,6 +399,7 @@ type FieldRefInputType<Model, FieldType> = Model extends never ? never : FieldRe
 export const ModelName = {
   User: 'User',
   Hostel: 'Hostel',
+  StockGroup: 'StockGroup',
   Product: 'Product',
   ProductInventory: 'ProductInventory',
   Order: 'Order',
@@ -426,7 +427,7 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
     omit: GlobalOmitOptions
   }
   meta: {
-    modelProps: "user" | "hostel" | "product" | "productInventory" | "order" | "orderItem" | "payment" | "paymentAttempt" | "inventoryReservation" | "setting" | "cashfreeWebhookEvent" | "productRequest" | "productRequestVote" | "feedback"
+    modelProps: "user" | "hostel" | "stockGroup" | "product" | "productInventory" | "order" | "orderItem" | "payment" | "paymentAttempt" | "inventoryReservation" | "setting" | "cashfreeWebhookEvent" | "productRequest" | "productRequestVote" | "feedback"
     txIsolationLevel: TransactionIsolationLevel
   }
   model: {
@@ -575,6 +576,80 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
         count: {
           args: Prisma.HostelCountArgs<ExtArgs>
           result: runtime.Types.Utils.Optional<Prisma.HostelCountAggregateOutputType> | number
+        }
+      }
+    }
+    StockGroup: {
+      payload: Prisma.$StockGroupPayload<ExtArgs>
+      fields: Prisma.StockGroupFieldRefs
+      operations: {
+        findUnique: {
+          args: Prisma.StockGroupFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$StockGroupPayload> | null
+        }
+        findUniqueOrThrow: {
+          args: Prisma.StockGroupFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$StockGroupPayload>
+        }
+        findFirst: {
+          args: Prisma.StockGroupFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$StockGroupPayload> | null
+        }
+        findFirstOrThrow: {
+          args: Prisma.StockGroupFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$StockGroupPayload>
+        }
+        findMany: {
+          args: Prisma.StockGroupFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$StockGroupPayload>[]
+        }
+        create: {
+          args: Prisma.StockGroupCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$StockGroupPayload>
+        }
+        createMany: {
+          args: Prisma.StockGroupCreateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        createManyAndReturn: {
+          args: Prisma.StockGroupCreateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$StockGroupPayload>[]
+        }
+        delete: {
+          args: Prisma.StockGroupDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$StockGroupPayload>
+        }
+        update: {
+          args: Prisma.StockGroupUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$StockGroupPayload>
+        }
+        deleteMany: {
+          args: Prisma.StockGroupDeleteManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateMany: {
+          args: Prisma.StockGroupUpdateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateManyAndReturn: {
+          args: Prisma.StockGroupUpdateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$StockGroupPayload>[]
+        }
+        upsert: {
+          args: Prisma.StockGroupUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$StockGroupPayload>
+        }
+        aggregate: {
+          args: Prisma.StockGroupAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregateStockGroup>
+        }
+        groupBy: {
+          args: Prisma.StockGroupGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.StockGroupGroupByOutputType>[]
+        }
+        count: {
+          args: Prisma.StockGroupCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.StockGroupCountAggregateOutputType> | number
         }
       }
     }
@@ -1528,10 +1603,21 @@ export const HostelScalarFieldEnum = {
   isActive: 'isActive',
   requestsResetAt: 'requestsResetAt',
   createdAt: 'createdAt',
-  updatedAt: 'updatedAt'
+  updatedAt: 'updatedAt',
+  stockGroupId: 'stockGroupId'
 } as const
 
 export type HostelScalarFieldEnum = (typeof HostelScalarFieldEnum)[keyof typeof HostelScalarFieldEnum]
+
+
+export const StockGroupScalarFieldEnum = {
+  id: 'id',
+  name: 'name',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type StockGroupScalarFieldEnum = (typeof StockGroupScalarFieldEnum)[keyof typeof StockGroupScalarFieldEnum]
 
 
 export const ProductScalarFieldEnum = {
@@ -1553,7 +1639,7 @@ export type ProductScalarFieldEnum = (typeof ProductScalarFieldEnum)[keyof typeo
 export const ProductInventoryScalarFieldEnum = {
   id: 'id',
   productId: 'productId',
-  hostelId: 'hostelId',
+  stockGroupId: 'stockGroupId',
   quantity: 'quantity',
   isAvailable: 'isAvailable',
   createdAt: 'createdAt',
@@ -1644,6 +1730,7 @@ export const InventoryReservationScalarFieldEnum = {
   userId: 'userId',
   orderId: 'orderId',
   hostelId: 'hostelId',
+  stockGroupId: 'stockGroupId',
   quantity: 'quantity',
   status: 'status',
   expiresAt: 'expiresAt',
@@ -2046,6 +2133,7 @@ export type PrismaClientOptions = PrismaClientOptionsWithAccelerateUrl | PrismaC
 export type GlobalOmitConfig = {
   user?: Prisma.UserOmit
   hostel?: Prisma.HostelOmit
+  stockGroup?: Prisma.StockGroupOmit
   product?: Prisma.ProductOmit
   productInventory?: Prisma.ProductInventoryOmit
   order?: Prisma.OrderOmit

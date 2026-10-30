@@ -5,6 +5,7 @@ import type {
   HostelStockUpdateEntry,
   Product,
   ProductInput,
+  StockGroup,
   StoreSettings,
 } from '../types/product';
 import type { UpdateProfileInput, UserProfile } from '../types/user';
@@ -47,8 +48,14 @@ export class ApiError extends Error {
   }
 }
 
-export interface Hostel { id: string; name: string; }
-export interface AdminHostel extends Hostel { isActive: boolean; createdAt: string; updatedAt: string; }
+/** A hostel customers can shop at. Hostels with the same stockGroupId share one stock. */
+export interface Hostel { id: string; name: string; stockGroupId?: string; }
+export interface AdminHostel extends Hostel {
+  isActive: boolean;
+  createdAt: string;
+  updatedAt: string;
+  stockGroup?: { id: string; name: string };
+}
 
 type TokenProvider = () => Promise<string | null>;
 let tokenProvider: TokenProvider = async () => null;
@@ -265,7 +272,27 @@ export const api = {
   updateFeedbackStatus: (id: string, status: FeedbackStatus) =>
     request<unknown>(`/api/admin/feedback/messages/${encodeURIComponent(id)}`, { method: 'PATCH', body: { status }, auth: true }),
   getAdminHostels: () => request<AdminHostel[]>('/api/admin/hostels', { auth: true }),
-  createHostel: (name: string) => request<AdminHostel>('/api/admin/hostels', { method: 'POST', body: { name }, auth: true }),
+  createHostel: (name: string, stockGroupId?: string) =>
+    request<AdminHostel>('/api/admin/hostels', { method: 'POST', body: { name, ...(stockGroupId ? { stockGroupId } : {}) }, auth: true }),
+  getStockGroups: () => request<StockGroup[]>('/api/admin/stock-groups', { auth: true }),
+  /** Creates a pool; `copyStockFromHostelId` starts its stock as a copy of that hostel's current stock. */
+  createStockGroup: (name: string, hostelIds: string[], copyStockFromHostelId?: string) =>
+    request<StockGroup>('/api/admin/stock-groups', {
+      method: 'POST',
+      body: { name, hostelIds, ...(copyStockFromHostelId ? { copyStockFromHostelId } : {}) },
+      auth: true,
+    }),
+  /** Moves a hostel into a pool, or (with no pool) into a new empty pool of its own. */
+  moveHostelToPool: (hostelId: string, stockGroupId: string | null) =>
+    request<AdminHostel>(`/api/admin/hostels/${encodeURIComponent(hostelId)}/pool`, {
+      method: 'PATCH',
+      body: stockGroupId ? { stockGroupId } : {},
+      auth: true,
+    }),
+  updateStockGroup: (id: string, body: { name?: string; hostelIds?: string[] }) =>
+    request<StockGroup>(`/api/admin/stock-groups/${encodeURIComponent(id)}`, { method: 'PATCH', body, auth: true }),
+  deleteStockGroup: (id: string) =>
+    request<void>(`/api/admin/stock-groups/${encodeURIComponent(id)}`, { method: 'DELETE', auth: true }),
   activateHostel: (id: string) => request<AdminHostel>(`/api/admin/hostels/${encodeURIComponent(id)}/activate`, { method: 'PATCH', auth: true }),
   deactivateHostel: (id: string) => request<AdminHostel>(`/api/admin/hostels/${encodeURIComponent(id)}/deactivate`, { method: 'PATCH', auth: true }),
   permanentlyDeleteHostel: (id: string) =>
@@ -273,10 +300,10 @@ export const api = {
   updateAdminSettings: (body: StoreSettings) =>
     request<StoreSettings>('/api/admin/settings', { method: 'PUT', body, auth: true }),
   getAdminProducts: () => request<AdminProduct[]>('/api/admin/products', { auth: true }),
-  getHostelStock: (hostelId: string) =>
-    request<HostelStock>(`/api/admin/hostels/${encodeURIComponent(hostelId)}/inventory`, { auth: true }),
-  updateHostelStock: (hostelId: string, entries: HostelStockUpdateEntry[]) =>
-    request<HostelStock>(`/api/admin/hostels/${encodeURIComponent(hostelId)}/inventory`, {
+  getGroupStock: (stockGroupId: string) =>
+    request<HostelStock>(`/api/admin/stock-groups/${encodeURIComponent(stockGroupId)}/inventory`, { auth: true }),
+  updateGroupStock: (stockGroupId: string, entries: HostelStockUpdateEntry[]) =>
+    request<HostelStock>(`/api/admin/stock-groups/${encodeURIComponent(stockGroupId)}/inventory`, {
       method: 'PUT',
       body: { entries },
       auth: true,
