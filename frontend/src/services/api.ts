@@ -48,8 +48,10 @@ export class ApiError extends Error {
   }
 }
 
-/** A hostel customers can shop at. Hostels with the same stockGroupId share one stock. */
+/** A hostel. Hostels with the same stockGroupId (pool) share one stock. */
 export interface Hostel { id: string; name: string; stockGroupId?: string; }
+/** Where customers shop: one shared stock ("Boys' Hostels") and the active hostels it serves. */
+export interface Pool { id: string; name: string; hostels: { id: string; name: string }[]; }
 export interface AdminHostel extends Hostel {
   isActive: boolean;
   createdAt: string;
@@ -164,18 +166,19 @@ function mapOrder(order: BackendOrder): OrderSummary {
 
 export const api = {
   // Public
-  getProducts: (hostelId: string) =>
-    request<Product[]>(`/api/products?hostelId=${encodeURIComponent(hostelId)}`),
-  getProduct: (id: string, hostelId: string) =>
-    request<Product>(`/api/products/${encodeURIComponent(id)}?hostelId=${encodeURIComponent(hostelId)}`),
+  getPools: () => request<Pool[]>('/api/pools'),
+  getProducts: (poolId: string) =>
+    request<Product[]>(`/api/products?poolId=${encodeURIComponent(poolId)}`),
+  getProduct: (id: string, poolId: string) =>
+    request<Product>(`/api/products/${encodeURIComponent(id)}?poolId=${encodeURIComponent(poolId)}`),
   getSettings: () => request<StoreSettings>('/api/settings'),
   getHostels: () => request<Hostel[]>('/api/hostels'),
 
   // Product requests and feedback (no sign-in needed)
-  getProductRequests: (hostelId: string) =>
-    request<ProductRequestBoard>(`/api/product-requests?hostelId=${encodeURIComponent(hostelId)}`, { headers: voterHeaders() }),
-  requestProduct: (hostelId: string, name: string) =>
-    request<CreateProductRequestResponse>('/api/product-requests', { method: 'POST', body: { hostelId, name }, headers: voterHeaders() }),
+  getProductRequests: (poolId: string) =>
+    request<ProductRequestBoard>(`/api/product-requests?poolId=${encodeURIComponent(poolId)}`, { headers: voterHeaders() }),
+  requestProduct: (poolId: string, name: string) =>
+    request<CreateProductRequestResponse>('/api/product-requests', { method: 'POST', body: { poolId, name }, headers: voterHeaders() }),
   setProductRequestVote: async (id: string, voted: boolean) =>
     envelopeValue<ProductRequest>(
       await request<unknown>(`/api/product-requests/${encodeURIComponent(id)}/vote`, { method: voted ? 'PUT' : 'DELETE', headers: voterHeaders() }),
@@ -258,9 +261,9 @@ export const api = {
       'order',
     ),
   getAdminSettings: () => request<StoreSettings>('/api/admin/settings', { auth: true }),
-  getAdminProductRequests: (status: ProductRequestStatus, hostelId?: string) =>
+  getAdminProductRequests: (status: ProductRequestStatus, poolId?: string) =>
     request<AdminProductRequests>(
-      `/api/admin/feedback/product-requests?status=${status}${hostelId ? `&hostelId=${encodeURIComponent(hostelId)}` : ''}`,
+      `/api/admin/feedback/product-requests?status=${status}${poolId ? `&poolId=${encodeURIComponent(poolId)}` : ''}`,
       { auth: true },
     ),
   updateProductRequestStatus: (id: string, status: ProductRequestStatus) =>

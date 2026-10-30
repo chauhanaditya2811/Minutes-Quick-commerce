@@ -16,11 +16,72 @@ const formatINR = (amount: number): string =>
     maximumFractionDigits: 0,
   }).format(amount);
 
-// Notify the owner after a customer's Razorpay payment is confirmed.
-export const notifyOwner = async (
-  orderId: string,
-  paymentMethod: string
-): Promise<void> => {
+/** Customers are promised delivery within 10 minutes of confirmation. */
+const DELIVERY_WINDOW_MS = 10 * 60_000;
+
+// Times as the shop sees them: India time, e.g. "9:42 PM".
+const formatTime = (date: Date): string =>
+  new Intl.DateTimeFormat("en-IN", { hour: "numeric", minute: "2-digit", hour12: true, timeZone: "Asia/Kolkata" })
+    .format(date)
+    .toUpperCase();
+
+// "7498414922" → "+91 74984 14922", which Telegram makes tappable to call.
+const formatPhone = (phone: string): string =>
+  /^\d{10}$/.test(phone) ? `+91 ${phone.slice(0, 5)} ${phone.slice(5)}` : phone;
+
+// "blue lays" → "Blue Lays"; names already capitalised ("KitKat") are left alone.
+const capitalise = (text: string): string => text.replace(/(^|\s)(\p{Ll})/gu, (_m, space: string, letter: string) => space + letter.toUpperCase());
+
+/** The last 8 characters of the order number: short to read, still unique enough to find in admin. */
+export const shortOrderCode = (orderNumber: string): string => orderNumber.slice(-8);
+
+export interface OrderMessageInput {
+  orderNumber: string;
+  total: number;
+  subtotal: number;
+  deliveryFee: number;
+  customerName: string;
+  customerPhone: string;
+  customerEmail: string | null;
+  customerHostel: string;
+  customerFloor: string;
+  customerRoom: string;
+  createdAt: Date;
+  confirmedAt: Date | null;
+  items: { productName: string; quantity: number; subtotal: number }[];
+}
+
+/**
+ * The owner's "new order" message, laid out for whoever delivers it: where to go and who to
+ * call first, then what to bring, then the money, with a short order code at the end.
+ */
+export const formatOrderMessage = (order: OrderMessageInput, now = new Date()): string => {
+  const units = order.items.reduce((sum, item) => sum + item.quantity, 0);
+  const confirmed = order.confirmedAt ?? now;
+  const items = order.items
+    .map((item) => `• ${item.quantity} × ${escapeHtml(capitalise(item.productName))} — ${formatINR(item.subtotal)}`)
+    .join("\n");
+  const delivery = order.deliveryFee === 0 ? "Free delivery" : `Delivery ${formatINR(order.deliveryFee)}`;
+
+  return [
+    `<b>🛵 NEW ORDER · ${formatINR(order.total)} PAID</b>`,
+    `⏱ Deliver by <b>${formatTime(new Date(confirmed.getTime() + DELIVERY_WINDOW_MS))}</b>`,
+    "",
+    `📍 <b>${escapeHtml(order.customerHostel)}</b>`,
+    `Block/Floor ${escapeHtml(order.customerFloor)} · Room ${escapeHtml(order.customerRoom)}`,
+    `👤 ${escapeHtml(order.customerName)} · 📞 ${escapeHtml(formatPhone(order.customerPhone))}`,
+    "",
+    `<b>🛒 ${units} ${units === 1 ? "item" : "items"}</b>`,
+    items || "No items",
+    "",
+    `💰 Items ${formatINR(order.subtotal)} + ${delivery} = <b>${formatINR(order.total)}</b>`,
+    "",
+    `<code>#${escapeHtml(shortOrderCode(order.orderNumber))}</code> · ${order.customerEmail ? "Account" : "Guest"} · placed ${formatTime(order.createdAt)}`,
+  ].join("\n");
+};
+
+// Notify the owner after a customer's payment is confirmed.
+export const notifyOwner = async (orderId: string): Promise<void> => {
   try {
     const botToken = process.env.TELEGRAM_BOT_TOKEN?.trim();
     const chatId = process.env.TELEGRAM_CHAT_ID?.trim();
@@ -46,41 +107,8 @@ export const notifyOwner = async (
       return;
     }
 
-    // Format each item using the saved order snapshot.
-    const items = order.items
-      .map(
-        (item) =>
-          `• ${escapeHtml(item.productName)} — ${item.quantity} × ` +
-          `${formatINR(item.price)} / ${escapeHtml(item.unit)} = ` +
-          `${formatINR(item.subtotal)}`
-      )
-      .join("\n");
-
-    // Build the order message using Telegram's HTML formatting.
-    const message = [
-      "<b>🛍 New Minutes Order Confirmed!</b>",
-      "",
-      `<b>Order:</b> ${escapeHtml(order.orderNumber)}`,
-      `<b>Status:</b> ${escapeHtml(order.orderStatus)}`,
-      `<b>Payment method:</b> ${escapeHtml(paymentMethod)}`,
-      `<b>Total:</b> ${formatINR(order.total)}`,
-      "",
-      "<b>Items</b>",
-      items || "No items",
-      "",
-      "<b>Customer Details</b>",
-      `<b>Name:</b> ${escapeHtml(order.customerName)}`,
-      `<b>Phone:</b> ${escapeHtml(order.customerPhone)}`,
-      order.customerEmail ? `<b>Email:</b> ${escapeHtml(order.customerEmail)}` : "<b>Account:</b> Guest checkout (no email)",
-      `<b>Hostel:</b> ${escapeHtml(order.customerHostel)}`,
-      `<b>Block/Floor:</b> ${escapeHtml(order.customerFloor)}`,
-      `<b>Room:</b> ${escapeHtml(order.customerRoom)}`,
-      "",
-      "<b>Bill Summary</b>",
-      `<b>Subtotal:</b> ${formatINR(order.subtotal)}`,
-      `<b>Delivery:</b> ${formatINR(order.deliveryFee)}`,
-      `<b>Total:</b> ${formatINR(order.total)}`,
-    ].join("\n");
+    // Built from the saved order snapshot, using Telegram's HTML formatting.
+    const message = formatOrderMessage(order);
 
     // Send the notification through Telegram's Bot API.
     const response = await fetch(

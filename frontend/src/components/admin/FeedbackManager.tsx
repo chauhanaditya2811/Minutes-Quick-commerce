@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
-import { api, type AdminHostel } from '../../services/api';
+import { api } from '../../services/api';
+import type { StockGroup } from '../../types/product';
 import type {
   AdminFeedback,
   AdminProductRequests,
@@ -76,24 +77,25 @@ function FilterChips<T extends string>({
 
 function RequestsView() {
   const [status, setStatus] = useState<ProductRequestStatus>('OPEN');
-  const [hostelId, setHostelId] = useState('');
-  const [hostels, setHostels] = useState<AdminHostel[]>([]);
+  // Requests are per pool (customers shop per pool).
+  const [poolId, setPoolId] = useState('');
+  const [pools, setPools] = useState<StockGroup[]>([]);
   const [data, setData] = useState<AdminProductRequests | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState<string | null>(null);
 
   useEffect(() => {
-    api.getAdminHostels().then(setHostels).catch(() => setHostels([]));
+    api.getStockGroups().then((list) => setPools(list.filter((p) => p.hostels.length > 0))).catch(() => setPools([]));
   }, []);
 
   const load = useCallback(async () => {
     setError(null);
     try {
-      setData(await api.getAdminProductRequests(status, hostelId || undefined));
+      setData(await api.getAdminProductRequests(status, poolId || undefined));
     } catch (err) {
       setError(errorText(err, 'Could not load product requests.'));
     }
-  }, [status, hostelId]);
+  }, [status, poolId]);
 
   useEffect(() => {
     setData(null);
@@ -132,10 +134,10 @@ function RequestsView() {
       <div className="feedback-admin__toolbar">
         <FilterChips filters={REQUEST_FILTERS} value={status} counts={data?.counts} onChange={setStatus} />
         <label className="feedback-admin__hostel">
-          <span className="sr-only">Hostel</span>
-          <select value={hostelId} onChange={(e) => setHostelId(e.target.value)}>
-            <option value="">All hostels</option>
-            {hostels.map((h) => <option key={h.id} value={h.id}>{h.name}</option>)}
+          <span className="sr-only">Pool</span>
+          <select value={poolId} onChange={(e) => setPoolId(e.target.value)}>
+            <option value="">All pools</option>
+            {pools.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
           </select>
         </label>
       </div>
@@ -163,7 +165,7 @@ function RequestsView() {
               <span className="admin-request__main">
                 <strong>{r.name}</strong>
                 <span className="muted small">
-                  {r.hostel.name} · requested {formatDate(r.createdAt)}
+                  {r.pool.name} · requested {formatDate(r.createdAt)}
                   {r.addedAt && ` · added ${formatDate(r.addedAt)}`}
                   {r.archivedAt && ` · archived ${formatDate(r.archivedAt)}`}
                 </span>
@@ -185,7 +187,7 @@ function RequestsView() {
         </ul>
       )}
       <p className="muted small feedback-admin__hint">
-        “Mark added” shows the request as Now available to customers for 7 days. “Hide” removes it from customers and stops it being requested again. “Delete” removes it and its votes completely. Customers can have up to 10 open requests per hostel; every night at 12 am the top 3 stay and the rest move to Archived.
+        “Mark added” shows the request as Now available to customers for 7 days. “Hide” removes it from customers and stops it being requested again. “Delete” removes it and its votes completely. Each pool can have up to 10 open requests; every night at 12 am the top 3 stay and the rest move to Archived.
       </p>
     </>
   );

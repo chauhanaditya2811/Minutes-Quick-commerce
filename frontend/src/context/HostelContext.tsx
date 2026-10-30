@@ -1,44 +1,66 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from 'react';
-import { api, type Hostel } from '../services/api';
+import { api, type Pool } from '../services/api';
 import { previewMode } from '../services/config';
-import { mockHostels } from '../data/mockProducts';
+import { mockPools } from '../data/mockProducts';
 import { useAuth } from './AuthContext';
 
+// Customers choose a pool first: one shared stock serving one or more hostels ("Boys' Hostels").
+// Their exact hostel is picked at checkout from that pool's hostels.
+
 interface HostelContextValue {
-  /** Active hostels customers can choose from. */
-  hostels: Hostel[];
-  hostelsLoading: boolean;
-  hostelsError: string | null;
-  reloadHostels: () => void;
-  /** The store hostel the customer is shopping at. Null until they choose one. */
-  selectedHostel: Hostel | null;
-  /** Explains why an earlier selection was cleared, e.g. the hostel was deactivated. */
+  /** Pools customers can choose from, each with its active hostels. */
+  pools: Pool[];
+  poolsLoading: boolean;
+  poolsError: string | null;
+  reloadPools: () => void;
+  /** The pool the customer is shopping in. Null until they choose one. */
+  selectedPool: Pool | null;
+  /** Explains why an earlier selection was cleared, e.g. its hostels were closed. */
   selectionNotice: string | null;
-  selectHostel: (hostel: Hostel) => void;
+  selectPool: (pool: Pool) => void;
+  /** The pool a hostel belongs to, if it's open for delivery. */
+  poolOfHostel: (hostelId: string | null | undefined) => Pool | null;
   pickerOpen: boolean;
   openPicker: () => void;
   closePicker: () => void;
 }
 
-const STORAGE_KEY = 'minutes.hostel.v1';
+const STORAGE_KEY = 'minutes.pool.v1';
+/** What the previous version saved: the hostel itself (and, lately, its pool). */
+const LEGACY_HOSTEL_KEY = 'minutes.hostel.v1';
 const HostelContext = createContext<HostelContextValue | null>(null);
 
-function loadSelection(): Hostel | null {
+type Stored = { id: string; name: string } | { legacyHostelId: string; legacyPoolId?: string; legacyName: string };
+
+function loadSelection(): Stored | null {
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
-    if (!raw) return null;
-    const value = JSON.parse(raw) as Partial<Hostel>;
-    if (typeof value.id !== 'string' || typeof value.name !== 'string') return null;
-    return { id: value.id, name: value.name, ...(typeof value.stockGroupId === 'string' ? { stockGroupId: value.stockGroupId } : {}) };
+    if (raw) {
+      const value = JSON.parse(raw) as Partial<{ id: string; name: string }>;
+      if (typeof value.id === 'string' && typeof value.name === 'string') return { id: value.id, name: value.name };
+    }
+    const legacy = localStorage.getItem(LEGACY_HOSTEL_KEY);
+    if (legacy) {
+      const value = JSON.parse(legacy) as Partial<{ id: string; name: string; stockGroupId: string }>;
+      if (typeof value.id === 'string') {
+        return {
+          legacyHostelId: value.id,
+          legacyName: typeof value.name === 'string' ? value.name : '',
+          ...(typeof value.stockGroupId === 'string' ? { legacyPoolId: value.stockGroupId } : {}),
+        };
+      }
+    }
   } catch {
-    return null;
+    /* unreadable storage: start fresh */
   }
+  return null;
 }
 
-function saveSelection(hostel: Hostel | null) {
+function saveSelection(pool: Pool | null) {
   try {
-    if (hostel) localStorage.setItem(STORAGE_KEY, JSON.stringify({ id: hostel.id, name: hostel.name, stockGroupId: hostel.stockGroupId }));
+    if (pool) localStorage.setItem(STORAGE_KEY, JSON.stringify({ id: pool.id, name: pool.name }));
     else localStorage.removeItem(STORAGE_KEY);
+    localStorage.removeItem(LEGACY_HOSTEL_KEY);
   } catch {
     /* storage unavailable: the selection still works for this session */
   }
@@ -46,83 +68,103 @@ function saveSelection(hostel: Hostel | null) {
 
 export function HostelProvider({ children }: { children: ReactNode }) {
   const { profile } = useAuth();
-  const [hostels, setHostels] = useState<Hostel[]>([]);
-  const [hostelsLoaded, setHostelsLoaded] = useState(false);
-  const [hostelsLoading, setHostelsLoading] = useState(true);
-  const [hostelsError, setHostelsError] = useState<string | null>(null);
+  const [pools, setPools] = useState<Pool[]>([]);
+  const [poolsLoaded, setPoolsLoaded] = useState(false);
+  const [poolsLoading, setPoolsLoading] = useState(true);
+  const [poolsError, setPoolsError] = useState<string | null>(null);
   const [tick, setTick] = useState(0);
-  const [selectedHostel, setSelectedHostel] = useState<Hostel | null>(loadSelection);
+  const [stored] = useState<Stored | null>(loadSelection);
+  // Until pools load, a remembered pool is shown by its saved name (no hostels yet). A hostel
+  // saved by the previous version stands in for its pool (a hostel's first pool shares its id),
+  // so the saved cart isn't lost; it's corrected once pools load.
+  const [selectedPool, setSelectedPool] = useState<Pool | null>(() =>
+    !stored
+      ? null
+      : 'id' in stored
+        ? { id: stored.id, name: stored.name, hostels: [] }
+        : { id: stored.legacyPoolId ?? stored.legacyHostelId, name: stored.legacyName, hostels: [] },
+  );
   const [selectionNotice, setSelectionNotice] = useState<string | null>(null);
   const [pickerOpen, setPickerOpen] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
-    setHostelsLoading(true);
-    setHostelsError(null);
-    (previewMode ? Promise.resolve(mockHostels) : api.getHostels())
+    setPoolsLoading(true);
+    setPoolsError(null);
+    (previewMode ? Promise.resolve(mockPools) : api.getPools())
       .then((list) => {
         if (cancelled) return;
-        setHostels(list);
-        setHostelsLoaded(true);
+        setPools(list);
+        setPoolsLoaded(true);
       })
-      .catch((e: unknown) => !cancelled && setHostelsError(e instanceof Error ? e.message : 'Could not load hostels.'))
-      .finally(() => !cancelled && setHostelsLoading(false));
+      .catch((e: unknown) => !cancelled && setPoolsError(e instanceof Error ? e.message : 'Could not load where we deliver.'))
+      .finally(() => !cancelled && setPoolsLoading(false));
     return () => {
       cancelled = true;
     };
   }, [tick]);
 
-  const applySelection = useCallback((hostel: Hostel | null) => {
-    setSelectedHostel(hostel);
-    saveSelection(hostel);
+  const applySelection = useCallback((pool: Pool | null) => {
+    setSelectedPool(pool);
+    saveSelection(pool);
   }, []);
 
-  // Drop a stored hostel that is no longer active, and keep its name and stock group current.
+  const poolOfHostel = useCallback(
+    (hostelId: string | null | undefined) => (hostelId ? pools.find((p) => p.hostels.some((h) => h.id === hostelId)) ?? null : null),
+    [pools],
+  );
+
+  // Once pools load: refresh the remembered pool (name, hostels), turn a hostel saved by the
+  // previous version into its pool, and drop a pool that no longer has open hostels.
   useEffect(() => {
-    if (!hostelsLoaded || !selectedHostel) return;
-    const current = hostels.find((h) => h.id === selectedHostel.id);
+    if (!poolsLoaded || !selectedPool) return;
+    const current =
+      pools.find((p) => p.id === selectedPool.id) ??
+      // A hostel saved by the previous version may since have joined a shared pool.
+      (stored && 'legacyHostelId' in stored ? poolOfHostel(stored.legacyHostelId) : null);
     if (!current) {
       applySelection(null);
-      setSelectionNotice(`${selectedHostel.name} is no longer available. Please choose another hostel.`);
-    } else if (current.name !== selectedHostel.name || current.stockGroupId !== selectedHostel.stockGroupId) {
-      applySelection({ id: current.id, name: current.name, stockGroupId: current.stockGroupId });
+      setSelectionNotice(`${selectedPool.name || 'Your hostel'} is no longer available. Please choose again.`);
+    } else if (current !== selectedPool) {
+      applySelection(current);
     }
-  }, [hostelsLoaded, hostels, selectedHostel, applySelection]);
+  }, [poolsLoaded, pools, selectedPool, stored, poolOfHostel, applySelection]);
 
-  // A signed-in customer with no store hostel yet starts at their saved delivery hostel.
+  // A signed-in customer with nothing chosen yet starts at the pool of their saved hostel.
   useEffect(() => {
-    if (!hostelsLoaded || selectedHostel || !profile?.hostelId) return;
-    const saved = hostels.find((h) => h.id === profile.hostelId);
-    if (saved) applySelection(saved);
-  }, [hostelsLoaded, hostels, selectedHostel, profile?.hostelId, applySelection]);
+    if (!poolsLoaded || selectedPool || !profile?.hostelId) return;
+    const pool = poolOfHostel(profile.hostelId);
+    if (pool) applySelection(pool);
+  }, [poolsLoaded, selectedPool, profile?.hostelId, poolOfHostel, applySelection]);
 
-  const selectHostel = useCallback(
-    (hostel: Hostel) => {
-      applySelection({ id: hostel.id, name: hostel.name, stockGroupId: hostel.stockGroupId });
+  const selectPool = useCallback(
+    (pool: Pool) => {
+      applySelection(pool);
       setSelectionNotice(null);
       setPickerOpen(false);
     },
     [applySelection],
   );
 
-  const reloadHostels = useCallback(() => setTick((t) => t + 1), []);
+  const reloadPools = useCallback(() => setTick((t) => t + 1), []);
   const openPicker = useCallback(() => setPickerOpen(true), []);
   const closePicker = useCallback(() => setPickerOpen(false), []);
 
   const value = useMemo<HostelContextValue>(
     () => ({
-      hostels,
-      hostelsLoading,
-      hostelsError,
-      reloadHostels,
-      selectedHostel,
+      pools,
+      poolsLoading,
+      poolsError,
+      reloadPools,
+      selectedPool,
       selectionNotice,
-      selectHostel,
+      selectPool,
+      poolOfHostel,
       pickerOpen,
       openPicker,
       closePicker,
     }),
-    [hostels, hostelsLoading, hostelsError, reloadHostels, selectedHostel, selectionNotice, selectHostel, pickerOpen, openPicker, closePicker],
+    [pools, poolsLoading, poolsError, reloadPools, selectedPool, selectionNotice, selectPool, poolOfHostel, pickerOpen, openPicker, closePicker],
   );
 
   return <HostelContext.Provider value={value}>{children}</HostelContext.Provider>;

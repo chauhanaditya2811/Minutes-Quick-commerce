@@ -27,6 +27,7 @@ export type AggregateStockGroup = {
 export type StockGroupMinAggregateOutputType = {
   id: string | null
   name: string | null
+  requestsResetAt: Date | null
   createdAt: Date | null
   updatedAt: Date | null
 }
@@ -34,6 +35,7 @@ export type StockGroupMinAggregateOutputType = {
 export type StockGroupMaxAggregateOutputType = {
   id: string | null
   name: string | null
+  requestsResetAt: Date | null
   createdAt: Date | null
   updatedAt: Date | null
 }
@@ -41,6 +43,7 @@ export type StockGroupMaxAggregateOutputType = {
 export type StockGroupCountAggregateOutputType = {
   id: number
   name: number
+  requestsResetAt: number
   createdAt: number
   updatedAt: number
   _all: number
@@ -50,6 +53,7 @@ export type StockGroupCountAggregateOutputType = {
 export type StockGroupMinAggregateInputType = {
   id?: true
   name?: true
+  requestsResetAt?: true
   createdAt?: true
   updatedAt?: true
 }
@@ -57,6 +61,7 @@ export type StockGroupMinAggregateInputType = {
 export type StockGroupMaxAggregateInputType = {
   id?: true
   name?: true
+  requestsResetAt?: true
   createdAt?: true
   updatedAt?: true
 }
@@ -64,6 +69,7 @@ export type StockGroupMaxAggregateInputType = {
 export type StockGroupCountAggregateInputType = {
   id?: true
   name?: true
+  requestsResetAt?: true
   createdAt?: true
   updatedAt?: true
   _all?: true
@@ -144,6 +150,7 @@ export type StockGroupGroupByArgs<ExtArgs extends runtime.Types.Extensions.Inter
 export type StockGroupGroupByOutputType = {
   id: string
   name: string
+  requestsResetAt: Date | null
   createdAt: Date
   updatedAt: Date
   _count: StockGroupCountAggregateOutputType | null
@@ -172,21 +179,25 @@ export type StockGroupWhereInput = {
   NOT?: Prisma.StockGroupWhereInput | Prisma.StockGroupWhereInput[]
   id?: Prisma.StringFilter<"StockGroup"> | string
   name?: Prisma.StringFilter<"StockGroup"> | string
+  requestsResetAt?: Prisma.DateTimeNullableFilter<"StockGroup"> | Date | string | null
   createdAt?: Prisma.DateTimeFilter<"StockGroup"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"StockGroup"> | Date | string
   hostels?: Prisma.HostelListRelationFilter
   inventories?: Prisma.ProductInventoryListRelationFilter
   reservations?: Prisma.InventoryReservationListRelationFilter
+  productRequests?: Prisma.ProductRequestListRelationFilter
 }
 
 export type StockGroupOrderByWithRelationInput = {
   id?: Prisma.SortOrder
   name?: Prisma.SortOrder
+  requestsResetAt?: Prisma.SortOrderInput | Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
   hostels?: Prisma.HostelOrderByRelationAggregateInput
   inventories?: Prisma.ProductInventoryOrderByRelationAggregateInput
   reservations?: Prisma.InventoryReservationOrderByRelationAggregateInput
+  productRequests?: Prisma.ProductRequestOrderByRelationAggregateInput
 }
 
 export type StockGroupWhereUniqueInput = Prisma.AtLeast<{
@@ -195,16 +206,19 @@ export type StockGroupWhereUniqueInput = Prisma.AtLeast<{
   OR?: Prisma.StockGroupWhereInput[]
   NOT?: Prisma.StockGroupWhereInput | Prisma.StockGroupWhereInput[]
   name?: Prisma.StringFilter<"StockGroup"> | string
+  requestsResetAt?: Prisma.DateTimeNullableFilter<"StockGroup"> | Date | string | null
   createdAt?: Prisma.DateTimeFilter<"StockGroup"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"StockGroup"> | Date | string
   hostels?: Prisma.HostelListRelationFilter
   inventories?: Prisma.ProductInventoryListRelationFilter
   reservations?: Prisma.InventoryReservationListRelationFilter
+  productRequests?: Prisma.ProductRequestListRelationFilter
 }, "id">
 
 export type StockGroupOrderByWithAggregationInput = {
   id?: Prisma.SortOrder
   name?: Prisma.SortOrder
+  requestsResetAt?: Prisma.SortOrderInput | Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
   _count?: Prisma.StockGroupCountOrderByAggregateInput
@@ -218,6 +232,7 @@ export type StockGroupScalarWhereWithAggregatesInput = {
   NOT?: Prisma.StockGroupScalarWhereWithAggregatesInput | Prisma.StockGroupScalarWhereWithAggregatesInput[]
   id?: Prisma.StringWithAggregatesFilter<"StockGroup"> | string
   name?: Prisma.StringWithAggregatesFilter<"StockGroup"> | string
+  requestsResetAt?: Prisma.DateTimeNullableWithAggregatesFilter<"StockGroup"> | Date | string | null
   createdAt?: Prisma.DateTimeWithAggregatesFilter<"StockGroup"> | Date | string
   updatedAt?: Prisma.DateTimeWithAggregatesFilter<"StockGroup"> | Date | string
 }
@@ -225,46 +240,55 @@ export type StockGroupScalarWhereWithAggregatesInput = {
 export type StockGroupCreateInput = {
   id?: string
   name: string
+  requestsResetAt?: Date | string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   hostels?: Prisma.HostelCreateNestedManyWithoutStockGroupInput
   inventories?: Prisma.ProductInventoryCreateNestedManyWithoutStockGroupInput
   reservations?: Prisma.InventoryReservationCreateNestedManyWithoutStockGroupInput
+  productRequests?: Prisma.ProductRequestCreateNestedManyWithoutStockGroupInput
 }
 
 export type StockGroupUncheckedCreateInput = {
   id?: string
   name: string
+  requestsResetAt?: Date | string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   hostels?: Prisma.HostelUncheckedCreateNestedManyWithoutStockGroupInput
   inventories?: Prisma.ProductInventoryUncheckedCreateNestedManyWithoutStockGroupInput
   reservations?: Prisma.InventoryReservationUncheckedCreateNestedManyWithoutStockGroupInput
+  productRequests?: Prisma.ProductRequestUncheckedCreateNestedManyWithoutStockGroupInput
 }
 
 export type StockGroupUpdateInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   name?: Prisma.StringFieldUpdateOperationsInput | string
+  requestsResetAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   hostels?: Prisma.HostelUpdateManyWithoutStockGroupNestedInput
   inventories?: Prisma.ProductInventoryUpdateManyWithoutStockGroupNestedInput
   reservations?: Prisma.InventoryReservationUpdateManyWithoutStockGroupNestedInput
+  productRequests?: Prisma.ProductRequestUpdateManyWithoutStockGroupNestedInput
 }
 
 export type StockGroupUncheckedUpdateInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   name?: Prisma.StringFieldUpdateOperationsInput | string
+  requestsResetAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   hostels?: Prisma.HostelUncheckedUpdateManyWithoutStockGroupNestedInput
   inventories?: Prisma.ProductInventoryUncheckedUpdateManyWithoutStockGroupNestedInput
   reservations?: Prisma.InventoryReservationUncheckedUpdateManyWithoutStockGroupNestedInput
+  productRequests?: Prisma.ProductRequestUncheckedUpdateManyWithoutStockGroupNestedInput
 }
 
 export type StockGroupCreateManyInput = {
   id?: string
   name: string
+  requestsResetAt?: Date | string | null
   createdAt?: Date | string
   updatedAt?: Date | string
 }
@@ -272,6 +296,7 @@ export type StockGroupCreateManyInput = {
 export type StockGroupUpdateManyMutationInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   name?: Prisma.StringFieldUpdateOperationsInput | string
+  requestsResetAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -279,6 +304,7 @@ export type StockGroupUpdateManyMutationInput = {
 export type StockGroupUncheckedUpdateManyInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   name?: Prisma.StringFieldUpdateOperationsInput | string
+  requestsResetAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -291,6 +317,7 @@ export type StockGroupScalarRelationFilter = {
 export type StockGroupCountOrderByAggregateInput = {
   id?: Prisma.SortOrder
   name?: Prisma.SortOrder
+  requestsResetAt?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
 }
@@ -298,6 +325,7 @@ export type StockGroupCountOrderByAggregateInput = {
 export type StockGroupMaxOrderByAggregateInput = {
   id?: Prisma.SortOrder
   name?: Prisma.SortOrder
+  requestsResetAt?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
 }
@@ -305,6 +333,7 @@ export type StockGroupMaxOrderByAggregateInput = {
 export type StockGroupMinOrderByAggregateInput = {
   id?: Prisma.SortOrder
   name?: Prisma.SortOrder
+  requestsResetAt?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
 }
@@ -326,6 +355,10 @@ export type StockGroupUpdateOneRequiredWithoutHostelsNestedInput = {
   upsert?: Prisma.StockGroupUpsertWithoutHostelsInput
   connect?: Prisma.StockGroupWhereUniqueInput
   update?: Prisma.XOR<Prisma.XOR<Prisma.StockGroupUpdateToOneWithWhereWithoutHostelsInput, Prisma.StockGroupUpdateWithoutHostelsInput>, Prisma.StockGroupUncheckedUpdateWithoutHostelsInput>
+}
+
+export type NullableDateTimeFieldUpdateOperationsInput = {
+  set?: Date | string | null
 }
 
 export type StockGroupCreateNestedOneWithoutInventoriesInput = {
@@ -358,22 +391,40 @@ export type StockGroupUpdateOneWithoutReservationsNestedInput = {
   update?: Prisma.XOR<Prisma.XOR<Prisma.StockGroupUpdateToOneWithWhereWithoutReservationsInput, Prisma.StockGroupUpdateWithoutReservationsInput>, Prisma.StockGroupUncheckedUpdateWithoutReservationsInput>
 }
 
+export type StockGroupCreateNestedOneWithoutProductRequestsInput = {
+  create?: Prisma.XOR<Prisma.StockGroupCreateWithoutProductRequestsInput, Prisma.StockGroupUncheckedCreateWithoutProductRequestsInput>
+  connectOrCreate?: Prisma.StockGroupCreateOrConnectWithoutProductRequestsInput
+  connect?: Prisma.StockGroupWhereUniqueInput
+}
+
+export type StockGroupUpdateOneRequiredWithoutProductRequestsNestedInput = {
+  create?: Prisma.XOR<Prisma.StockGroupCreateWithoutProductRequestsInput, Prisma.StockGroupUncheckedCreateWithoutProductRequestsInput>
+  connectOrCreate?: Prisma.StockGroupCreateOrConnectWithoutProductRequestsInput
+  upsert?: Prisma.StockGroupUpsertWithoutProductRequestsInput
+  connect?: Prisma.StockGroupWhereUniqueInput
+  update?: Prisma.XOR<Prisma.XOR<Prisma.StockGroupUpdateToOneWithWhereWithoutProductRequestsInput, Prisma.StockGroupUpdateWithoutProductRequestsInput>, Prisma.StockGroupUncheckedUpdateWithoutProductRequestsInput>
+}
+
 export type StockGroupCreateWithoutHostelsInput = {
   id?: string
   name: string
+  requestsResetAt?: Date | string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   inventories?: Prisma.ProductInventoryCreateNestedManyWithoutStockGroupInput
   reservations?: Prisma.InventoryReservationCreateNestedManyWithoutStockGroupInput
+  productRequests?: Prisma.ProductRequestCreateNestedManyWithoutStockGroupInput
 }
 
 export type StockGroupUncheckedCreateWithoutHostelsInput = {
   id?: string
   name: string
+  requestsResetAt?: Date | string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   inventories?: Prisma.ProductInventoryUncheckedCreateNestedManyWithoutStockGroupInput
   reservations?: Prisma.InventoryReservationUncheckedCreateNestedManyWithoutStockGroupInput
+  productRequests?: Prisma.ProductRequestUncheckedCreateNestedManyWithoutStockGroupInput
 }
 
 export type StockGroupCreateOrConnectWithoutHostelsInput = {
@@ -395,37 +446,45 @@ export type StockGroupUpdateToOneWithWhereWithoutHostelsInput = {
 export type StockGroupUpdateWithoutHostelsInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   name?: Prisma.StringFieldUpdateOperationsInput | string
+  requestsResetAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   inventories?: Prisma.ProductInventoryUpdateManyWithoutStockGroupNestedInput
   reservations?: Prisma.InventoryReservationUpdateManyWithoutStockGroupNestedInput
+  productRequests?: Prisma.ProductRequestUpdateManyWithoutStockGroupNestedInput
 }
 
 export type StockGroupUncheckedUpdateWithoutHostelsInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   name?: Prisma.StringFieldUpdateOperationsInput | string
+  requestsResetAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   inventories?: Prisma.ProductInventoryUncheckedUpdateManyWithoutStockGroupNestedInput
   reservations?: Prisma.InventoryReservationUncheckedUpdateManyWithoutStockGroupNestedInput
+  productRequests?: Prisma.ProductRequestUncheckedUpdateManyWithoutStockGroupNestedInput
 }
 
 export type StockGroupCreateWithoutInventoriesInput = {
   id?: string
   name: string
+  requestsResetAt?: Date | string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   hostels?: Prisma.HostelCreateNestedManyWithoutStockGroupInput
   reservations?: Prisma.InventoryReservationCreateNestedManyWithoutStockGroupInput
+  productRequests?: Prisma.ProductRequestCreateNestedManyWithoutStockGroupInput
 }
 
 export type StockGroupUncheckedCreateWithoutInventoriesInput = {
   id?: string
   name: string
+  requestsResetAt?: Date | string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   hostels?: Prisma.HostelUncheckedCreateNestedManyWithoutStockGroupInput
   reservations?: Prisma.InventoryReservationUncheckedCreateNestedManyWithoutStockGroupInput
+  productRequests?: Prisma.ProductRequestUncheckedCreateNestedManyWithoutStockGroupInput
 }
 
 export type StockGroupCreateOrConnectWithoutInventoriesInput = {
@@ -447,37 +506,45 @@ export type StockGroupUpdateToOneWithWhereWithoutInventoriesInput = {
 export type StockGroupUpdateWithoutInventoriesInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   name?: Prisma.StringFieldUpdateOperationsInput | string
+  requestsResetAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   hostels?: Prisma.HostelUpdateManyWithoutStockGroupNestedInput
   reservations?: Prisma.InventoryReservationUpdateManyWithoutStockGroupNestedInput
+  productRequests?: Prisma.ProductRequestUpdateManyWithoutStockGroupNestedInput
 }
 
 export type StockGroupUncheckedUpdateWithoutInventoriesInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   name?: Prisma.StringFieldUpdateOperationsInput | string
+  requestsResetAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   hostels?: Prisma.HostelUncheckedUpdateManyWithoutStockGroupNestedInput
   reservations?: Prisma.InventoryReservationUncheckedUpdateManyWithoutStockGroupNestedInput
+  productRequests?: Prisma.ProductRequestUncheckedUpdateManyWithoutStockGroupNestedInput
 }
 
 export type StockGroupCreateWithoutReservationsInput = {
   id?: string
   name: string
+  requestsResetAt?: Date | string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   hostels?: Prisma.HostelCreateNestedManyWithoutStockGroupInput
   inventories?: Prisma.ProductInventoryCreateNestedManyWithoutStockGroupInput
+  productRequests?: Prisma.ProductRequestCreateNestedManyWithoutStockGroupInput
 }
 
 export type StockGroupUncheckedCreateWithoutReservationsInput = {
   id?: string
   name: string
+  requestsResetAt?: Date | string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   hostels?: Prisma.HostelUncheckedCreateNestedManyWithoutStockGroupInput
   inventories?: Prisma.ProductInventoryUncheckedCreateNestedManyWithoutStockGroupInput
+  productRequests?: Prisma.ProductRequestUncheckedCreateNestedManyWithoutStockGroupInput
 }
 
 export type StockGroupCreateOrConnectWithoutReservationsInput = {
@@ -499,19 +566,83 @@ export type StockGroupUpdateToOneWithWhereWithoutReservationsInput = {
 export type StockGroupUpdateWithoutReservationsInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   name?: Prisma.StringFieldUpdateOperationsInput | string
+  requestsResetAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   hostels?: Prisma.HostelUpdateManyWithoutStockGroupNestedInput
   inventories?: Prisma.ProductInventoryUpdateManyWithoutStockGroupNestedInput
+  productRequests?: Prisma.ProductRequestUpdateManyWithoutStockGroupNestedInput
 }
 
 export type StockGroupUncheckedUpdateWithoutReservationsInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   name?: Prisma.StringFieldUpdateOperationsInput | string
+  requestsResetAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   hostels?: Prisma.HostelUncheckedUpdateManyWithoutStockGroupNestedInput
   inventories?: Prisma.ProductInventoryUncheckedUpdateManyWithoutStockGroupNestedInput
+  productRequests?: Prisma.ProductRequestUncheckedUpdateManyWithoutStockGroupNestedInput
+}
+
+export type StockGroupCreateWithoutProductRequestsInput = {
+  id?: string
+  name: string
+  requestsResetAt?: Date | string | null
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  hostels?: Prisma.HostelCreateNestedManyWithoutStockGroupInput
+  inventories?: Prisma.ProductInventoryCreateNestedManyWithoutStockGroupInput
+  reservations?: Prisma.InventoryReservationCreateNestedManyWithoutStockGroupInput
+}
+
+export type StockGroupUncheckedCreateWithoutProductRequestsInput = {
+  id?: string
+  name: string
+  requestsResetAt?: Date | string | null
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  hostels?: Prisma.HostelUncheckedCreateNestedManyWithoutStockGroupInput
+  inventories?: Prisma.ProductInventoryUncheckedCreateNestedManyWithoutStockGroupInput
+  reservations?: Prisma.InventoryReservationUncheckedCreateNestedManyWithoutStockGroupInput
+}
+
+export type StockGroupCreateOrConnectWithoutProductRequestsInput = {
+  where: Prisma.StockGroupWhereUniqueInput
+  create: Prisma.XOR<Prisma.StockGroupCreateWithoutProductRequestsInput, Prisma.StockGroupUncheckedCreateWithoutProductRequestsInput>
+}
+
+export type StockGroupUpsertWithoutProductRequestsInput = {
+  update: Prisma.XOR<Prisma.StockGroupUpdateWithoutProductRequestsInput, Prisma.StockGroupUncheckedUpdateWithoutProductRequestsInput>
+  create: Prisma.XOR<Prisma.StockGroupCreateWithoutProductRequestsInput, Prisma.StockGroupUncheckedCreateWithoutProductRequestsInput>
+  where?: Prisma.StockGroupWhereInput
+}
+
+export type StockGroupUpdateToOneWithWhereWithoutProductRequestsInput = {
+  where?: Prisma.StockGroupWhereInput
+  data: Prisma.XOR<Prisma.StockGroupUpdateWithoutProductRequestsInput, Prisma.StockGroupUncheckedUpdateWithoutProductRequestsInput>
+}
+
+export type StockGroupUpdateWithoutProductRequestsInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  name?: Prisma.StringFieldUpdateOperationsInput | string
+  requestsResetAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  hostels?: Prisma.HostelUpdateManyWithoutStockGroupNestedInput
+  inventories?: Prisma.ProductInventoryUpdateManyWithoutStockGroupNestedInput
+  reservations?: Prisma.InventoryReservationUpdateManyWithoutStockGroupNestedInput
+}
+
+export type StockGroupUncheckedUpdateWithoutProductRequestsInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  name?: Prisma.StringFieldUpdateOperationsInput | string
+  requestsResetAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  hostels?: Prisma.HostelUncheckedUpdateManyWithoutStockGroupNestedInput
+  inventories?: Prisma.ProductInventoryUncheckedUpdateManyWithoutStockGroupNestedInput
+  reservations?: Prisma.InventoryReservationUncheckedUpdateManyWithoutStockGroupNestedInput
 }
 
 
@@ -523,12 +654,14 @@ export type StockGroupCountOutputType = {
   hostels: number
   inventories: number
   reservations: number
+  productRequests: number
 }
 
 export type StockGroupCountOutputTypeSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   hostels?: boolean | StockGroupCountOutputTypeCountHostelsArgs
   inventories?: boolean | StockGroupCountOutputTypeCountInventoriesArgs
   reservations?: boolean | StockGroupCountOutputTypeCountReservationsArgs
+  productRequests?: boolean | StockGroupCountOutputTypeCountProductRequestsArgs
 }
 
 /**
@@ -562,21 +695,31 @@ export type StockGroupCountOutputTypeCountReservationsArgs<ExtArgs extends runti
   where?: Prisma.InventoryReservationWhereInput
 }
 
+/**
+ * StockGroupCountOutputType without action
+ */
+export type StockGroupCountOutputTypeCountProductRequestsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  where?: Prisma.ProductRequestWhereInput
+}
+
 
 export type StockGroupSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   id?: boolean
   name?: boolean
+  requestsResetAt?: boolean
   createdAt?: boolean
   updatedAt?: boolean
   hostels?: boolean | Prisma.StockGroup$hostelsArgs<ExtArgs>
   inventories?: boolean | Prisma.StockGroup$inventoriesArgs<ExtArgs>
   reservations?: boolean | Prisma.StockGroup$reservationsArgs<ExtArgs>
+  productRequests?: boolean | Prisma.StockGroup$productRequestsArgs<ExtArgs>
   _count?: boolean | Prisma.StockGroupCountOutputTypeDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["stockGroup"]>
 
 export type StockGroupSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   id?: boolean
   name?: boolean
+  requestsResetAt?: boolean
   createdAt?: boolean
   updatedAt?: boolean
 }, ExtArgs["result"]["stockGroup"]>
@@ -584,6 +727,7 @@ export type StockGroupSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Ex
 export type StockGroupSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   id?: boolean
   name?: boolean
+  requestsResetAt?: boolean
   createdAt?: boolean
   updatedAt?: boolean
 }, ExtArgs["result"]["stockGroup"]>
@@ -591,15 +735,17 @@ export type StockGroupSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Ex
 export type StockGroupSelectScalar = {
   id?: boolean
   name?: boolean
+  requestsResetAt?: boolean
   createdAt?: boolean
   updatedAt?: boolean
 }
 
-export type StockGroupOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "name" | "createdAt" | "updatedAt", ExtArgs["result"]["stockGroup"]>
+export type StockGroupOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "name" | "requestsResetAt" | "createdAt" | "updatedAt", ExtArgs["result"]["stockGroup"]>
 export type StockGroupInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   hostels?: boolean | Prisma.StockGroup$hostelsArgs<ExtArgs>
   inventories?: boolean | Prisma.StockGroup$inventoriesArgs<ExtArgs>
   reservations?: boolean | Prisma.StockGroup$reservationsArgs<ExtArgs>
+  productRequests?: boolean | Prisma.StockGroup$productRequestsArgs<ExtArgs>
   _count?: boolean | Prisma.StockGroupCountOutputTypeDefaultArgs<ExtArgs>
 }
 export type StockGroupIncludeCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {}
@@ -611,10 +757,12 @@ export type $StockGroupPayload<ExtArgs extends runtime.Types.Extensions.Internal
     hostels: Prisma.$HostelPayload<ExtArgs>[]
     inventories: Prisma.$ProductInventoryPayload<ExtArgs>[]
     reservations: Prisma.$InventoryReservationPayload<ExtArgs>[]
+    productRequests: Prisma.$ProductRequestPayload<ExtArgs>[]
   }
   scalars: runtime.Types.Extensions.GetPayloadResult<{
     id: string
     name: string
+    requestsResetAt: Date | null
     createdAt: Date
     updatedAt: Date
   }, ExtArgs["result"]["stockGroup"]>
@@ -1014,6 +1162,7 @@ export interface Prisma__StockGroupClient<T, Null = never, ExtArgs extends runti
   hostels<T extends Prisma.StockGroup$hostelsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.StockGroup$hostelsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$HostelPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   inventories<T extends Prisma.StockGroup$inventoriesArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.StockGroup$inventoriesArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$ProductInventoryPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   reservations<T extends Prisma.StockGroup$reservationsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.StockGroup$reservationsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$InventoryReservationPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+  productRequests<T extends Prisma.StockGroup$productRequestsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.StockGroup$productRequestsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$ProductRequestPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   /**
    * Attaches callbacks for the resolution and/or rejection of the Promise.
    * @param onfulfilled The callback to execute when the Promise is resolved.
@@ -1045,6 +1194,7 @@ export interface Prisma__StockGroupClient<T, Null = never, ExtArgs extends runti
 export interface StockGroupFieldRefs {
   readonly id: Prisma.FieldRef<"StockGroup", 'String'>
   readonly name: Prisma.FieldRef<"StockGroup", 'String'>
+  readonly requestsResetAt: Prisma.FieldRef<"StockGroup", 'DateTime'>
   readonly createdAt: Prisma.FieldRef<"StockGroup", 'DateTime'>
   readonly updatedAt: Prisma.FieldRef<"StockGroup", 'DateTime'>
 }
@@ -1509,6 +1659,30 @@ export type StockGroup$reservationsArgs<ExtArgs extends runtime.Types.Extensions
   take?: number
   skip?: number
   distinct?: Prisma.InventoryReservationScalarFieldEnum | Prisma.InventoryReservationScalarFieldEnum[]
+}
+
+/**
+ * StockGroup.productRequests
+ */
+export type StockGroup$productRequestsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the ProductRequest
+   */
+  select?: Prisma.ProductRequestSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the ProductRequest
+   */
+  omit?: Prisma.ProductRequestOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.ProductRequestInclude<ExtArgs> | null
+  where?: Prisma.ProductRequestWhereInput
+  orderBy?: Prisma.ProductRequestOrderByWithRelationInput | Prisma.ProductRequestOrderByWithRelationInput[]
+  cursor?: Prisma.ProductRequestWhereUniqueInput
+  take?: number
+  skip?: number
+  distinct?: Prisma.ProductRequestScalarFieldEnum | Prisma.ProductRequestScalarFieldEnum[]
 }
 
 /**

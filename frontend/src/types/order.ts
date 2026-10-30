@@ -8,7 +8,9 @@ export interface OrderItemInput {
 
 /** Body for POST /api/orders/validate and POST /api/orders. */
 export interface OrderRequest {
-  hostelId: string; // store hostel; must match the profile's delivery hostel
+  hostelId: string; // the delivery hostel saved in the customer's profile
+  /** The pool the cart was filled from; the delivery hostel must belong to it. */
+  poolId?: string;
   items: OrderItemInput[];
 }
 
@@ -142,7 +144,10 @@ export interface GuestCustomerInput {
 
 /** Body for POST /api/guest/checkout/validate. Only IDs and quantities are sent; prices come from the server. */
 export interface GuestValidateRequest {
+  /** The exact hostel chosen at checkout. */
   hostelId: string;
+  /** The pool the cart was filled from; the hostel must belong to it. */
+  poolId?: string;
   items: OrderItemInput[];
   customer: GuestCustomerInput;
 }

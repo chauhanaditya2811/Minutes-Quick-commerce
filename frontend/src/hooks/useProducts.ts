@@ -6,29 +6,29 @@ import { useAsync } from './useAsync';
 
 const delay = <T,>(v: T) => new Promise<T>((r) => setTimeout(() => r(v), 250));
 
-/** Products available at the given hostel. `stock` is that hostel's quantity. */
-export function useProducts(hostelId: string | undefined) {
+/** Products available in the given pool. `stock` is the pool's shared quantity. */
+export function useProducts(poolId: string | undefined) {
   return useAsync<Product[]>(async () => {
-    if (!hostelId) return [];
-    if (previewMode) return delay(mockProducts.map((p) => ({ ...p, hostelId })));
-    return api.getProducts(hostelId);
-  }, [hostelId]);
+    if (!poolId) return [];
+    if (previewMode) return delay(mockProducts.map((p) => ({ ...p, poolId })));
+    return api.getProducts(poolId);
+  }, [poolId]);
 }
 
-/** One product if it is available at the given hostel, otherwise null. */
-export function useProduct(id: string | undefined, hostelId: string | undefined) {
+/** One product if it is available in the given pool, otherwise null. */
+export function useProduct(id: string | undefined, poolId: string | undefined) {
   return useAsync<Product | null>(async () => {
-    if (!id || !hostelId) return null;
+    if (!id || !poolId) return null;
     if (previewMode) {
       const product = mockProducts.find((p) => p.id === id);
-      return delay(product ? { ...product, hostelId } : null);
+      return delay(product ? { ...product, poolId } : null);
     }
     try {
-      return await api.getProduct(id, hostelId);
+      return await api.getProduct(id, poolId);
     } catch (e) {
-      // 404 means the product is not sold at this hostel.
+      // 404 means the product is not sold in this pool.
       if (e instanceof Error && 'status' in e && e.status === 404) return null;
       throw e;
     }
-  }, [id, hostelId]);
+  }, [id, poolId]);
 }

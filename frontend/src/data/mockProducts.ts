@@ -3,13 +3,16 @@
  * Never imported by pages directly — see hooks/useProducts.ts and hooks/useStoreSettings.ts.
  */
 import type { Product, StoreSettings } from '../types/product';
-import type { Hostel } from '../services/api';
+import type { Hostel, Pool } from '../services/api';
 
 export const mockHostels: Hostel[] = [
   { id: 'mh1', name: 'Aravali Hostel', stockGroupId: 'mh1' },
   { id: 'mh2', name: 'Kailash Hostel', stockGroupId: 'mh2' },
   { id: 'mh3', name: 'Nilgiri Hostel', stockGroupId: 'mh3' },
 ];
+
+/** Preview: each sample hostel is a pool of its own. */
+export const mockPools: Pool[] = mockHostels.map((h) => ({ id: h.id, name: h.name, hostels: [{ id: h.id, name: h.name }] }));
 
 const art = (emoji: string, bg: string): string =>
   'data:image/svg+xml;utf8,' +

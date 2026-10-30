@@ -1,5 +1,7 @@
 import { useState, type FormEvent } from 'react';
+import { useAuth } from '../../context/AuthContext';
 import { useHostel } from '../../context/HostelContext';
+import { loadGuestHostel } from '../../services/guestCheckout';
 import { api } from '../../services/api';
 import { CheckIcon, StarIcon } from '../ui/Icons';
 import Notice from '../ui/Notice';
@@ -9,7 +11,11 @@ const RATING_LABELS = ['Poor', 'Fair', 'Good', 'Very good', 'Excellent'];
 
 /** Private feedback for the Minutes team: an optional rating, a message and an optional phone. */
 export default function FeedbackForm() {
-  const { selectedHostel } = useHostel();
+  const { selectedPool } = useHostel();
+  const { profile } = useAuth();
+  // Feedback mentions the customer's own hostel when we know it (saved profile or last guest order).
+  const knownHostel = [profile?.hostelId, selectedPool ? loadGuestHostel(selectedPool.id) : '']
+    .find((id) => id && selectedPool?.hostels.some((h) => h.id === id));
   const [rating, setRating] = useState(0);
   const [hover, setHover] = useState(0);
   const [message, setMessage] = useState('');
@@ -34,7 +40,7 @@ export default function FeedbackForm() {
     setError(null);
     try {
       await api.sendFeedback({
-        hostelId: selectedHostel?.id,
+        hostelId: knownHostel || undefined,
         message: text,
         ...(rating ? { rating } : {}),
         ...(contactPhone ? { contactPhone } : {}),

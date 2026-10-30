@@ -93,6 +93,38 @@ export const getHostelCatalog = async (hostelId: string) => {
   );
 };
 
+/** A pool customers can shop at: it serves at least one active hostel. */
+const requireLivePool = async (poolId: string) => {
+  const live = await prisma.hostel.count({ where: { stockGroupId: poolId, isActive: true } });
+  if (!live) throw new InventoryServiceError("This place is not available.", 404);
+};
+
+// Returns the customer catalogue for one pool (customers shop per pool), most ordered first.
+export const getPoolCatalog = async (poolId: string) => {
+  await requireLivePool(poolId);
+  const [rows, counts] = await Promise.all([
+    prisma.productInventory.findMany({
+      where: { stockGroupId: poolId, isAvailable: true, product: { isDeleted: false } },
+      select: { quantity: true, product: { select: catalogProductSelection } },
+    }),
+    getRecentOrderCounts(poolId),
+  ]);
+  return rankByPopularity(
+    rows.map(({ quantity, product }) => ({ ...product, stock: quantity, poolId })),
+    counts
+  );
+};
+
+// Returns one product if it is enabled in the given pool.
+export const getPoolProduct = async (poolId: string, productId: string) => {
+  await requireLivePool(poolId);
+  const row = await prisma.productInventory.findFirst({
+    where: { stockGroupId: poolId, productId, isAvailable: true, product: { isDeleted: false } },
+    select: { quantity: true, product: { select: catalogProductSelection } },
+  });
+  return row ? { ...row.product, stock: row.quantity, poolId } : null;
+};
+
 // Returns one product if it is enabled in the stock group of the given active hostel.
 export const getHostelProduct = async (hostelId: string, productId: string) => {
   const { stockGroupId } = await requireActiveHostel(hostelId);

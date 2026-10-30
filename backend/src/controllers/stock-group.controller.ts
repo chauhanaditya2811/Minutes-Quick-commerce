@@ -3,6 +3,7 @@ import {
   StockGroupError,
   createStockGroup,
   deleteStockGroup,
+  listPublicPools,
   listStockGroups,
   moveHostelToGroup,
   updateStockGroup,
@@ -18,6 +19,11 @@ const handleError = (error: unknown, res: Response, fallback: string) => {
 };
 
 const groupId = (req: Request) => (typeof req.params.id === "string" ? req.params.id.trim() : "");
+
+export const listPublicPoolsController = async (_req: Request, res: Response): Promise<void> => {
+  try { res.status(200).json(await listPublicPools()); }
+  catch (error) { handleError(error, res, "Unable to load where we deliver."); }
+};
 
 export const listStockGroupsController = async (_req: Request, res: Response): Promise<void> => {
   try { res.status(200).json(await listStockGroups()); }

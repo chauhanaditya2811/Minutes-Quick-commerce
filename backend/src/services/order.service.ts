@@ -27,6 +27,8 @@ type CheckoutClient = Pick<
 export interface CheckoutInput {
   hostelId: unknown;
   items: unknown;
+  /** The pool the cart was filled from. When sent, the delivery hostel must belong to it. */
+  poolId?: unknown;
 }
 
 export class CheckoutError extends Error {
@@ -82,6 +84,14 @@ const parseCheckoutItems = (items: unknown): CheckoutItemInput[] => {
   }
 
   return parsedItems;
+};
+
+/** The cart's pool, if the app sent one (older versions don't). */
+const parseCheckoutPoolId = (poolId: unknown): string | null =>
+  typeof poolId === "string" && poolId.trim() ? poolId.trim() : null;
+
+const requireHostelInPool = (hostel: { name: string; stockGroupId: string }, poolId: string | null, message: string) => {
+  if (poolId && hostel.stockGroupId !== poolId) throw new CheckoutError(message, 409);
 };
 
 const parseCheckoutHostelId = (hostelId: unknown): string => {
@@ -332,6 +342,12 @@ const validateCheckoutWithClient = async (
     );
   }
 
+  requireHostelInPool(
+    hostel,
+    parseCheckoutPoolId(input.poolId),
+    `${hostel.name} doesn't sell from the stock your cart was filled from. Choose your hostel again or change where you shop.`
+  );
+
   const settings = await loadStoreSettings(client);
   const priced = await priceCartAtHostel(client, hostel, items, settings);
 
@@ -364,6 +380,11 @@ const validateGuestCheckoutWithClient = async (
   if (!hostel || !hostel.isActive) {
     throw new CheckoutError("The selected hostel is no longer available. Please choose another hostel.", 409);
   }
+  requireHostelInPool(
+    hostel,
+    parseCheckoutPoolId(input.poolId),
+    `${hostel.name} doesn't sell from the stock your cart was filled from. Choose your hostel again.`
+  );
 
   const settings = await loadStoreSettings(client);
   const priced = await priceCartAtHostel(client, hostel, items, settings);

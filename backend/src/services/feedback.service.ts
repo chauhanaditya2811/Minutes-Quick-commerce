@@ -14,7 +14,7 @@ const DAY_MS = 24 * 60 * 60 * 1000;
 /** Stocked requests stay on the public list as "Now available" for this long. */
 export const ADDED_VISIBLE_DAYS = 7;
 const MAX_PUBLIC_REQUESTS = 100;
-/** At most this many open requests per hostel at a time. */
+/** At most this many open requests per pool at a time. */
 export const MAX_OPEN_REQUESTS = 10;
 /** How many of the most upvoted open requests survive each nightly reset. */
 export const KEEP_AFTER_RESET = 3;
@@ -66,11 +66,22 @@ const requireVoter = (token: unknown) => {
   return hash;
 };
 
-const requireActiveHostel = async (hostelId: unknown) => {
-  const id = typeof hostelId === "string" ? hostelId.trim() : "";
-  const hostel = id ? await prisma.hostel.findUnique({ where: { id } }) : null;
-  if (!hostel || !hostel.isActive) throw new FeedbackError("Select an active hostel.", 400);
-  return hostel;
+const text = (value: unknown) => (typeof value === "string" && value.trim() ? value.trim() : null);
+
+/**
+ * The pool (stock group) a board belongs to. Customers shop per pool, so requests are per pool.
+ * Older app versions send a hostel instead; it counts as that hostel's pool. The pool must serve
+ * at least one active hostel.
+ */
+const requireActivePool = async (ids: { poolId?: unknown; hostelId?: unknown }) => {
+  let poolId = text(ids.poolId);
+  if (!poolId && text(ids.hostelId)) {
+    const hostel = await prisma.hostel.findUnique({ where: { id: text(ids.hostelId)! }, select: { stockGroupId: true, isActive: true } });
+    poolId = hostel?.isActive ? hostel.stockGroupId : null;
+  }
+  const live = poolId ? await prisma.hostel.count({ where: { stockGroupId: poolId, isActive: true } }) : 0;
+  if (!poolId || live === 0) throw new FeedbackError("Choose where you live first.", 400);
+  return poolId;
 };
 
 const toPublicRequest = (
@@ -101,23 +112,23 @@ export const lastIndiaMidnight = (now = Date.now()) =>
   new Date(Math.floor((now + INDIA_OFFSET_MS) / DAY_MS) * DAY_MS - INDIA_OFFSET_MS);
 
 /**
- * Resets a hostel's board once a day: after midnight (India time) only the top 3 open requests
+ * Resets a pool's board once a day: after midnight (India time) only the top 3 open requests
  * stay (most votes, then oldest); the rest are archived for admins. The first caller after
- * midnight claims the reset by moving hostels."requestsResetAt" forward inside the same
+ * midnight claims the reset by moving stock_groups."requestsResetAt" forward inside the same
  * transaction, so concurrent requests and server restarts never reset twice.
  * Returns how many requests were archived.
  */
-export const ensureDailyReset = async (hostelId: string, now = Date.now()) => {
+export const ensureDailyReset = async (poolId: string, now = Date.now()) => {
   const boundary = lastIndiaMidnight(now);
   return prisma.$transaction(async (tx) => {
-    // Raw SQL so the hostel's updatedAt isn't touched by this bookkeeping.
+    // Raw SQL so the pool's updatedAt isn't touched by this bookkeeping.
     const claimed = await tx.$executeRaw`
-      UPDATE "hostels" SET "requestsResetAt" = ${boundary}
-      WHERE "id" = ${hostelId} AND ("requestsResetAt" IS NULL OR "requestsResetAt" < ${boundary})`;
+      UPDATE "stock_groups" SET "requestsResetAt" = ${boundary}
+      WHERE "id" = ${poolId} AND ("requestsResetAt" IS NULL OR "requestsResetAt" < ${boundary})`;
     if (!claimed) return 0;
 
     const open = await tx.productRequest.findMany({
-      where: { hostelId, status: "OPEN" },
+      where: { stockGroupId: poolId, status: "OPEN" },
       orderBy: [{ voteCount: "desc" }, { createdAt: "asc" }],
       select: { id: true },
     });
@@ -133,15 +144,19 @@ export const ensureDailyReset = async (hostelId: string, now = Date.now()) => {
 };
 
 /**
- * A hostel's public request board: open requests by votes (oldest first on ties), plus
+ * A pool's public request board: open requests by votes (oldest first on ties), plus
  * requests stocked in the last 7 days so customers see their votes led somewhere.
  */
-export const listProductRequests = async (hostelId: unknown, voterToken: unknown, now = Date.now()) => {
-  const hostel = await requireActiveHostel(hostelId);
-  await ensureDailyReset(hostel.id, now);
+export const listProductRequests = async (
+  ids: { poolId?: unknown; hostelId?: unknown },
+  voterToken: unknown,
+  now = Date.now()
+) => {
+  const poolId = await requireActivePool(ids);
+  await ensureDailyReset(poolId, now);
   const requests = await prisma.productRequest.findMany({
     where: {
-      hostelId: hostel.id,
+      stockGroupId: poolId,
       OR: [{ status: "OPEN" }, { status: "ADDED", addedAt: { gte: new Date(now - ADDED_VISIBLE_DAYS * DAY_MS) } }],
     },
     orderBy: [{ voteCount: "desc" }, { createdAt: "asc" }],
@@ -166,25 +181,25 @@ const addVote = (requestId: string, voterHash: string) =>
   prisma.$transaction((tx) => addVoteIn(tx, requestId, voterHash));
 
 /**
- * Requests a product at a hostel. If the same product (ignoring case and spaces) is already
+ * Requests a product in a pool. If the same product (ignoring case and spaces) is already
  * open there, the customer's request becomes an upvote on it instead of a duplicate, even when
  * the list is full. A new product, or an archived one coming back with its old votes, needs one
  * of the 10 open spots.
  */
 export const createProductRequest = async (input: unknown, voterToken: unknown) => {
   const data = isRecord(input) ? input : {};
-  const hostel = await requireActiveHostel(data.hostelId);
+  const poolId = await requireActivePool(data);
   const name = parseProductName(data.name);
   const voterHash = requireVoter(voterToken);
   const normalizedName = normalizeProductName(name);
-  await ensureDailyReset(hostel.id);
+  await ensureDailyReset(poolId);
 
   return prisma.$transaction(async (tx) => {
-    // Lock the hostel's row so two customers can't both take the last open spot.
-    await tx.$queryRaw`SELECT "id" FROM "hostels" WHERE "id" = ${hostel.id} FOR UPDATE`;
+    // Lock the pool's row so two customers can't both take the last open spot.
+    await tx.$queryRaw`SELECT "id" FROM "stock_groups" WHERE "id" = ${poolId} FOR UPDATE`;
 
     const existing = await tx.productRequest.findUnique({
-      where: { hostelId_normalizedName: { hostelId: hostel.id, normalizedName } },
+      where: { stockGroupId_normalizedName: { stockGroupId: poolId, normalizedName } },
     });
     if (existing?.status === "HIDDEN") {
       throw new FeedbackError("This product can't be requested.", 409);
@@ -196,7 +211,7 @@ export const createProductRequest = async (input: unknown, voterToken: unknown) 
       return { request: toPublicRequest(await addVoteIn(tx, existing.id, voterHash), true), duplicate: true };
     }
 
-    const open = await tx.productRequest.count({ where: { hostelId: hostel.id, status: "OPEN" } });
+    const open = await tx.productRequest.count({ where: { stockGroupId: poolId, status: "OPEN" } });
     if (open >= MAX_OPEN_REQUESTS) throw new FeedbackError(LIST_FULL_MESSAGE, 409);
 
     if (existing) {
@@ -206,7 +221,7 @@ export const createProductRequest = async (input: unknown, voterToken: unknown) 
     }
 
     const created = await tx.productRequest.create({
-      data: { hostelId: hostel.id, name, normalizedName, voteCount: 1, votes: { create: { voterHash } } },
+      data: { stockGroupId: poolId, name, normalizedName, voteCount: 1, votes: { create: { voterHash } } },
     });
     return { request: toPublicRequest(created, true), duplicate: false };
   });
@@ -214,9 +229,9 @@ export const createProductRequest = async (input: unknown, voterToken: unknown) 
 
 const requireOpenRequest = async (requestId: unknown) => {
   const id = typeof requestId === "string" ? requestId.trim() : "";
-  const found = id ? await prisma.productRequest.findUnique({ where: { id }, select: { hostelId: true } }) : null;
+  const found = id ? await prisma.productRequest.findUnique({ where: { id }, select: { stockGroupId: true } }) : null;
   // A vote just after midnight must not land on a request the reset is about to archive.
-  if (found) await ensureDailyReset(found.hostelId);
+  if (found) await ensureDailyReset(found.stockGroupId);
   const request = found ? await prisma.productRequest.findUnique({ where: { id } }) : null;
   if (!request || request.status !== "OPEN") throw new FeedbackError("This request is no longer open.", 404);
   return request;
@@ -284,23 +299,23 @@ const FEEDBACK_STATUSES: FeedbackStatus[] = ["NEW", "DONE"];
 const parseStatus = <T extends string>(value: unknown, allowed: T[]): T | null =>
   typeof value === "string" && (allowed as string[]).includes(value) ? (value as T) : null;
 
-/** Every request with its hostel, most upvoted first, optionally filtered by hostel and status. */
-export const getAdminProductRequests = async (filters: { hostelId?: unknown; status?: unknown }) => {
+/** Every request with its pool, most upvoted first, optionally filtered by pool and status. */
+export const getAdminProductRequests = async (filters: { poolId?: unknown; status?: unknown }) => {
   const status = parseStatus(filters.status, REQUEST_STATUSES);
-  const hostelId = typeof filters.hostelId === "string" && filters.hostelId.trim() ? filters.hostelId.trim() : undefined;
+  const poolId = text(filters.poolId) ?? undefined;
   // Apply any reset that's due, so admins see the same board customers do.
-  const due = hostelId ? [hostelId] : (await prisma.hostel.findMany({ select: { id: true } })).map((h) => h.id);
+  const due = poolId ? [poolId] : (await prisma.stockGroup.findMany({ select: { id: true } })).map((g) => g.id);
   for (const id of due) await ensureDailyReset(id);
   const [requests, grouped] = await Promise.all([
     prisma.productRequest.findMany({
-      where: { ...(hostelId && { hostelId }), ...(status && { status }) },
+      where: { ...(poolId && { stockGroupId: poolId }), ...(status && { status }) },
       orderBy: [{ voteCount: "desc" }, { createdAt: "asc" }],
-      include: { hostel: { select: { id: true, name: true } } },
+      include: { stockGroup: { select: { id: true, name: true } } },
       take: 500,
     }),
     prisma.productRequest.groupBy({
       by: ["status"],
-      where: { ...(hostelId && { hostelId }) },
+      where: { ...(poolId && { stockGroupId: poolId }) },
       _count: { _all: true },
     }),
   ]);
@@ -314,7 +329,7 @@ export const getAdminProductRequests = async (filters: { hostelId?: unknown; sta
       name: r.name,
       status: r.status,
       votes: r.voteCount,
-      hostel: r.hostel,
+      pool: r.stockGroup,
       addedAt: r.addedAt,
       archivedAt: r.archivedAt,
       createdAt: r.createdAt,

@@ -36,7 +36,7 @@ export type ProductRequestSumAggregateOutputType = {
 
 export type ProductRequestMinAggregateOutputType = {
   id: string | null
-  hostelId: string | null
+  stockGroupId: string | null
   name: string | null
   normalizedName: string | null
   status: $Enums.ProductRequestStatus | null
@@ -49,7 +49,7 @@ export type ProductRequestMinAggregateOutputType = {
 
 export type ProductRequestMaxAggregateOutputType = {
   id: string | null
-  hostelId: string | null
+  stockGroupId: string | null
   name: string | null
   normalizedName: string | null
   status: $Enums.ProductRequestStatus | null
@@ -62,7 +62,7 @@ export type ProductRequestMaxAggregateOutputType = {
 
 export type ProductRequestCountAggregateOutputType = {
   id: number
-  hostelId: number
+  stockGroupId: number
   name: number
   normalizedName: number
   status: number
@@ -85,7 +85,7 @@ export type ProductRequestSumAggregateInputType = {
 
 export type ProductRequestMinAggregateInputType = {
   id?: true
-  hostelId?: true
+  stockGroupId?: true
   name?: true
   normalizedName?: true
   status?: true
@@ -98,7 +98,7 @@ export type ProductRequestMinAggregateInputType = {
 
 export type ProductRequestMaxAggregateInputType = {
   id?: true
-  hostelId?: true
+  stockGroupId?: true
   name?: true
   normalizedName?: true
   status?: true
@@ -111,7 +111,7 @@ export type ProductRequestMaxAggregateInputType = {
 
 export type ProductRequestCountAggregateInputType = {
   id?: true
-  hostelId?: true
+  stockGroupId?: true
   name?: true
   normalizedName?: true
   status?: true
@@ -211,7 +211,7 @@ export type ProductRequestGroupByArgs<ExtArgs extends runtime.Types.Extensions.I
 
 export type ProductRequestGroupByOutputType = {
   id: string
-  hostelId: string
+  stockGroupId: string
   name: string
   normalizedName: string
   status: $Enums.ProductRequestStatus
@@ -247,7 +247,7 @@ export type ProductRequestWhereInput = {
   OR?: Prisma.ProductRequestWhereInput[]
   NOT?: Prisma.ProductRequestWhereInput | Prisma.ProductRequestWhereInput[]
   id?: Prisma.StringFilter<"ProductRequest"> | string
-  hostelId?: Prisma.StringFilter<"ProductRequest"> | string
+  stockGroupId?: Prisma.StringFilter<"ProductRequest"> | string
   name?: Prisma.StringFilter<"ProductRequest"> | string
   normalizedName?: Prisma.StringFilter<"ProductRequest"> | string
   status?: Prisma.EnumProductRequestStatusFilter<"ProductRequest"> | $Enums.ProductRequestStatus
@@ -256,13 +256,13 @@ export type ProductRequestWhereInput = {
   archivedAt?: Prisma.DateTimeNullableFilter<"ProductRequest"> | Date | string | null
   createdAt?: Prisma.DateTimeFilter<"ProductRequest"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"ProductRequest"> | Date | string
-  hostel?: Prisma.XOR<Prisma.HostelScalarRelationFilter, Prisma.HostelWhereInput>
+  stockGroup?: Prisma.XOR<Prisma.StockGroupScalarRelationFilter, Prisma.StockGroupWhereInput>
   votes?: Prisma.ProductRequestVoteListRelationFilter
 }
 
 export type ProductRequestOrderByWithRelationInput = {
   id?: Prisma.SortOrder
-  hostelId?: Prisma.SortOrder
+  stockGroupId?: Prisma.SortOrder
   name?: Prisma.SortOrder
   normalizedName?: Prisma.SortOrder
   status?: Prisma.SortOrder
@@ -271,17 +271,17 @@ export type ProductRequestOrderByWithRelationInput = {
   archivedAt?: Prisma.SortOrderInput | Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
-  hostel?: Prisma.HostelOrderByWithRelationInput
+  stockGroup?: Prisma.StockGroupOrderByWithRelationInput
   votes?: Prisma.ProductRequestVoteOrderByRelationAggregateInput
 }
 
 export type ProductRequestWhereUniqueInput = Prisma.AtLeast<{
   id?: string
-  hostelId_normalizedName?: Prisma.ProductRequestHostelIdNormalizedNameCompoundUniqueInput
+  stockGroupId_normalizedName?: Prisma.ProductRequestStockGroupIdNormalizedNameCompoundUniqueInput
   AND?: Prisma.ProductRequestWhereInput | Prisma.ProductRequestWhereInput[]
   OR?: Prisma.ProductRequestWhereInput[]
   NOT?: Prisma.ProductRequestWhereInput | Prisma.ProductRequestWhereInput[]
-  hostelId?: Prisma.StringFilter<"ProductRequest"> | string
+  stockGroupId?: Prisma.StringFilter<"ProductRequest"> | string
   name?: Prisma.StringFilter<"ProductRequest"> | string
   normalizedName?: Prisma.StringFilter<"ProductRequest"> | string
   status?: Prisma.EnumProductRequestStatusFilter<"ProductRequest"> | $Enums.ProductRequestStatus
@@ -290,13 +290,13 @@ export type ProductRequestWhereUniqueInput = Prisma.AtLeast<{
   archivedAt?: Prisma.DateTimeNullableFilter<"ProductRequest"> | Date | string | null
   createdAt?: Prisma.DateTimeFilter<"ProductRequest"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"ProductRequest"> | Date | string
-  hostel?: Prisma.XOR<Prisma.HostelScalarRelationFilter, Prisma.HostelWhereInput>
+  stockGroup?: Prisma.XOR<Prisma.StockGroupScalarRelationFilter, Prisma.StockGroupWhereInput>
   votes?: Prisma.ProductRequestVoteListRelationFilter
-}, "id" | "hostelId_normalizedName">
+}, "id" | "stockGroupId_normalizedName">
 
 export type ProductRequestOrderByWithAggregationInput = {
   id?: Prisma.SortOrder
-  hostelId?: Prisma.SortOrder
+  stockGroupId?: Prisma.SortOrder
   name?: Prisma.SortOrder
   normalizedName?: Prisma.SortOrder
   status?: Prisma.SortOrder
@@ -317,7 +317,7 @@ export type ProductRequestScalarWhereWithAggregatesInput = {
   OR?: Prisma.ProductRequestScalarWhereWithAggregatesInput[]
   NOT?: Prisma.ProductRequestScalarWhereWithAggregatesInput | Prisma.ProductRequestScalarWhereWithAggregatesInput[]
   id?: Prisma.StringWithAggregatesFilter<"ProductRequest"> | string
-  hostelId?: Prisma.StringWithAggregatesFilter<"ProductRequest"> | string
+  stockGroupId?: Prisma.StringWithAggregatesFilter<"ProductRequest"> | string
   name?: Prisma.StringWithAggregatesFilter<"ProductRequest"> | string
   normalizedName?: Prisma.StringWithAggregatesFilter<"ProductRequest"> | string
   status?: Prisma.EnumProductRequestStatusWithAggregatesFilter<"ProductRequest"> | $Enums.ProductRequestStatus
@@ -338,13 +338,13 @@ export type ProductRequestCreateInput = {
   archivedAt?: Date | string | null
   createdAt?: Date | string
   updatedAt?: Date | string
-  hostel: Prisma.HostelCreateNestedOneWithoutProductRequestsInput
+  stockGroup: Prisma.StockGroupCreateNestedOneWithoutProductRequestsInput
   votes?: Prisma.ProductRequestVoteCreateNestedManyWithoutRequestInput
 }
 
 export type ProductRequestUncheckedCreateInput = {
   id?: string
-  hostelId: string
+  stockGroupId: string
   name: string
   normalizedName: string
   status?: $Enums.ProductRequestStatus
@@ -366,13 +366,13 @@ export type ProductRequestUpdateInput = {
   archivedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  hostel?: Prisma.HostelUpdateOneRequiredWithoutProductRequestsNestedInput
+  stockGroup?: Prisma.StockGroupUpdateOneRequiredWithoutProductRequestsNestedInput
   votes?: Prisma.ProductRequestVoteUpdateManyWithoutRequestNestedInput
 }
 
 export type ProductRequestUncheckedUpdateInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
-  hostelId?: Prisma.StringFieldUpdateOperationsInput | string
+  stockGroupId?: Prisma.StringFieldUpdateOperationsInput | string
   name?: Prisma.StringFieldUpdateOperationsInput | string
   normalizedName?: Prisma.StringFieldUpdateOperationsInput | string
   status?: Prisma.EnumProductRequestStatusFieldUpdateOperationsInput | $Enums.ProductRequestStatus
@@ -386,7 +386,7 @@ export type ProductRequestUncheckedUpdateInput = {
 
 export type ProductRequestCreateManyInput = {
   id?: string
-  hostelId: string
+  stockGroupId: string
   name: string
   normalizedName: string
   status?: $Enums.ProductRequestStatus
@@ -411,7 +411,7 @@ export type ProductRequestUpdateManyMutationInput = {
 
 export type ProductRequestUncheckedUpdateManyInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
-  hostelId?: Prisma.StringFieldUpdateOperationsInput | string
+  stockGroupId?: Prisma.StringFieldUpdateOperationsInput | string
   name?: Prisma.StringFieldUpdateOperationsInput | string
   normalizedName?: Prisma.StringFieldUpdateOperationsInput | string
   status?: Prisma.EnumProductRequestStatusFieldUpdateOperationsInput | $Enums.ProductRequestStatus
@@ -432,14 +432,14 @@ export type ProductRequestOrderByRelationAggregateInput = {
   _count?: Prisma.SortOrder
 }
 
-export type ProductRequestHostelIdNormalizedNameCompoundUniqueInput = {
-  hostelId: string
+export type ProductRequestStockGroupIdNormalizedNameCompoundUniqueInput = {
+  stockGroupId: string
   normalizedName: string
 }
 
 export type ProductRequestCountOrderByAggregateInput = {
   id?: Prisma.SortOrder
-  hostelId?: Prisma.SortOrder
+  stockGroupId?: Prisma.SortOrder
   name?: Prisma.SortOrder
   normalizedName?: Prisma.SortOrder
   status?: Prisma.SortOrder
@@ -456,7 +456,7 @@ export type ProductRequestAvgOrderByAggregateInput = {
 
 export type ProductRequestMaxOrderByAggregateInput = {
   id?: Prisma.SortOrder
-  hostelId?: Prisma.SortOrder
+  stockGroupId?: Prisma.SortOrder
   name?: Prisma.SortOrder
   normalizedName?: Prisma.SortOrder
   status?: Prisma.SortOrder
@@ -469,7 +469,7 @@ export type ProductRequestMaxOrderByAggregateInput = {
 
 export type ProductRequestMinOrderByAggregateInput = {
   id?: Prisma.SortOrder
-  hostelId?: Prisma.SortOrder
+  stockGroupId?: Prisma.SortOrder
   name?: Prisma.SortOrder
   normalizedName?: Prisma.SortOrder
   status?: Prisma.SortOrder
@@ -489,45 +489,45 @@ export type ProductRequestScalarRelationFilter = {
   isNot?: Prisma.ProductRequestWhereInput
 }
 
-export type ProductRequestCreateNestedManyWithoutHostelInput = {
-  create?: Prisma.XOR<Prisma.ProductRequestCreateWithoutHostelInput, Prisma.ProductRequestUncheckedCreateWithoutHostelInput> | Prisma.ProductRequestCreateWithoutHostelInput[] | Prisma.ProductRequestUncheckedCreateWithoutHostelInput[]
-  connectOrCreate?: Prisma.ProductRequestCreateOrConnectWithoutHostelInput | Prisma.ProductRequestCreateOrConnectWithoutHostelInput[]
-  createMany?: Prisma.ProductRequestCreateManyHostelInputEnvelope
+export type ProductRequestCreateNestedManyWithoutStockGroupInput = {
+  create?: Prisma.XOR<Prisma.ProductRequestCreateWithoutStockGroupInput, Prisma.ProductRequestUncheckedCreateWithoutStockGroupInput> | Prisma.ProductRequestCreateWithoutStockGroupInput[] | Prisma.ProductRequestUncheckedCreateWithoutStockGroupInput[]
+  connectOrCreate?: Prisma.ProductRequestCreateOrConnectWithoutStockGroupInput | Prisma.ProductRequestCreateOrConnectWithoutStockGroupInput[]
+  createMany?: Prisma.ProductRequestCreateManyStockGroupInputEnvelope
   connect?: Prisma.ProductRequestWhereUniqueInput | Prisma.ProductRequestWhereUniqueInput[]
 }
 
-export type ProductRequestUncheckedCreateNestedManyWithoutHostelInput = {
-  create?: Prisma.XOR<Prisma.ProductRequestCreateWithoutHostelInput, Prisma.ProductRequestUncheckedCreateWithoutHostelInput> | Prisma.ProductRequestCreateWithoutHostelInput[] | Prisma.ProductRequestUncheckedCreateWithoutHostelInput[]
-  connectOrCreate?: Prisma.ProductRequestCreateOrConnectWithoutHostelInput | Prisma.ProductRequestCreateOrConnectWithoutHostelInput[]
-  createMany?: Prisma.ProductRequestCreateManyHostelInputEnvelope
+export type ProductRequestUncheckedCreateNestedManyWithoutStockGroupInput = {
+  create?: Prisma.XOR<Prisma.ProductRequestCreateWithoutStockGroupInput, Prisma.ProductRequestUncheckedCreateWithoutStockGroupInput> | Prisma.ProductRequestCreateWithoutStockGroupInput[] | Prisma.ProductRequestUncheckedCreateWithoutStockGroupInput[]
+  connectOrCreate?: Prisma.ProductRequestCreateOrConnectWithoutStockGroupInput | Prisma.ProductRequestCreateOrConnectWithoutStockGroupInput[]
+  createMany?: Prisma.ProductRequestCreateManyStockGroupInputEnvelope
   connect?: Prisma.ProductRequestWhereUniqueInput | Prisma.ProductRequestWhereUniqueInput[]
 }
 
-export type ProductRequestUpdateManyWithoutHostelNestedInput = {
-  create?: Prisma.XOR<Prisma.ProductRequestCreateWithoutHostelInput, Prisma.ProductRequestUncheckedCreateWithoutHostelInput> | Prisma.ProductRequestCreateWithoutHostelInput[] | Prisma.ProductRequestUncheckedCreateWithoutHostelInput[]
-  connectOrCreate?: Prisma.ProductRequestCreateOrConnectWithoutHostelInput | Prisma.ProductRequestCreateOrConnectWithoutHostelInput[]
-  upsert?: Prisma.ProductRequestUpsertWithWhereUniqueWithoutHostelInput | Prisma.ProductRequestUpsertWithWhereUniqueWithoutHostelInput[]
-  createMany?: Prisma.ProductRequestCreateManyHostelInputEnvelope
+export type ProductRequestUpdateManyWithoutStockGroupNestedInput = {
+  create?: Prisma.XOR<Prisma.ProductRequestCreateWithoutStockGroupInput, Prisma.ProductRequestUncheckedCreateWithoutStockGroupInput> | Prisma.ProductRequestCreateWithoutStockGroupInput[] | Prisma.ProductRequestUncheckedCreateWithoutStockGroupInput[]
+  connectOrCreate?: Prisma.ProductRequestCreateOrConnectWithoutStockGroupInput | Prisma.ProductRequestCreateOrConnectWithoutStockGroupInput[]
+  upsert?: Prisma.ProductRequestUpsertWithWhereUniqueWithoutStockGroupInput | Prisma.ProductRequestUpsertWithWhereUniqueWithoutStockGroupInput[]
+  createMany?: Prisma.ProductRequestCreateManyStockGroupInputEnvelope
   set?: Prisma.ProductRequestWhereUniqueInput | Prisma.ProductRequestWhereUniqueInput[]
   disconnect?: Prisma.ProductRequestWhereUniqueInput | Prisma.ProductRequestWhereUniqueInput[]
   delete?: Prisma.ProductRequestWhereUniqueInput | Prisma.ProductRequestWhereUniqueInput[]
   connect?: Prisma.ProductRequestWhereUniqueInput | Prisma.ProductRequestWhereUniqueInput[]
-  update?: Prisma.ProductRequestUpdateWithWhereUniqueWithoutHostelInput | Prisma.ProductRequestUpdateWithWhereUniqueWithoutHostelInput[]
-  updateMany?: Prisma.ProductRequestUpdateManyWithWhereWithoutHostelInput | Prisma.ProductRequestUpdateManyWithWhereWithoutHostelInput[]
+  update?: Prisma.ProductRequestUpdateWithWhereUniqueWithoutStockGroupInput | Prisma.ProductRequestUpdateWithWhereUniqueWithoutStockGroupInput[]
+  updateMany?: Prisma.ProductRequestUpdateManyWithWhereWithoutStockGroupInput | Prisma.ProductRequestUpdateManyWithWhereWithoutStockGroupInput[]
   deleteMany?: Prisma.ProductRequestScalarWhereInput | Prisma.ProductRequestScalarWhereInput[]
 }
 
-export type ProductRequestUncheckedUpdateManyWithoutHostelNestedInput = {
-  create?: Prisma.XOR<Prisma.ProductRequestCreateWithoutHostelInput, Prisma.ProductRequestUncheckedCreateWithoutHostelInput> | Prisma.ProductRequestCreateWithoutHostelInput[] | Prisma.ProductRequestUncheckedCreateWithoutHostelInput[]
-  connectOrCreate?: Prisma.ProductRequestCreateOrConnectWithoutHostelInput | Prisma.ProductRequestCreateOrConnectWithoutHostelInput[]
-  upsert?: Prisma.ProductRequestUpsertWithWhereUniqueWithoutHostelInput | Prisma.ProductRequestUpsertWithWhereUniqueWithoutHostelInput[]
-  createMany?: Prisma.ProductRequestCreateManyHostelInputEnvelope
+export type ProductRequestUncheckedUpdateManyWithoutStockGroupNestedInput = {
+  create?: Prisma.XOR<Prisma.ProductRequestCreateWithoutStockGroupInput, Prisma.ProductRequestUncheckedCreateWithoutStockGroupInput> | Prisma.ProductRequestCreateWithoutStockGroupInput[] | Prisma.ProductRequestUncheckedCreateWithoutStockGroupInput[]
+  connectOrCreate?: Prisma.ProductRequestCreateOrConnectWithoutStockGroupInput | Prisma.ProductRequestCreateOrConnectWithoutStockGroupInput[]
+  upsert?: Prisma.ProductRequestUpsertWithWhereUniqueWithoutStockGroupInput | Prisma.ProductRequestUpsertWithWhereUniqueWithoutStockGroupInput[]
+  createMany?: Prisma.ProductRequestCreateManyStockGroupInputEnvelope
   set?: Prisma.ProductRequestWhereUniqueInput | Prisma.ProductRequestWhereUniqueInput[]
   disconnect?: Prisma.ProductRequestWhereUniqueInput | Prisma.ProductRequestWhereUniqueInput[]
   delete?: Prisma.ProductRequestWhereUniqueInput | Prisma.ProductRequestWhereUniqueInput[]
   connect?: Prisma.ProductRequestWhereUniqueInput | Prisma.ProductRequestWhereUniqueInput[]
-  update?: Prisma.ProductRequestUpdateWithWhereUniqueWithoutHostelInput | Prisma.ProductRequestUpdateWithWhereUniqueWithoutHostelInput[]
-  updateMany?: Prisma.ProductRequestUpdateManyWithWhereWithoutHostelInput | Prisma.ProductRequestUpdateManyWithWhereWithoutHostelInput[]
+  update?: Prisma.ProductRequestUpdateWithWhereUniqueWithoutStockGroupInput | Prisma.ProductRequestUpdateWithWhereUniqueWithoutStockGroupInput[]
+  updateMany?: Prisma.ProductRequestUpdateManyWithWhereWithoutStockGroupInput | Prisma.ProductRequestUpdateManyWithWhereWithoutStockGroupInput[]
   deleteMany?: Prisma.ProductRequestScalarWhereInput | Prisma.ProductRequestScalarWhereInput[]
 }
 
@@ -549,7 +549,7 @@ export type ProductRequestUpdateOneRequiredWithoutVotesNestedInput = {
   update?: Prisma.XOR<Prisma.XOR<Prisma.ProductRequestUpdateToOneWithWhereWithoutVotesInput, Prisma.ProductRequestUpdateWithoutVotesInput>, Prisma.ProductRequestUncheckedUpdateWithoutVotesInput>
 }
 
-export type ProductRequestCreateWithoutHostelInput = {
+export type ProductRequestCreateWithoutStockGroupInput = {
   id?: string
   name: string
   normalizedName: string
@@ -562,7 +562,7 @@ export type ProductRequestCreateWithoutHostelInput = {
   votes?: Prisma.ProductRequestVoteCreateNestedManyWithoutRequestInput
 }
 
-export type ProductRequestUncheckedCreateWithoutHostelInput = {
+export type ProductRequestUncheckedCreateWithoutStockGroupInput = {
   id?: string
   name: string
   normalizedName: string
@@ -575,30 +575,30 @@ export type ProductRequestUncheckedCreateWithoutHostelInput = {
   votes?: Prisma.ProductRequestVoteUncheckedCreateNestedManyWithoutRequestInput
 }
 
-export type ProductRequestCreateOrConnectWithoutHostelInput = {
+export type ProductRequestCreateOrConnectWithoutStockGroupInput = {
   where: Prisma.ProductRequestWhereUniqueInput
-  create: Prisma.XOR<Prisma.ProductRequestCreateWithoutHostelInput, Prisma.ProductRequestUncheckedCreateWithoutHostelInput>
+  create: Prisma.XOR<Prisma.ProductRequestCreateWithoutStockGroupInput, Prisma.ProductRequestUncheckedCreateWithoutStockGroupInput>
 }
 
-export type ProductRequestCreateManyHostelInputEnvelope = {
-  data: Prisma.ProductRequestCreateManyHostelInput | Prisma.ProductRequestCreateManyHostelInput[]
+export type ProductRequestCreateManyStockGroupInputEnvelope = {
+  data: Prisma.ProductRequestCreateManyStockGroupInput | Prisma.ProductRequestCreateManyStockGroupInput[]
   skipDuplicates?: boolean
 }
 
-export type ProductRequestUpsertWithWhereUniqueWithoutHostelInput = {
+export type ProductRequestUpsertWithWhereUniqueWithoutStockGroupInput = {
   where: Prisma.ProductRequestWhereUniqueInput
-  update: Prisma.XOR<Prisma.ProductRequestUpdateWithoutHostelInput, Prisma.ProductRequestUncheckedUpdateWithoutHostelInput>
-  create: Prisma.XOR<Prisma.ProductRequestCreateWithoutHostelInput, Prisma.ProductRequestUncheckedCreateWithoutHostelInput>
+  update: Prisma.XOR<Prisma.ProductRequestUpdateWithoutStockGroupInput, Prisma.ProductRequestUncheckedUpdateWithoutStockGroupInput>
+  create: Prisma.XOR<Prisma.ProductRequestCreateWithoutStockGroupInput, Prisma.ProductRequestUncheckedCreateWithoutStockGroupInput>
 }
 
-export type ProductRequestUpdateWithWhereUniqueWithoutHostelInput = {
+export type ProductRequestUpdateWithWhereUniqueWithoutStockGroupInput = {
   where: Prisma.ProductRequestWhereUniqueInput
-  data: Prisma.XOR<Prisma.ProductRequestUpdateWithoutHostelInput, Prisma.ProductRequestUncheckedUpdateWithoutHostelInput>
+  data: Prisma.XOR<Prisma.ProductRequestUpdateWithoutStockGroupInput, Prisma.ProductRequestUncheckedUpdateWithoutStockGroupInput>
 }
 
-export type ProductRequestUpdateManyWithWhereWithoutHostelInput = {
+export type ProductRequestUpdateManyWithWhereWithoutStockGroupInput = {
   where: Prisma.ProductRequestScalarWhereInput
-  data: Prisma.XOR<Prisma.ProductRequestUpdateManyMutationInput, Prisma.ProductRequestUncheckedUpdateManyWithoutHostelInput>
+  data: Prisma.XOR<Prisma.ProductRequestUpdateManyMutationInput, Prisma.ProductRequestUncheckedUpdateManyWithoutStockGroupInput>
 }
 
 export type ProductRequestScalarWhereInput = {
@@ -606,7 +606,7 @@ export type ProductRequestScalarWhereInput = {
   OR?: Prisma.ProductRequestScalarWhereInput[]
   NOT?: Prisma.ProductRequestScalarWhereInput | Prisma.ProductRequestScalarWhereInput[]
   id?: Prisma.StringFilter<"ProductRequest"> | string
-  hostelId?: Prisma.StringFilter<"ProductRequest"> | string
+  stockGroupId?: Prisma.StringFilter<"ProductRequest"> | string
   name?: Prisma.StringFilter<"ProductRequest"> | string
   normalizedName?: Prisma.StringFilter<"ProductRequest"> | string
   status?: Prisma.EnumProductRequestStatusFilter<"ProductRequest"> | $Enums.ProductRequestStatus
@@ -627,12 +627,12 @@ export type ProductRequestCreateWithoutVotesInput = {
   archivedAt?: Date | string | null
   createdAt?: Date | string
   updatedAt?: Date | string
-  hostel: Prisma.HostelCreateNestedOneWithoutProductRequestsInput
+  stockGroup: Prisma.StockGroupCreateNestedOneWithoutProductRequestsInput
 }
 
 export type ProductRequestUncheckedCreateWithoutVotesInput = {
   id?: string
-  hostelId: string
+  stockGroupId: string
   name: string
   normalizedName: string
   status?: $Enums.ProductRequestStatus
@@ -669,12 +669,12 @@ export type ProductRequestUpdateWithoutVotesInput = {
   archivedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  hostel?: Prisma.HostelUpdateOneRequiredWithoutProductRequestsNestedInput
+  stockGroup?: Prisma.StockGroupUpdateOneRequiredWithoutProductRequestsNestedInput
 }
 
 export type ProductRequestUncheckedUpdateWithoutVotesInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
-  hostelId?: Prisma.StringFieldUpdateOperationsInput | string
+  stockGroupId?: Prisma.StringFieldUpdateOperationsInput | string
   name?: Prisma.StringFieldUpdateOperationsInput | string
   normalizedName?: Prisma.StringFieldUpdateOperationsInput | string
   status?: Prisma.EnumProductRequestStatusFieldUpdateOperationsInput | $Enums.ProductRequestStatus
@@ -685,7 +685,7 @@ export type ProductRequestUncheckedUpdateWithoutVotesInput = {
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
 
-export type ProductRequestCreateManyHostelInput = {
+export type ProductRequestCreateManyStockGroupInput = {
   id?: string
   name: string
   normalizedName: string
@@ -697,7 +697,7 @@ export type ProductRequestCreateManyHostelInput = {
   updatedAt?: Date | string
 }
 
-export type ProductRequestUpdateWithoutHostelInput = {
+export type ProductRequestUpdateWithoutStockGroupInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   name?: Prisma.StringFieldUpdateOperationsInput | string
   normalizedName?: Prisma.StringFieldUpdateOperationsInput | string
@@ -710,7 +710,7 @@ export type ProductRequestUpdateWithoutHostelInput = {
   votes?: Prisma.ProductRequestVoteUpdateManyWithoutRequestNestedInput
 }
 
-export type ProductRequestUncheckedUpdateWithoutHostelInput = {
+export type ProductRequestUncheckedUpdateWithoutStockGroupInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   name?: Prisma.StringFieldUpdateOperationsInput | string
   normalizedName?: Prisma.StringFieldUpdateOperationsInput | string
@@ -723,7 +723,7 @@ export type ProductRequestUncheckedUpdateWithoutHostelInput = {
   votes?: Prisma.ProductRequestVoteUncheckedUpdateManyWithoutRequestNestedInput
 }
 
-export type ProductRequestUncheckedUpdateManyWithoutHostelInput = {
+export type ProductRequestUncheckedUpdateManyWithoutStockGroupInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   name?: Prisma.StringFieldUpdateOperationsInput | string
   normalizedName?: Prisma.StringFieldUpdateOperationsInput | string
@@ -768,7 +768,7 @@ export type ProductRequestCountOutputTypeCountVotesArgs<ExtArgs extends runtime.
 
 export type ProductRequestSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   id?: boolean
-  hostelId?: boolean
+  stockGroupId?: boolean
   name?: boolean
   normalizedName?: boolean
   status?: boolean
@@ -777,14 +777,14 @@ export type ProductRequestSelect<ExtArgs extends runtime.Types.Extensions.Intern
   archivedAt?: boolean
   createdAt?: boolean
   updatedAt?: boolean
-  hostel?: boolean | Prisma.HostelDefaultArgs<ExtArgs>
+  stockGroup?: boolean | Prisma.StockGroupDefaultArgs<ExtArgs>
   votes?: boolean | Prisma.ProductRequest$votesArgs<ExtArgs>
   _count?: boolean | Prisma.ProductRequestCountOutputTypeDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["productRequest"]>
 
 export type ProductRequestSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   id?: boolean
-  hostelId?: boolean
+  stockGroupId?: boolean
   name?: boolean
   normalizedName?: boolean
   status?: boolean
@@ -793,12 +793,12 @@ export type ProductRequestSelectCreateManyAndReturn<ExtArgs extends runtime.Type
   archivedAt?: boolean
   createdAt?: boolean
   updatedAt?: boolean
-  hostel?: boolean | Prisma.HostelDefaultArgs<ExtArgs>
+  stockGroup?: boolean | Prisma.StockGroupDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["productRequest"]>
 
 export type ProductRequestSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   id?: boolean
-  hostelId?: boolean
+  stockGroupId?: boolean
   name?: boolean
   normalizedName?: boolean
   status?: boolean
@@ -807,12 +807,12 @@ export type ProductRequestSelectUpdateManyAndReturn<ExtArgs extends runtime.Type
   archivedAt?: boolean
   createdAt?: boolean
   updatedAt?: boolean
-  hostel?: boolean | Prisma.HostelDefaultArgs<ExtArgs>
+  stockGroup?: boolean | Prisma.StockGroupDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["productRequest"]>
 
 export type ProductRequestSelectScalar = {
   id?: boolean
-  hostelId?: boolean
+  stockGroupId?: boolean
   name?: boolean
   normalizedName?: boolean
   status?: boolean
@@ -823,28 +823,28 @@ export type ProductRequestSelectScalar = {
   updatedAt?: boolean
 }
 
-export type ProductRequestOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "hostelId" | "name" | "normalizedName" | "status" | "voteCount" | "addedAt" | "archivedAt" | "createdAt" | "updatedAt", ExtArgs["result"]["productRequest"]>
+export type ProductRequestOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "stockGroupId" | "name" | "normalizedName" | "status" | "voteCount" | "addedAt" | "archivedAt" | "createdAt" | "updatedAt", ExtArgs["result"]["productRequest"]>
 export type ProductRequestInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
-  hostel?: boolean | Prisma.HostelDefaultArgs<ExtArgs>
+  stockGroup?: boolean | Prisma.StockGroupDefaultArgs<ExtArgs>
   votes?: boolean | Prisma.ProductRequest$votesArgs<ExtArgs>
   _count?: boolean | Prisma.ProductRequestCountOutputTypeDefaultArgs<ExtArgs>
 }
 export type ProductRequestIncludeCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
-  hostel?: boolean | Prisma.HostelDefaultArgs<ExtArgs>
+  stockGroup?: boolean | Prisma.StockGroupDefaultArgs<ExtArgs>
 }
 export type ProductRequestIncludeUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
-  hostel?: boolean | Prisma.HostelDefaultArgs<ExtArgs>
+  stockGroup?: boolean | Prisma.StockGroupDefaultArgs<ExtArgs>
 }
 
 export type $ProductRequestPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   name: "ProductRequest"
   objects: {
-    hostel: Prisma.$HostelPayload<ExtArgs>
+    stockGroup: Prisma.$StockGroupPayload<ExtArgs>
     votes: Prisma.$ProductRequestVotePayload<ExtArgs>[]
   }
   scalars: runtime.Types.Extensions.GetPayloadResult<{
     id: string
-    hostelId: string
+    stockGroupId: string
     name: string
     normalizedName: string
     status: $Enums.ProductRequestStatus
@@ -1247,7 +1247,7 @@ readonly fields: ProductRequestFieldRefs;
  */
 export interface Prisma__ProductRequestClient<T, Null = never, ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
   readonly [Symbol.toStringTag]: "PrismaPromise"
-  hostel<T extends Prisma.HostelDefaultArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.HostelDefaultArgs<ExtArgs>>): Prisma.Prisma__HostelClient<runtime.Types.Result.GetResult<Prisma.$HostelPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
+  stockGroup<T extends Prisma.StockGroupDefaultArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.StockGroupDefaultArgs<ExtArgs>>): Prisma.Prisma__StockGroupClient<runtime.Types.Result.GetResult<Prisma.$StockGroupPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
   votes<T extends Prisma.ProductRequest$votesArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.ProductRequest$votesArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$ProductRequestVotePayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   /**
    * Attaches callbacks for the resolution and/or rejection of the Promise.
@@ -1279,7 +1279,7 @@ export interface Prisma__ProductRequestClient<T, Null = never, ExtArgs extends r
  */
 export interface ProductRequestFieldRefs {
   readonly id: Prisma.FieldRef<"ProductRequest", 'String'>
-  readonly hostelId: Prisma.FieldRef<"ProductRequest", 'String'>
+  readonly stockGroupId: Prisma.FieldRef<"ProductRequest", 'String'>
   readonly name: Prisma.FieldRef<"ProductRequest", 'String'>
   readonly normalizedName: Prisma.FieldRef<"ProductRequest", 'String'>
   readonly status: Prisma.FieldRef<"ProductRequest", 'ProductRequestStatus'>
