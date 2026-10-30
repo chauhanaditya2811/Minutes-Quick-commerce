@@ -114,7 +114,7 @@ describe("Cashfree webhook service", () => {
     expect(mocks.finalize).toHaveBeenCalledWith(tx, verifiedPayment);
     expect(mocks.notifyOwner).toHaveBeenCalledOnce();
     expect(mocks.notifyStockShortfall).not.toHaveBeenCalled();
-    expect(mocks.notifyOwner).toHaveBeenCalledWith("order-1", "Cashfree");
+    expect(mocks.notifyOwner).toHaveBeenCalledWith("order-1");
     expect(result).not.toHaveProperty("newlyConfirmed");
   });
 
@@ -202,6 +202,6 @@ describe("Cashfree webhook service", () => {
     await new Promise((resolve) => setImmediate(resolve));
     expect(result).toMatchObject({ processed: true, paymentStatus: "SUCCESS" });
     expect(mocks.finalize).toHaveBeenCalled();
-    expect(mocks.notifyOwner).toHaveBeenCalledWith("order-1", "Cashfree");
+    expect(mocks.notifyOwner).toHaveBeenCalledWith("order-1");
   });
 });

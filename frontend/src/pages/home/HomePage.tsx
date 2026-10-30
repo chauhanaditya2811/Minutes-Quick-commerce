@@ -15,8 +15,8 @@ import { ChatIcon } from '../../components/ui/Icons';
 export default function HomePage() {
   const [params] = useSearchParams();
   const q = (params.get('q') ?? '').trim().toLowerCase();
-  const { selectedHostel, openPicker } = useHostel();
-  const { data: products, loading, error, reload } = useProducts(selectedHostel?.id);
+  const { selectedPool, openPicker } = useHostel();
+  const { data: products, loading, error, reload } = useProducts(selectedPool?.id);
   const { data: settings, loading: settingsLoading, error: settingsError, reload: reloadSettings } = useStoreSettings();
 
   const visible = useMemo(
@@ -30,7 +30,7 @@ export default function HomePage() {
   return (
     <div className="page">
       <div className="page__head">
-        <h1>Available at {selectedHostel?.name}</h1>
+        <h1>Available at {selectedPool?.name}</h1>
         {settings && (
           <p className="muted">
             {settings.storeOpen ? 'Open now' : 'Closed'} · Delivery {formatINR(settings.deliveryFee)} · Minimum order {formatINR(settings.minimumOrder)}
@@ -53,7 +53,7 @@ export default function HomePage() {
         </Notice>
       )}
       {!loading && !error && visible.length === 0 && (
-        <EmptyState title={q ? `No results for "${params.get('q')}"` : `No products available at ${selectedHostel?.name} yet`}>
+        <EmptyState title={q ? `No results for "${params.get('q')}"` : `No products available at ${selectedPool?.name} yet`}>
           <p>{q ? 'Try a different word.' : 'Check back soon, or try another hostel.'}</p>
           {!q && <button type="button" className="btn btn--yellow" onClick={openPicker}>Change hostel</button>}
         </EmptyState>

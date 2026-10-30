@@ -32,7 +32,7 @@ const query = (value: unknown) => (typeof value === "string" ? value : undefined
 export const listProductRequestsController = async (req: Request, res: Response) => {
   try {
     res.status(200).json({
-      requests: await listProductRequests(query(req.query.hostelId), voterToken(req)),
+      requests: await listProductRequests({ poolId: query(req.query.poolId), hostelId: query(req.query.hostelId) }, voterToken(req)),
       maxOpen: MAX_OPEN_REQUESTS,
     });
   } catch (error) {
@@ -75,7 +75,7 @@ export const createFeedbackController = async (req: Request, res: Response) => {
 
 export const getAdminProductRequestsController = async (req: Request, res: Response) => {
   try {
-    res.status(200).json(await getAdminProductRequests({ hostelId: query(req.query.hostelId), status: query(req.query.status) }));
+    res.status(200).json(await getAdminProductRequests({ poolId: query(req.query.poolId), status: query(req.query.status) }));
   } catch (error) {
     sendError(error, res, "Could not load product requests.");
   }

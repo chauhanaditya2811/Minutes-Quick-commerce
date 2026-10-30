@@ -10,7 +10,7 @@ import Notice from '../../components/ui/Notice';
 export default function CartPage() {
   const { lines, subtotal, clearCart } = useCart();
   const { data: settings } = useStoreSettings();
-  const { selectedHostel, openPicker } = useHostel();
+  const { selectedPool, openPicker } = useHostel();
   const navigate = useNavigate();
 
   if (lines.length === 0) {
@@ -33,7 +33,7 @@ export default function CartPage() {
           <button type="button" className="btn btn--red btn--sm" onClick={clearCart}>Clear Cart</button>
         </div>
         <p className="cart-hostel muted small">
-          Shopping at <strong>{selectedHostel?.name}</strong> ·{' '}
+          Shopping at <strong>{selectedPool?.name}</strong> ·{' '}
           <button type="button" className="link-btn" onClick={openPicker}>Change</button>
         </p>
         <ul className="cart-list">

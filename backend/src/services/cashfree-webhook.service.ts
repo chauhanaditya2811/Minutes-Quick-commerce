@@ -156,7 +156,7 @@ export const processCashfreeWebhook = async (
       };
     });
     if (result.newlyConfirmed) {
-      void notifyOwner(result.orderId, "Cashfree").catch((error: unknown) => {
+      void notifyOwner(result.orderId).catch((error: unknown) => {
         console.error("Cashfree webhook Telegram notification failed:", error);
       });
       if (result.shortfall) void notifyStockShortfall(result.orderId);

@@ -8,7 +8,7 @@ import { CartIcon, ChevronDownIcon, MenuIcon, PinIcon, SearchIcon, UserIcon } fr
 export default function Navbar() {
   const { firebaseUser, profile, signOut, loading: authLoading } = useAuth();
   const { itemCount } = useCart();
-  const { selectedHostel, openPicker } = useHostel();
+  const { selectedPool, openPicker } = useHostel();
   const navigate = useNavigate();
   const { pathname, search } = useLocation();
   const [params] = useSearchParams();
@@ -82,12 +82,12 @@ export default function Navbar() {
           type="button"
           className="hostel-chip"
           onClick={openPicker}
-          aria-label={selectedHostel ? `Delivering to ${selectedHostel.name}. Change hostel` : 'Select your hostel'}
+          aria-label={selectedPool ? `Delivering to ${selectedPool.name}. Change hostel` : 'Select your hostel'}
         >
           <PinIcon width={16} height={16} className="hostel-chip__pin" />
           <span className="hostel-chip__text">
-            <span className="hostel-chip__label">{selectedHostel ? 'Delivering to' : 'Select hostel'}</span>
-            {selectedHostel && <span className="hostel-chip__name">{selectedHostel.name}</span>}
+            <span className="hostel-chip__label">{selectedPool ? 'Delivering to' : 'Select hostel'}</span>
+            {selectedPool && <span className="hostel-chip__name">{selectedPool.name}</span>}
           </span>
           <ChevronDownIcon width={14} height={14} />
         </button>
@@ -175,7 +175,7 @@ export default function Navbar() {
         <span className="container hostel-bar__inner">
           <PinIcon width={15} height={15} className="hostel-chip__pin" />
           <span className="hostel-bar__text">
-            {selectedHostel ? <>Delivering to <strong>{selectedHostel.name}</strong></> : 'Select your hostel'}
+            {selectedPool ? <>Delivering to <strong>{selectedPool.name}</strong></> : 'Select your hostel'}
           </span>
           <ChevronDownIcon width={14} height={14} />
         </span>

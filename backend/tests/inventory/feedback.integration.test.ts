@@ -160,10 +160,11 @@ describe("customer feedback (minutes_test)", () => {
     ["abuse with spelling tricks", { name: "f u c k" }],
     ["an abusive phrase", { name: "Teri maa ki" }],
   ])("rejects %s without saving it", async (_label, body) => {
-    const before = await prisma.productRequest.count({ where: { hostelId: hostelA } });
+    const pool = await fx.groupOf(hostelA);
+    const before = await prisma.productRequest.count({ where: { stockGroupId: pool } });
     const response = await call("POST", "/api/product-requests", { body: { hostelId: hostelA, ...body }, voterToken: voter() });
     expect(response.status).toBe(400);
-    expect(await prisma.productRequest.count({ where: { hostelId: hostelA } })).toBe(before);
+    expect(await prisma.productRequest.count({ where: { stockGroupId: pool } })).toBe(before);
   });
 
   it("gives abusive requests a vague message that doesn't name the caught word", async () => {
@@ -221,7 +222,7 @@ describe("customer feedback (minutes_test)", () => {
     expect((await list(hostelA)).map((r) => r.id)).not.toContain(id);
     expect((await request(hostelA, name("rude joke"))).status).toBe(409);
 
-    const admin = await call("GET", `/api/admin/feedback/product-requests?hostelId=${hostelA}&status=HIDDEN`, { admin: "admin" });
+    const admin = await call("GET", `/api/admin/feedback/product-requests?poolId=${await fx.groupOf(hostelA)}&status=HIDDEN`, { admin: "admin" });
     expect(admin.body.requests.map((r: { id: string }) => r.id)).toEqual([id]);
     expect(admin.body.counts.HIDDEN).toBe(1);
   });
@@ -270,7 +271,10 @@ describe("customer feedback (minutes_test)", () => {
 
   describe("daily limit and midnight reset", () => {
     const yesterday = () => new Date(lastIndiaMidnight().getTime() - DAY_MS);
-    const openCount = (hostelId: string) => prisma.productRequest.count({ where: { hostelId, status: "OPEN" } });
+    const openCount = async (hostelId: string) =>
+      prisma.productRequest.count({ where: { stockGroupId: await fx.groupOf(hostelId), status: "OPEN" } });
+    const resetYesterday = async (hostelId: string) =>
+      prisma.stockGroup.update({ where: { id: await fx.groupOf(hostelId) }, data: { requestsResetAt: yesterday() } });
 
     /** Creates requests in order with the given vote counts (oldest first). */
     const seed = async (hostelId: string, votes: number[]) => {
@@ -328,7 +332,7 @@ describe("customer feedback (minutes_test)", () => {
       const [a, b, c, d, e, f] = await seed(hostel, [2, 9, 5, 5, 1, 7]);
       const stocked = (await request(hostel, name("Stocked"))).body.request.id;
       await call("PATCH", `/api/admin/feedback/product-requests/${stocked}`, { body: { status: "ADDED" }, admin: "admin" });
-      await prisma.hostel.update({ where: { id: hostel }, data: { requestsResetAt: yesterday() } });
+      await resetYesterday(hostel);
 
       const board = await list(hostel);
       expect(board.filter((r) => r.status === "OPEN").map((r) => r.id)).toEqual([b, f, c]);
@@ -350,7 +354,7 @@ describe("customer feedback (minutes_test)", () => {
       expect(back.status).toBe(200);
       expect(back.body).toMatchObject({ duplicate: true, request: { id: d, votes: 6, status: "OPEN" } });
 
-      const admin = await call("GET", `/api/admin/feedback/product-requests?hostelId=${hostel}&status=ARCHIVED`, { admin: "admin" });
+      const admin = await call("GET", `/api/admin/feedback/product-requests?poolId=${await fx.groupOf(hostel)}&status=ARCHIVED`, { admin: "admin" });
       expect(admin.body.requests.map((r: { id: string }) => r.id).sort()).toEqual([a, e].sort());
       expect(admin.body.counts).toMatchObject({ OPEN: 5, ADDED: 1, ARCHIVED: 2 });
     });
@@ -358,12 +362,12 @@ describe("customer feedback (minutes_test)", () => {
     it("resets exactly once when many requests arrive just after midnight", async () => {
       const hostel = (await fx.hostel("Busy Midnight")).id;
       await seed(hostel, [8, 7, 6, 5, 4, 3, 2]);
-      await prisma.hostel.update({ where: { id: hostel }, data: { requestsResetAt: yesterday() } });
+      await resetYesterday(hostel);
 
-      const archived = await Promise.all(Array.from({ length: 6 }, () => ensureDailyReset(hostel)));
+      const archived = await Promise.all(Array.from({ length: 6 }, async () => ensureDailyReset(await fx.groupOf(hostel))));
       expect(archived.reduce((sum, n) => sum + n, 0)).toBe(4);
       expect(await openCount(hostel)).toBe(3);
-      expect((await prisma.hostel.findUniqueOrThrow({ where: { id: hostel } })).requestsResetAt).toEqual(lastIndiaMidnight());
+      expect((await prisma.stockGroup.findUniqueOrThrow({ where: { id: await fx.groupOf(hostel) } })).requestsResetAt).toEqual(lastIndiaMidnight());
     });
   });
 });

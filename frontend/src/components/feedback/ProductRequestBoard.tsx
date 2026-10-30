@@ -14,8 +14,8 @@ const normalize = (name: string) => name.toLowerCase().replace(/[^\p{L}\p{N}]/gu
 
 /** A hostel's request board: ask for a product, or upvote what others asked for. */
 export default function ProductRequestBoard() {
-  const { selectedHostel } = useHostel();
-  const hostelId = selectedHostel?.id ?? '';
+  const { selectedPool } = useHostel();
+  const poolId = selectedPool?.id ?? '';
   const [requests, setRequests] = useState<ProductRequest[] | null>(null);
   const [maxOpen, setMaxOpen] = useState(DEFAULT_MAX_OPEN);
   const [loadError, setLoadError] = useState<string | null>(null);
@@ -25,16 +25,16 @@ export default function ProductRequestBoard() {
   const [pending, setPending] = useState<Set<string>>(new Set());
 
   const load = useCallback(async () => {
-    if (!hostelId) return;
+    if (!poolId) return;
     setLoadError(null);
     try {
-      const board = await api.getProductRequests(hostelId);
+      const board = await api.getProductRequests(poolId);
       setRequests(board.requests);
       setMaxOpen(board.maxOpen);
     } catch (error) {
       setLoadError(error instanceof Error ? error.message : 'Could not load requests.');
     }
-  }, [hostelId]);
+  }, [poolId]);
 
   useEffect(() => {
     setRequests(null);
@@ -88,7 +88,7 @@ export default function ProductRequestBoard() {
     setSubmitting(true);
     setNotice(null);
     try {
-      const { request, duplicate } = await api.requestProduct(hostelId, trimmed);
+      const { request, duplicate } = await api.requestProduct(poolId, trimmed);
       setRequests((list) => {
         const rest = (list ?? []).filter((r) => r.id !== request.id);
         return [...rest, request].sort((a, b) => b.votes - a.votes || a.createdAt.localeCompare(b.createdAt));
@@ -113,7 +113,7 @@ export default function ProductRequestBoard() {
     <div className="requests">
       <section className="panel requests__form-card" aria-labelledby="request-title">
         <h2 id="request-title">What should we stock?</h2>
-        <p className="muted small">Request a product for {selectedHostel?.name}. We stock the most wanted items first.</p>
+        <p className="muted small">Request a product for {selectedPool?.name}. We stock the most wanted items first.</p>
         {full && (
           <p className="requests__full" role="status">
             Today’s list is full ({maxOpen} of {maxOpen}). Upvote a request below, or come back after midnight when spots open up.
@@ -133,7 +133,7 @@ export default function ProductRequestBoard() {
               if (notice?.tone !== 'error') setNotice(null);
             }}
           />
-          <button type="submit" className="btn btn--yellow requests__submit" disabled={submitting || !hostelId || (full && matches.length === 0)}>
+          <button type="submit" className="btn btn--yellow requests__submit" disabled={submitting || !poolId || (full && matches.length === 0)}>
             {submitting ? 'Sending…' : 'Request'}
           </button>
         </form>

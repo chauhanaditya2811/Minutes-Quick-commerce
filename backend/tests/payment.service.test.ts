@@ -211,7 +211,7 @@ describe("Cashfree payment service", () => {
       cashfreePaymentId: "cf-pay-1",
       amount: 140,
     });
-    expect(mocks.notifyOwner).toHaveBeenCalledWith("order-1", "Cashfree");
+    expect(mocks.notifyOwner).toHaveBeenCalledWith("order-1");
   });
 
   it("does not notify again when the payment was already confirmed by the webhook", async () => {

@@ -37,7 +37,7 @@ export interface AdminProductRequest {
   name: string;
   status: ProductRequestStatus;
   votes: number;
-  hostel: { id: string; name: string };
+  pool: { id: string; name: string };
   addedAt: string | null;
   archivedAt: string | null;
   createdAt: string;

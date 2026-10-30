@@ -1194,3 +1194,13 @@
   .pool-hostel__actions { width: 100%; justify-content: space-between; }
   .pool-card__add { flex-direction: column; }
 }
+.hostel-option__sub { display: block; margin-top: 2px; color: var(--muted); font-size: 0.78rem; font-weight: 500; }
+
+/* ---------- Checkout: "Your hostel" chooser ---------- */
+.hostel-select { display: flex; align-items: center; justify-content: space-between; gap: 8px; width: 100%; min-height: 44px; padding: 10px 12px; background: var(--field); border: 1px solid var(--line); border-radius: var(--radius); color: var(--ink); font: inherit; text-align: left; cursor: pointer; }
+.hostel-select:hover:not(:disabled) { border-color: #cbd5e1; }
+.hostel-select:focus-visible { outline: 3px solid var(--blue); outline-offset: 1px; }
+.hostel-select[aria-invalid='true'] { border-color: var(--red); }
+.hostel-select--empty .hostel-select__value { color: #8b8f97; }
+.hostel-select__value { flex: 1; min-width: 0; overflow-wrap: anywhere; }
+.hostel-select__list .hostel-option { width: 100%; font: inherit; color: var(--ink); text-align: left; }

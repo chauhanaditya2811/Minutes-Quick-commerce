@@ -11,6 +11,7 @@ import orderRoutes from "./routes/order.routes.js";
 import adminOrderRoutes from "./routes/admin-order.routes.js";
 import cashfreeWebhookRoutes from "./routes/cashfree-webhook.routes.js";
 import hostelRoutes from "./routes/hostel.routes.js";
+import poolRoutes from "./routes/pool.routes.js";
 import adminHostelRoutes from "./routes/admin-hostel.routes.js";
 import adminStockGroupRoutes from "./routes/admin-stock-group.routes.js";
 import guestRoutes from "./routes/guest.routes.js";
@@ -40,6 +41,8 @@ app.use("/api/auth", authRoutes);
 app.use("/api/users", userRoutes);
 app.use("/api/products", productRoutes);
 app.use("/api/hostels", hostelRoutes);
+// Customers choose a pool (shared stock) first, and their exact hostel at checkout.
+app.use("/api/pools", poolRoutes);
 app.use("/api/admin/hostels", adminHostelRoutes);
 // Shared stock: which hostels sell from which stock, and each group's product stock.
 app.use("/api/admin/stock-groups", adminStockGroupRoutes);

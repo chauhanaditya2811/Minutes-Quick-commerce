@@ -10,7 +10,7 @@ const TABS = [
 
 /** Customer feedback: a hostel's upvotable product request board and a private feedback form. */
 export default function FeedbackPage() {
-  const { selectedHostel } = useHostel();
+  const { selectedPool } = useHostel();
   const [params, setParams] = useSearchParams();
   const tab = params.get('tab') === 'feedback' ? 'feedback' : 'requests';
 
@@ -18,7 +18,7 @@ export default function FeedbackPage() {
     <div className="page feedback-page">
       <header className="feedback-page__head">
         <h1>Feedback</h1>
-        <p className="muted">Tell us what to stock at {selectedHostel?.name} and how we can do better.</p>
+        <p className="muted">Tell us what to stock at {selectedPool?.name} and how we can do better.</p>
       </header>
 
       <div className="segmented" role="tablist" aria-label="Feedback">

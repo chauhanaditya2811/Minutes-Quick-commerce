@@ -88,10 +88,10 @@ describe("hostel catalogue and stock group routes", () => {
     else process.env.ADMIN_EMAIL = previousAdminEmail;
   });
 
-  it("requires a hostel for the customer catalogue", async () => {
+  it("requires a pool or hostel for the customer catalogue", async () => {
     const response = await fetch(`${baseUrl}/api/products`);
     expect(response.status).toBe(400);
-    await expect(response.json()).resolves.toEqual({ message: "Select a hostel first." });
+    await expect(response.json()).resolves.toEqual({ message: "Choose where you live first." });
     expect(mocks.inventoryFindMany).not.toHaveBeenCalled();
   });
 

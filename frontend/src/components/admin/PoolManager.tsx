@@ -79,7 +79,8 @@ export default function PoolManager({ onManageStock }: Props) {
         <div>
           <h2>Pools &amp; hostels</h2>
           <p className="muted small">
-            A pool is one stock. Every hostel sells from one pool, and hostels in the same pool share its stock. Customers only see hostels.
+            A pool is one stock. Every hostel sells from one pool, and hostels in the same pool share its stock.
+            <strong> Customers choose a pool by its name first</strong> (so name it the way students would, e.g. “Boys’ Hostels”), then pick their exact hostel at checkout.
           </p>
         </div>
         {!creating && (
@@ -314,7 +315,7 @@ function NewPoolForm({ hostels, pools, busy, error, onCancel, onCreate }: NewPoo
   return (
     <form className="shared-stock__editor pools__new" onSubmit={submit}>
       <h3>New pool</h3>
-      <Field label="Pool name" value={name} onChange={(e) => setName(e.target.value)} required maxLength={80} placeholder="e.g. Boys’ pool" />
+      <Field label="Pool name" value={name} onChange={(e) => setName(e.target.value)} required maxLength={80} placeholder="e.g. Boys’ Hostels" hint="Customers see this name when they choose where they live." />
 
       <div className="shared-stock__pick">
         <div className="shared-stock__pick-head">

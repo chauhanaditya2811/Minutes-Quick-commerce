@@ -9,6 +9,7 @@ import type { GuestCustomerInput } from '../types/order';
 const PENDING_KEY = 'minutes.guestCheckout.pending.v1';
 const DETAILS_KEY = 'minutes.guestCheckout.details.v1';
 const ORDERS_KEY = 'minutes.guestOrders.v1';
+const HOSTELS_KEY = 'minutes.guestHostels.v1';
 const MAX_REMEMBERED_ORDERS = 20;
 
 /** A 256-bit random secret, base64url encoded (43 characters). */
@@ -52,6 +53,11 @@ export const savePendingCheckout = (pending: PendingGuestCheckout | null) => wri
 
 export const loadGuestDetails = () => read<Partial<Record<keyof GuestCustomerInput, string>>>(sessionStorage, DETAILS_KEY);
 export const saveGuestDetails = (details: Record<keyof GuestCustomerInput, string>) => write(sessionStorage, DETAILS_KEY, details);
+
+/** The hostel a guest last chose in each pool on this device, so checkout can pre-fill it. */
+export const loadGuestHostel = (poolId: string) => read<Record<string, string>>(localStorage, HOSTELS_KEY)?.[poolId] ?? '';
+export const saveGuestHostel = (poolId: string, hostelId: string) =>
+  write(localStorage, HOSTELS_KEY, { ...(read<Record<string, string>>(localStorage, HOSTELS_KEY) ?? {}), [poolId]: hostelId });
 
 /** A guest order placed on this device, so its page can be reopened. */
 export interface RememberedGuestOrder {

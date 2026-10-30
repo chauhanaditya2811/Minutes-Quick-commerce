@@ -23,8 +23,8 @@ interface CartContextValue {
 
 interface StoredCart {
   /**
-   * The stock the cart was filled from: the hostel's stock group (stored under the old
-   * "hostelId" name; a hostel's first group shares its id, so older carts keep working).
+   * The pool (shared stock) the cart was filled from, stored under the old "hostelId" name.
+   * A hostel's first pool shares its id, so carts saved by older versions keep working.
    */
   hostelId: string | null;
   lines: CartLine[];
@@ -50,14 +50,17 @@ function load(): StoredCart {
 const clamp = (qty: number, product: Product) => Math.max(0, Math.min(qty, product.stock));
 
 export function CartProvider({ children }: { children: ReactNode }) {
-  const { selectedHostel } = useHostel();
-  // Hostels sharing a stock group share a cart: switching between them keeps it.
-  const hostelId = selectedHostel ? (selectedHostel.stockGroupId ?? selectedHostel.id) : null;
+  const { selectedPool } = useHostel();
+  // The cart belongs to the pool (shared stock) it was filled from.
+  const hostelId = selectedPool?.id ?? null;
   const [cart, setCart] = useState<StoredCart>(load);
   // A cart never carries items from one stock into another.
   const lines = useMemo(() => (cart.hostelId === hostelId ? cart.lines : []), [cart, hostelId]);
 
+  // Switching to a different pool starts a fresh cart. Nothing chosen yet (e.g. while the
+  // places are still loading) keeps the saved cart for when the choice is known.
   useEffect(() => {
+    if (hostelId === null) return;
     setCart((prev) => (prev.hostelId === hostelId ? prev : { hostelId, lines: [] }));
   }, [hostelId]);
 

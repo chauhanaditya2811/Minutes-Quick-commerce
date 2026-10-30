@@ -302,7 +302,7 @@ export const verifyCashfreePaymentForOwner = async (
       amount: attempt.amount,
     })
   );
-  if (result.newlyConfirmed) void notifyOwner(orderId, "Cashfree");
+  if (result.newlyConfirmed) void notifyOwner(orderId);
   if (result.shortfall) void notifyStockShortfall(orderId);
   return {
     orderId,
