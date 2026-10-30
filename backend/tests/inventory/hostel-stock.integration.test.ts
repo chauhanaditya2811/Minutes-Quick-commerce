@@ -2,7 +2,7 @@ import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
 import { prisma } from "../../src/config/database.js";
 import { createOrder } from "../../src/services/order.service.js";
 import { expireReservations } from "../../src/services/inventory.service.js";
-import { getHostelInventory, updateHostelInventory } from "../../src/services/product-inventory.service.js";
+import { getStockGroupInventory, updateStockGroupInventory } from "../../src/services/product-inventory.service.js";
 import { createInventoryFixture } from "./fixtures.js";
 
 // Hostel-first stock saves against the real minutes_test database.
@@ -13,6 +13,11 @@ describe("hostel-first stock management (minutes_test)", () => {
   let maggi: string;
   let water: string;
   let unstocked: string;
+
+  // Admins edit stock per stock group; each fixture hostel has a group of its own.
+  const getHostelInventory = async (hostelId: string) => getStockGroupInventory(await fx.groupOf(hostelId));
+  const updateHostelInventory = async (hostelId: string, entries: unknown) =>
+    updateStockGroupInventory(await fx.groupOf(hostelId), entries);
 
   const rowFor = async (hostelId: string, productId: string) =>
     (await getHostelInventory(hostelId)).products.find((p) => p.productId === productId);
@@ -100,7 +105,7 @@ describe("hostel-first stock management (minutes_test)", () => {
       const inventory = await updateHostelInventory(hostelB, [
         { productId: maggi, isAvailable: true, quantity: 4, expectedQuantity: 10 },
       ]);
-      expect(inventory.hostelActive).toBe(false);
+      expect(inventory.active).toBe(false);
       expect(await fx.stock(maggi, hostelB)).toBe(4);
       expect(await fx.stock(water, hostelB)).toBe(5);
     } finally {

@@ -32,9 +32,9 @@ export interface ProductInput {
   unit: string;
 }
 
-/** One product's stock at one hostel, as summarised in GET /api/admin/products. */
+/** One product's stock in one stock group, as summarised in GET /api/admin/products. */
 export interface HostelInventorySummary {
-  hostelId: string;
+  stockGroupId: string;
   quantity: number; // available to sell now
   isAvailable: boolean;
   reserved?: number; // held for payments in progress, not included in quantity
@@ -52,7 +52,7 @@ export interface AdminProduct {
   inventories: HostelInventorySummary[];
 }
 
-/** One product row of GET /api/admin/hostels/:id/inventory. */
+/** One product row of GET /api/admin/stock-groups/:id/inventory. */
 export interface HostelStockRow {
   productId: string;
   name: string;
@@ -62,16 +62,34 @@ export interface HostelStockRow {
   isAvailable: boolean;
   quantity: number; // available to sell now
   reserved: number; // held for payments in progress, not included in quantity
-  exists: boolean; // false: no stock record yet at this hostel (shown as unavailable, 0)
+  exists: boolean; // false: no stock record yet in this group (shown as unavailable, 0)
   updatedAt: string | null;
 }
 
-/** GET /api/admin/hostels/:id/inventory — every product's stock at one hostel. */
+/** A hostel served by a stock group. */
+export interface StockGroupHostel {
+  id: string;
+  name: string;
+  isActive: boolean;
+}
+
+/** GET /api/admin/stock-groups/:id/inventory — every product's stock in one shared stock group. */
 export interface HostelStock {
-  hostelId: string;
-  hostelName: string;
-  hostelActive: boolean;
+  stockGroupId: string;
+  name: string;
+  hostels: StockGroupHostel[];
+  /** True when at least one of its hostels is active (customers can buy from it). */
+  active: boolean;
   products: HostelStockRow[];
+}
+
+/** GET /api/admin/stock-groups — one shared stock and the hostels that sell from it. */
+export interface StockGroup {
+  id: string;
+  name: string;
+  hostels: StockGroupHostel[];
+  createdAt: string;
+  updatedAt: string;
 }
 
 /** Body entries for PUT /api/admin/hostels/:id/inventory. */

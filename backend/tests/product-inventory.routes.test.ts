@@ -5,6 +5,8 @@ import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from "vites
 const mocks = vi.hoisted(() => ({
   hostelFindUnique: vi.fn(),
   hostelFindMany: vi.fn(),
+  groupFindUnique: vi.fn(),
+  groupFindMany: vi.fn(),
   productFindFirst: vi.fn(),
   productFindMany: vi.fn(),
   inventoryFindMany: vi.fn(),
@@ -19,6 +21,7 @@ const mocks = vi.hoisted(() => ({
 vi.mock("../src/config/database.js", () => ({
   prisma: {
     hostel: { findUnique: mocks.hostelFindUnique, findMany: mocks.hostelFindMany },
+    stockGroup: { findUnique: mocks.groupFindUnique, findMany: mocks.groupFindMany },
     product: { findFirst: mocks.productFindFirst, findMany: mocks.productFindMany },
     productInventory: {
       findMany: mocks.inventoryFindMany,
@@ -36,9 +39,9 @@ vi.mock("firebase-admin/auth", () => ({ getAuth: () => ({ verifyIdToken: mocks.v
 
 import productRoutes from "../src/routes/product.routes.js";
 import adminProductRoutes from "../src/routes/admin-product.routes.js";
-import adminHostelRoutes from "../src/routes/admin-hostel.routes.js";
+import adminStockGroupRoutes from "../src/routes/admin-stock-group.routes.js";
 
-describe("hostel-scoped product routes", () => {
+describe("hostel catalogue and stock group routes", () => {
   let server: Server;
   let baseUrl: string;
   let previousAdminEmail: string | undefined;
@@ -49,7 +52,7 @@ describe("hostel-scoped product routes", () => {
     const app = express();
     app.use(express.json());
     app.use("/api/products", productRoutes);
-    app.use("/api/admin/hostels", adminHostelRoutes);
+    app.use("/api/admin/stock-groups", adminStockGroupRoutes);
     app.use("/api/admin", adminProductRoutes);
     server = createServer(app);
     await new Promise<void>((resolve) => server.listen(0, "127.0.0.1", resolve));
@@ -69,7 +72,8 @@ describe("hostel-scoped product routes", () => {
           ? { uid: "c", email: "customer@example.test" }
           : Promise.reject(new Error("bad token"))
     );
-    mocks.hostelFindUnique.mockResolvedValue({ id: "hostel-a", name: "Hostel A", isActive: true });
+    mocks.hostelFindUnique.mockResolvedValue({ id: "hostel-a", name: "Hostel A", isActive: true, stockGroupId: "group-a" });
+    mocks.groupFindUnique.mockResolvedValue({ id: "group-a", name: "Group A", hostels: [{ id: "hostel-a", name: "Hostel A", isActive: true }] });
     mocks.inventoryFindMany.mockResolvedValue([]);
     mocks.transaction.mockImplementation(async (callback: (tx: unknown) => Promise<unknown>) =>
       callback({ productInventory: { upsert: mocks.inventoryUpsert } })
@@ -124,7 +128,7 @@ describe("hostel-scoped product routes", () => {
     const put = await fetch(`${baseUrl}/api/admin/products/product-1/inventory`, {
       method: "PUT",
       headers: { authorization: "Bearer customer", "content-type": "application/json" },
-      body: JSON.stringify({ entries: [{ hostelId: "hostel-a", isAvailable: true, quantity: 1 }] }),
+      body: JSON.stringify({ entries: [{ stockGroupId: "group-a", isAvailable: true, quantity: 1 }] }),
     });
     expect(put.status).toBe(403);
     expect(mocks.transaction).not.toHaveBeenCalled();
@@ -134,39 +138,41 @@ describe("hostel-scoped product routes", () => {
     const response = await fetch(`${baseUrl}/api/admin/products/product-1/inventory`, {
       method: "PUT",
       headers: { authorization: "Bearer admin", "content-type": "application/json" },
-      body: JSON.stringify({ entries: [{ hostelId: "hostel-a", isAvailable: true, quantity: -5 }] }),
+      body: JSON.stringify({ entries: [{ stockGroupId: "group-a", isAvailable: true, quantity: -5 }] }),
     });
     expect(response.status).toBe(400);
     expect(mocks.transaction).not.toHaveBeenCalled();
   });
 
-  it("saves admin inventory and returns the refreshed hostel list", async () => {
+  it("saves admin inventory and returns the refreshed stock group list", async () => {
     mocks.productFindFirst.mockResolvedValue({ id: "product-1", name: "Maggi", stock: 0 });
-    mocks.hostelFindMany.mockImplementation(async (args?: { where?: unknown }) =>
-      args?.where ? [{ id: "hostel-a", name: "Hostel A" }] : [{ id: "hostel-a", name: "Hostel A", isActive: true }]
+    mocks.groupFindMany.mockImplementation(async (args?: { where?: unknown }) =>
+      args?.where
+        ? [{ id: "group-a", name: "Group A" }]
+        : [{ id: "group-a", name: "Group A", hostels: [{ id: "hostel-a", name: "Hostel A", isActive: true }] }]
     );
     mocks.inventoryFindMany.mockResolvedValue([
-      { hostelId: "hostel-a", quantity: 30, isAvailable: true, updatedAt: new Date(0) },
+      { stockGroupId: "group-a", quantity: 30, isAvailable: true, updatedAt: new Date(0) },
     ]);
 
     const response = await fetch(`${baseUrl}/api/admin/products/product-1/inventory`, {
       method: "PUT",
       headers: { authorization: "Bearer admin", "content-type": "application/json" },
-      body: JSON.stringify({ entries: [{ hostelId: "hostel-a", isAvailable: true, quantity: 30 }] }),
+      body: JSON.stringify({ entries: [{ stockGroupId: "group-a", isAvailable: true, quantity: 30 }] }),
     });
 
     expect(response.status).toBe(200);
     const body = await response.json();
-    expect(body.hostels[0]).toMatchObject({ hostelId: "hostel-a", quantity: 30, isAvailable: true });
+    expect(body.groups[0]).toMatchObject({ stockGroupId: "group-a", quantity: 30, isAvailable: true, active: true });
     expect(mocks.inventoryUpsert).toHaveBeenCalledOnce();
   });
 
-  it("protects hostel stock endpoints from guests and non-admins", async () => {
-    expect((await fetch(`${baseUrl}/api/admin/hostels/hostel-a/inventory`)).status).toBe(401);
+  it("protects stock group endpoints from guests and non-admins", async () => {
+    expect((await fetch(`${baseUrl}/api/admin/stock-groups/group-a/inventory`)).status).toBe(401);
     expect(
-      (await fetch(`${baseUrl}/api/admin/hostels/hostel-a/inventory`, { headers: { authorization: "Bearer customer" } })).status
+      (await fetch(`${baseUrl}/api/admin/stock-groups/group-a/inventory`, { headers: { authorization: "Bearer customer" } })).status
     ).toBe(403);
-    const put = await fetch(`${baseUrl}/api/admin/hostels/hostel-a/inventory`, {
+    const put = await fetch(`${baseUrl}/api/admin/stock-groups/group-a/inventory`, {
       method: "PUT",
       headers: { authorization: "Bearer customer", "content-type": "application/json" },
       body: JSON.stringify({ entries: [{ productId: "product-1", isAvailable: true, quantity: 1 }] }),
@@ -175,24 +181,24 @@ describe("hostel-scoped product routes", () => {
     expect(mocks.transaction).not.toHaveBeenCalled();
   });
 
-  it("returns one hostel's stock for every product to admins", async () => {
+  it("returns one stock group's stock for every product to admins", async () => {
     mocks.productFindMany.mockResolvedValue([
       { id: "product-1", name: "Maggi", imageUrl: "https://x.test/m.jpg", unit: "pack", price: 15 },
     ]);
     mocks.inventoryFindMany.mockResolvedValue([
-      { productId: "product-1", hostelId: "hostel-a", quantity: 12, isAvailable: true, updatedAt: new Date(0) },
+      { productId: "product-1", stockGroupId: "group-a", quantity: 12, isAvailable: true, updatedAt: new Date(0) },
     ]);
 
-    const response = await fetch(`${baseUrl}/api/admin/hostels/hostel-a/inventory`, { headers: { authorization: "Bearer admin" } });
+    const response = await fetch(`${baseUrl}/api/admin/stock-groups/group-a/inventory`, { headers: { authorization: "Bearer admin" } });
 
     expect(response.status).toBe(200);
     const body = await response.json();
-    expect(body).toMatchObject({ hostelId: "hostel-a", hostelName: "Hostel A" });
+    expect(body).toMatchObject({ stockGroupId: "group-a", name: "Group A", hostels: [{ id: "hostel-a", name: "Hostel A", isActive: true }] });
     expect(body.products[0]).toMatchObject({ productId: "product-1", quantity: 12, isAvailable: true, reserved: 0 });
   });
 
-  it("rejects invalid hostel stock payloads with 400 before writing", async () => {
-    const response = await fetch(`${baseUrl}/api/admin/hostels/hostel-a/inventory`, {
+  it("rejects invalid stock group payloads with 400 before writing", async () => {
+    const response = await fetch(`${baseUrl}/api/admin/stock-groups/group-a/inventory`, {
       method: "PUT",
       headers: { authorization: "Bearer admin", "content-type": "application/json" },
       body: JSON.stringify({ entries: [{ productId: "product-1", isAvailable: true, quantity: 1.5 }] }),

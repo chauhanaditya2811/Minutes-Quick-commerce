@@ -8,7 +8,7 @@ export const NEW_PRODUCT_DAYS = 7;
 /** How many top sellers get the "Popular" tag, and how many orders each needs first. */
 export const POPULAR_TAG_COUNT = 3;
 export const POPULAR_TAG_MIN_ORDERS = 2;
-/** Order counts are cached briefly per hostel; stock itself is always read live. */
+/** Order counts are cached briefly per stock group; stock itself is always read live. */
 const CACHE_MS = 5 * 60 * 1000;
 
 const cache = new Map<string, { at: number; counts: Map<string, number> }>();
@@ -17,11 +17,12 @@ const cache = new Map<string, { at: number; counts: Map<string, number> }>();
 export const clearPopularityCache = () => cache.clear();
 
 /**
- * How many paid orders at this hostel included each product in the last 30 days.
- * Counts orders, not units, so one bulk buyer can't outrank many separate customers.
+ * How many paid orders from the hostels of one stock group included each product in the last
+ * 30 days. Hostels sharing a shelf share one ranking. Counts orders, not units, so one bulk
+ * buyer can't outrank many separate customers.
  */
-export const getRecentOrderCounts = async (hostelId: string, now = Date.now()) => {
-  const hit = cache.get(hostelId);
+export const getRecentOrderCounts = async (stockGroupId: string, now = Date.now()) => {
+  const hit = cache.get(stockGroupId);
   if (hit && now - hit.at < CACHE_MS) return hit.counts;
 
   // A cart can't hold the same product twice, so each order item is one order.
@@ -29,7 +30,7 @@ export const getRecentOrderCounts = async (hostelId: string, now = Date.now()) =
     by: ["productId"],
     where: {
       order: {
-        hostelId,
+        hostel: { stockGroupId },
         paymentStatus: "SUCCESS",
         orderStatus: { in: ["CONFIRMED", "DELIVERED"] },
         createdAt: { gte: new Date(now - POPULARITY_WINDOW_DAYS * DAY_MS) },
@@ -39,7 +40,7 @@ export const getRecentOrderCounts = async (hostelId: string, now = Date.now()) =
   });
 
   const counts = new Map(rows.map((row) => [row.productId, row._count._all]));
-  cache.set(hostelId, { at: now, counts });
+  cache.set(stockGroupId, { at: now, counts });
   return counts;
 };
 

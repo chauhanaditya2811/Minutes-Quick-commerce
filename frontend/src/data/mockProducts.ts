@@ -6,9 +6,9 @@ import type { Product, StoreSettings } from '../types/product';
 import type { Hostel } from '../services/api';
 
 export const mockHostels: Hostel[] = [
-  { id: 'mh1', name: 'Aravali Hostel' },
-  { id: 'mh2', name: 'Kailash Hostel' },
-  { id: 'mh3', name: 'Nilgiri Hostel' },
+  { id: 'mh1', name: 'Aravali Hostel', stockGroupId: 'mh1' },
+  { id: 'mh2', name: 'Kailash Hostel', stockGroupId: 'mh2' },
+  { id: 'mh3', name: 'Nilgiri Hostel', stockGroupId: 'mh3' },
 ];
 
 const art = (emoji: string, bg: string): string =>

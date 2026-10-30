@@ -287,8 +287,9 @@ describe("order and payment inventory lifecycle (minutes_test)", () => {
     await checkout(user.firebaseUid, 3);
 
     const admin = await getProductInventory(maggi);
-    const rowA = admin.hostels.find((h: { hostelId: string }) => h.hostelId === hostelA);
-    const rowB = admin.hostels.find((h: { hostelId: string }) => h.hostelId === hostelB);
+    const [groupA, groupB] = [await fx.groupOf(hostelA), await fx.groupOf(hostelB)];
+    const rowA = admin.groups.find((g) => g.stockGroupId === groupA);
+    const rowB = admin.groups.find((g) => g.stockGroupId === groupB);
     expect(rowA).toMatchObject({ quantity: 7, reserved: 3 });
     expect(rowB).toMatchObject({ quantity: 10, reserved: 0 });
 

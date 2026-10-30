@@ -70,7 +70,7 @@ const customer = {
   room: "204",
 };
 
-const hostel = { id: "hostel-1", name: "Hostel A", isActive: true };
+const hostel = { id: "hostel-1", name: "Hostel A", isActive: true, stockGroupId: "group-1" };
 
 const settings = {
   id: "store-settings",
@@ -156,7 +156,7 @@ describe("checkout validation service", () => {
     expect(mocks.inventoryFindMany).toHaveBeenCalledWith(
       expect.objectContaining({
         where: {
-          hostelId: "hostel-1",
+          stockGroupId: "group-1",
           productId: { in: ["product-1"] },
           isAvailable: true,
           product: { isDeleted: false },
@@ -276,7 +276,7 @@ describe("checkout validation service", () => {
 
   it("rejects a store hostel that differs from the delivery hostel", async () => {
     mocks.hostelFindUnique.mockImplementation(async ({ where }: { where: { id: string } }) =>
-      where.id === "hostel-2" ? { id: "hostel-2", name: "Hostel B", isActive: true } : hostel
+      where.id === "hostel-2" ? { id: "hostel-2", name: "Hostel B", isActive: true, stockGroupId: "group-2" } : hostel
     );
 
     await expect(
@@ -287,6 +287,19 @@ describe("checkout validation service", () => {
         "Your delivery details are for Hostel A, but you are shopping at Hostel B. Update your delivery hostel or switch store.",
     });
     expect(mocks.inventoryFindMany).not.toHaveBeenCalled();
+  });
+
+  it("accepts a store hostel that shares the delivery hostel's stock group", async () => {
+    mocks.hostelFindUnique.mockImplementation(async ({ where }: { where: { id: string } }) =>
+      where.id === "hostel-2" ? { id: "hostel-2", name: "Hostel B", isActive: true, stockGroupId: "group-1" } : hostel
+    );
+
+    const result = await validateCheckout("firebase-user-1", checkoutFor([{ productId: "product-1", quantity: 4 }], "hostel-2"));
+    // Delivered to the hostel in their details, from the shared stock.
+    expect(result.hostelId).toBe("hostel-1");
+    expect(mocks.inventoryFindMany).toHaveBeenCalledWith(
+      expect.objectContaining({ where: expect.objectContaining({ stockGroupId: "group-1" }) })
+    );
   });
 
   it("rejects an inactive or unknown store hostel", async () => {
@@ -301,7 +314,7 @@ describe("checkout validation service", () => {
 
   it("does not create an order for a different hostel than the delivery hostel", async () => {
     mocks.hostelFindUnique.mockImplementation(async ({ where }: { where: { id: string } }) =>
-      where.id === "hostel-2" ? { id: "hostel-2", name: "Hostel B", isActive: true } : hostel
+      where.id === "hostel-2" ? { id: "hostel-2", name: "Hostel B", isActive: true, stockGroupId: "group-2" } : hostel
     );
 
     await expect(

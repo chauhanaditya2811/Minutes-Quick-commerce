@@ -10,21 +10,26 @@ import { SearchIcon } from '../ui/Icons';
 import ProductForm from './ProductForm';
 import { loadAdminCatalogue, type AdminCatalogue } from './adminCatalogue';
 
+// Stock is per stock group, so a hostel shows the stock of the group it sells from.
+const groupOf = (hostels: AdminHostel[], hostelId: string) => hostels.find((h) => h.id === hostelId)?.stockGroupId ?? hostelId;
+
 function AvailabilityCell({ product, hostels, view }: { product: AdminProduct; hostels: AdminHostel[]; view: string }) {
   if (view !== 'all') {
-    const row = product.inventories.find((inv) => inv.hostelId === view);
+    const row = product.inventories.find((inv) => inv.stockGroupId === groupOf(hostels, view));
     if (!row?.isAvailable) return <span className="inv-chip inv-chip--hidden">Unavailable</span>;
     if (row.quantity === 0) return <span className="inv-chip inv-chip--out">Out of stock</span>;
     return <span className="inv-summary"><strong>{row.quantity}</strong> units</span>;
   }
 
-  const activeIds = new Set(hostels.filter((h) => h.isActive).map((h) => h.id));
-  const live = product.inventories.filter((inv) => inv.isAvailable && activeIds.has(inv.hostelId));
-  const units = live.reduce((sum, inv) => sum + inv.quantity, 0);
-  if (live.length === 0) return <span className="inv-chip inv-chip--out">Not available</span>;
+  const active = hostels.filter((h) => h.isActive);
+  const rows = new Map(product.inventories.map((inv) => [inv.stockGroupId, inv]));
+  const liveHostels = active.filter((h) => rows.get(groupOf(hostels, h.id))?.isAvailable);
+  // Count each shared stock once, however many hostels sell from it.
+  const units = [...new Set(liveHostels.map((h) => groupOf(hostels, h.id)))].reduce((sum, id) => sum + (rows.get(id)?.quantity ?? 0), 0);
+  if (liveHostels.length === 0) return <span className="inv-chip inv-chip--out">Not available</span>;
   return (
     <span className="inv-summary">
-      <span>Live in <strong>{live.length}</strong> of {activeIds.size}</span>
+      <span>Live at <strong>{liveHostels.length}</strong> of {active.length} hostels</span>
       <small className="muted">{units} units</small>
     </span>
   );
