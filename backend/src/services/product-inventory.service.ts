@@ -1,5 +1,6 @@
 import { prisma } from "../config/database.js";
 import { getActiveReservedQuantities } from "./inventory.service.js";
+import { getRecentOrderCounts, rankByPopularity } from "./product-popularity.service.js";
 
 export const MAX_INVENTORY_QUANTITY = 2_147_483_647;
 const MAX_INVENTORY_ENTRIES = 500;
@@ -65,17 +66,23 @@ const requireActiveHostel = async (hostelId: string) => {
   return hostel;
 };
 
-// Returns the customer catalogue for one active hostel. `stock` is that hostel's quantity.
+// Returns the customer catalogue for one active hostel, most ordered first (see rankByPopularity).
+// `stock` is that hostel's quantity; `popular` marks its top sellers.
 export const getHostelCatalog = async (hostelId: string) => {
   await requireActiveHostel(hostelId);
 
-  const rows = await prisma.productInventory.findMany({
-    where: { hostelId, isAvailable: true, product: { isDeleted: false } },
-    select: { quantity: true, product: { select: catalogProductSelection } },
-    orderBy: { product: { createdAt: "desc" } },
-  });
+  const [rows, counts] = await Promise.all([
+    prisma.productInventory.findMany({
+      where: { hostelId, isAvailable: true, product: { isDeleted: false } },
+      select: { quantity: true, product: { select: catalogProductSelection } },
+    }),
+    getRecentOrderCounts(hostelId),
+  ]);
 
-  return rows.map(({ quantity, product }) => ({ ...product, stock: quantity, hostelId }));
+  return rankByPopularity(
+    rows.map(({ quantity, product }) => ({ ...product, stock: quantity, hostelId })),
+    counts
+  );
 };
 
 // Returns one product if it is enabled at the given active hostel.
