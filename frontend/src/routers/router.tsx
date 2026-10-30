@@ -13,6 +13,7 @@ import OrdersPage from '../pages/orders/OrdersPage';
 import AccountPage from '../pages/account/AccountPage';
 import AuthPage from '../pages/auth/AuthPage';
 import DashboardPage from '../pages/dashboard/DashboardPage';
+import FeedbackPage from '../pages/feedback/FeedbackPage';
 import NotFoundPage from '../pages/NotFoundPage';
 import { CancellationRefundPage, ContactPage, DeliveryPolicyPage, PrivacyPage, TermsPage } from '../pages/support/PolicyPages';
 
@@ -23,6 +24,8 @@ export const router = createBrowserRouter([
       { path: '/', element: <HostelRoute><HomePage /></HostelRoute> },
       { path: '/products/:id', element: <HostelRoute><ProductDetailsPage /></HostelRoute> },
       { path: '/cart', element: <HostelRoute><CartPage /></HostelRoute> },
+      // Product requests are per hostel; general feedback is sent with the hostel for context.
+      { path: '/feedback', element: <HostelRoute><FeedbackPage /></HostelRoute> },
       { path: '/login', element: <AuthPage mode="login" /> },
       { path: '/register', element: <AuthPage mode="register" /> },
       { path: '/forgot-password', element: <AuthPage mode="reset-password" /> },

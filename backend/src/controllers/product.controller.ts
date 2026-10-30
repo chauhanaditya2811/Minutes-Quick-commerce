@@ -8,10 +8,10 @@ import {
   InventoryServiceError,
   getAdminProductsWithInventory,
   getHostelCatalog,
-  getHostelInventory,
+  getStockGroupInventory,
   getHostelProduct,
   getProductInventory,
-  updateHostelInventory,
+  updateStockGroupInventory,
   updateProductInventory,
 } from "../services/product-inventory.service.js";
 
@@ -153,7 +153,7 @@ export const getSingleProduct = async (
   }
 };
 
-// Admin-only product list with per-hostel inventory.
+// Admin-only product list with per-stock-group inventory.
 export const getAdminProductsController = async (
   _req: Request,
   res: Response
@@ -165,7 +165,7 @@ export const getAdminProductsController = async (
   }
 };
 
-// Admin-only inventory of one product across every hostel.
+// Admin-only inventory of one product across every stock group.
 export const getProductInventoryController = async (
   req: Request,
   res: Response
@@ -184,7 +184,7 @@ export const getProductInventoryController = async (
   }
 };
 
-// Admin-only bulk save of one product's hostel inventory.
+// Admin-only bulk save of one product's stock group inventory.
 export const updateProductInventoryController = async (
   req: Request,
   res: Response
@@ -318,40 +318,40 @@ export const deleteProductController = async (
     });
   }
 };
-// Admin-only stock of every product at one hostel.
-export const getHostelInventoryController = async (
+// Admin-only stock of every product in one stock group.
+export const getStockGroupInventoryController = async (
   req: Request,
   res: Response
 ): Promise<void> => {
   const { id } = req.params;
 
   if (typeof id !== "string" || !id.trim()) {
-    res.status(400).json({ message: "A hostel ID is required." });
+    res.status(400).json({ message: "A stock group ID is required." });
     return;
   }
 
   try {
-    res.status(200).json(await getHostelInventory(id));
+    res.status(200).json(await getStockGroupInventory(id));
   } catch (error) {
-    sendInventoryError(error, res, "Failed to get hostel stock.");
+    sendInventoryError(error, res, "Failed to get stock.");
   }
 };
 
-// Admin-only bulk save of several products' stock at one hostel.
-export const updateHostelInventoryController = async (
+// Admin-only bulk save of several products' stock in one stock group.
+export const updateStockGroupInventoryController = async (
   req: Request,
   res: Response
 ): Promise<void> => {
   const { id } = req.params;
 
   if (typeof id !== "string" || !id.trim()) {
-    res.status(400).json({ message: "A hostel ID is required." });
+    res.status(400).json({ message: "A stock group ID is required." });
     return;
   }
 
   try {
-    res.status(200).json(await updateHostelInventory(id, req.body?.entries));
+    res.status(200).json(await updateStockGroupInventory(id, req.body?.entries));
   } catch (error) {
-    sendInventoryError(error, res, "Failed to save hostel stock.");
+    sendInventoryError(error, res, "Failed to save stock.");
   }
 };

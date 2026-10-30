@@ -185,17 +185,17 @@ const loadStoreSettings = async (client: CheckoutClient) => {
   return settings;
 };
 
-// Prices a cart from the hostel's current stock and the database prices. Client-supplied
-// prices, fees and totals are never used: only product IDs and quantities are read.
+// Prices a cart from the current stock of the hostel's stock group and the database prices.
+// Client-supplied prices, fees and totals are never used: only product IDs and quantities are read.
 const priceCartAtHostel = async (
   client: CheckoutClient,
-  hostel: { id: string; name: string },
+  hostel: { id: string; name: string; stockGroupId: string },
   items: CheckoutItemInput[],
   settings: { deliveryFee: number; minimumOrder: number }
 ) => {
   const inventories = await client.productInventory.findMany({
     where: {
-      hostelId: hostel.id,
+      stockGroupId: hostel.stockGroupId,
       productId: { in: items.map(({ productId }) => productId) },
       isAvailable: true,
       product: { isDeleted: false },
@@ -319,14 +319,14 @@ const validateCheckoutWithClient = async (
     throw new CheckoutError("Your hostel is inactive or no longer available. Please update your profile.", 400);
   }
 
-  // Orders are fulfilled from the delivery hostel's own stock, so the store the
-  // customer browsed must be the hostel saved in their delivery details.
+  // Orders are fulfilled from the delivery hostel's stock group, so the store the customer
+  // browsed must share that stock: the same hostel, or another hostel in the same group.
   if (storeHostelId !== hostel.id) {
     const storeHostel = await client.hostel.findUnique({ where: { id: storeHostelId } });
     if (!storeHostel || !storeHostel.isActive) {
       throw new CheckoutError("The selected hostel is no longer available. Please choose another hostel.", 409);
     }
-    throw new CheckoutError(
+    if (storeHostel.stockGroupId !== hostel.stockGroupId) throw new CheckoutError(
       `Your delivery details are for ${hostel.name}, but you are shopping at ${storeHostel.name}. Update your delivery hostel or switch store.`,
       409
     );

@@ -71,6 +71,7 @@ export default function Navbar() {
               <Link role="menuitem" to="/" onClick={() => setMenuOpen(false)}>Shop</Link>
               <Link role="menuitem" to="/orders" onClick={() => setMenuOpen(false)}>My Orders</Link>
               <Link role="menuitem" to="/cart" onClick={() => setMenuOpen(false)}>Shopping Cart</Link>
+              <Link role="menuitem" to="/feedback" onClick={() => setMenuOpen(false)}>Feedback</Link>
             </div>
           )}
         </div>

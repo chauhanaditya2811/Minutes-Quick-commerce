@@ -2,15 +2,17 @@ import { useState } from 'react';
 import ProductManager from '../../components/admin/ProductManager';
 import SettingsPanel from '../../components/admin/SettingsPanel';
 import OrdersShell from '../../components/admin/OrdersShell';
-import HostelManager from '../../components/admin/HostelManager';
+import PoolManager from '../../components/admin/PoolManager';
 import StockManager from '../../components/admin/StockManager';
+import FeedbackManager from '../../components/admin/FeedbackManager';
 
 const TABS = [
   { id: 'products', label: 'Products' },
   { id: 'stock', label: 'Stock management' },
   { id: 'settings', label: 'Store settings' },
   { id: 'orders', label: 'Orders' },
-  { id: 'hostels', label: 'Hostels' },
+  { id: 'hostels', label: 'Pools & hostels' },
+  { id: 'feedback', label: 'Feedback' },
 ] as const;
 
 type TabId = (typeof TABS)[number]['id'];
@@ -18,12 +20,15 @@ type TabId = (typeof TABS)[number]['id'];
 export default function DashboardPage() {
   const [tab, setTab] = useState<TabId>('products');
   const [stockDirty, setStockDirty] = useState(false);
+  /** A pool to open straight away in Stock management ("Manage stock" on a pool). */
+  const [stockPool, setStockPool] = useState<string | null>(null);
 
   // Leaving Stock management unmounts it, so confirm before discarding unsaved edits.
   const goTo = (next: TabId) => {
     if (next === tab) return;
     if (tab === 'stock' && stockDirty && !window.confirm('You have unsaved stock changes. Leave without saving?')) return;
     setStockDirty(false);
+    if (next !== 'stock') setStockPool(null);
     setTab(next);
   };
 
@@ -39,11 +44,24 @@ export default function DashboardPage() {
       </div>
       {tab === 'products' && <ProductManager onGoToHostels={() => goTo('hostels')} onManageStock={() => goTo('stock')} />}
       {tab === 'stock' && (
-        <StockManager onGoToProducts={() => goTo('products')} onGoToHostels={() => goTo('hostels')} onDirtyChange={setStockDirty} />
+        <StockManager
+          initialPoolId={stockPool}
+          onGoToProducts={() => goTo('products')}
+          onGoToHostels={() => goTo('hostels')}
+          onDirtyChange={setStockDirty}
+        />
       )}
       {tab === 'settings' && <SettingsPanel />}
       {tab === 'orders' && <OrdersShell />}
-      {tab === 'hostels' && <HostelManager />}
+      {tab === 'hostels' && (
+        <PoolManager
+          onManageStock={(poolId) => {
+            setStockPool(poolId);
+            goTo('stock');
+          }}
+        />
+      )}
+      {tab === 'feedback' && <FeedbackManager />}
     </div>
   );
 }

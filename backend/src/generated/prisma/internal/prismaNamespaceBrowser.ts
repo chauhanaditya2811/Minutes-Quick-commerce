@@ -53,6 +53,7 @@ export const AnyNull = runtime.AnyNull
 export const ModelName = {
   User: 'User',
   Hostel: 'Hostel',
+  StockGroup: 'StockGroup',
   Product: 'Product',
   ProductInventory: 'ProductInventory',
   Order: 'Order',
@@ -61,7 +62,10 @@ export const ModelName = {
   PaymentAttempt: 'PaymentAttempt',
   InventoryReservation: 'InventoryReservation',
   Setting: 'Setting',
-  CashfreeWebhookEvent: 'CashfreeWebhookEvent'
+  CashfreeWebhookEvent: 'CashfreeWebhookEvent',
+  ProductRequest: 'ProductRequest',
+  ProductRequestVote: 'ProductRequestVote',
+  Feedback: 'Feedback'
 } as const
 
 export type ModelName = (typeof ModelName)[keyof typeof ModelName]
@@ -101,11 +105,23 @@ export const HostelScalarFieldEnum = {
   id: 'id',
   name: 'name',
   isActive: 'isActive',
+  requestsResetAt: 'requestsResetAt',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt',
+  stockGroupId: 'stockGroupId'
+} as const
+
+export type HostelScalarFieldEnum = (typeof HostelScalarFieldEnum)[keyof typeof HostelScalarFieldEnum]
+
+
+export const StockGroupScalarFieldEnum = {
+  id: 'id',
+  name: 'name',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt'
 } as const
 
-export type HostelScalarFieldEnum = (typeof HostelScalarFieldEnum)[keyof typeof HostelScalarFieldEnum]
+export type StockGroupScalarFieldEnum = (typeof StockGroupScalarFieldEnum)[keyof typeof StockGroupScalarFieldEnum]
 
 
 export const ProductScalarFieldEnum = {
@@ -127,7 +143,7 @@ export type ProductScalarFieldEnum = (typeof ProductScalarFieldEnum)[keyof typeo
 export const ProductInventoryScalarFieldEnum = {
   id: 'id',
   productId: 'productId',
-  hostelId: 'hostelId',
+  stockGroupId: 'stockGroupId',
   quantity: 'quantity',
   isAvailable: 'isAvailable',
   createdAt: 'createdAt',
@@ -218,6 +234,7 @@ export const InventoryReservationScalarFieldEnum = {
   userId: 'userId',
   orderId: 'orderId',
   hostelId: 'hostelId',
+  stockGroupId: 'stockGroupId',
   quantity: 'quantity',
   status: 'status',
   expiresAt: 'expiresAt',
@@ -249,6 +266,46 @@ export const CashfreeWebhookEventScalarFieldEnum = {
 } as const
 
 export type CashfreeWebhookEventScalarFieldEnum = (typeof CashfreeWebhookEventScalarFieldEnum)[keyof typeof CashfreeWebhookEventScalarFieldEnum]
+
+
+export const ProductRequestScalarFieldEnum = {
+  id: 'id',
+  hostelId: 'hostelId',
+  name: 'name',
+  normalizedName: 'normalizedName',
+  status: 'status',
+  voteCount: 'voteCount',
+  addedAt: 'addedAt',
+  archivedAt: 'archivedAt',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type ProductRequestScalarFieldEnum = (typeof ProductRequestScalarFieldEnum)[keyof typeof ProductRequestScalarFieldEnum]
+
+
+export const ProductRequestVoteScalarFieldEnum = {
+  id: 'id',
+  requestId: 'requestId',
+  voterHash: 'voterHash',
+  createdAt: 'createdAt'
+} as const
+
+export type ProductRequestVoteScalarFieldEnum = (typeof ProductRequestVoteScalarFieldEnum)[keyof typeof ProductRequestVoteScalarFieldEnum]
+
+
+export const FeedbackScalarFieldEnum = {
+  id: 'id',
+  hostelId: 'hostelId',
+  message: 'message',
+  rating: 'rating',
+  contactPhone: 'contactPhone',
+  status: 'status',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type FeedbackScalarFieldEnum = (typeof FeedbackScalarFieldEnum)[keyof typeof FeedbackScalarFieldEnum]
 
 
 export const SortOrder = {

@@ -1,5 +1,4 @@
-/** WhatsApp number in international format without "+" (India +91 98728 08122). */
-const WHATSAPP_NUMBER = '919872808122';
+import { WHATSAPP_NUMBER } from '../../services/contact';
 
 /** Floating bottom-right shortcut that opens a WhatsApp chat with Minutes. */
 export default function WhatsAppButton() {

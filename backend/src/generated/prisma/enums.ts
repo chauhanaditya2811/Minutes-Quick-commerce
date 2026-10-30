@@ -47,3 +47,21 @@ export const OrderStatus = {
 } as const
 
 export type OrderStatus = (typeof OrderStatus)[keyof typeof OrderStatus]
+
+
+export const ProductRequestStatus = {
+  OPEN: 'OPEN',
+  ADDED: 'ADDED',
+  HIDDEN: 'HIDDEN',
+  ARCHIVED: 'ARCHIVED'
+} as const
+
+export type ProductRequestStatus = (typeof ProductRequestStatus)[keyof typeof ProductRequestStatus]
+
+
+export const FeedbackStatus = {
+  NEW: 'NEW',
+  DONE: 'DONE'
+} as const
+
+export type FeedbackStatus = (typeof FeedbackStatus)[keyof typeof FeedbackStatus]

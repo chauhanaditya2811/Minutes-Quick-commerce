@@ -21,9 +21,9 @@ interface Draft {
 }
 
 interface Props {
-  hostelId: string;
-  /** Shown while the hostel's stock loads. */
-  hostelName: string;
+  stockGroupId: string;
+  /** Shown while the group's stock loads. */
+  groupName: string;
   /** Preview mode only: builds stock from sample data instead of the API. */
   catalogue: AdminCatalogue | null;
   onBack: () => void;
@@ -38,17 +38,18 @@ const parseQuantity = (text: string): number | null => {
   return Number.isSafeInteger(value) && value <= MAX_STOCK_QUANTITY ? value : null;
 };
 
-const previewStock = (catalogue: AdminCatalogue, hostelId: string): HostelStock | null => {
-  const hostel = catalogue.hostels.find((h) => h.id === hostelId);
-  if (!hostel) return null;
+const previewStock = (catalogue: AdminCatalogue, stockGroupId: string): HostelStock | null => {
+  const group = catalogue.groups.find((g) => g.id === stockGroupId);
+  if (!group) return null;
   return {
-    hostelId,
-    hostelName: hostel.name,
-    hostelActive: hostel.isActive,
+    stockGroupId,
+    name: group.name,
+    hostels: group.hostels,
+    active: group.hostels.some((h) => h.isActive),
     products: [...catalogue.products]
       .sort((a, b) => a.name.localeCompare(b.name))
       .map((product) => {
-        const row = product.inventories.find((inv) => inv.hostelId === hostelId);
+        const row = product.inventories.find((inv) => inv.stockGroupId === stockGroupId);
         return {
           productId: product.id,
           name: product.name,
@@ -65,8 +66,11 @@ const previewStock = (catalogue: AdminCatalogue, hostelId: string): HostelStock 
   };
 };
 
-/** Every product's stock at one hostel, edited together and saved in one atomic request. */
-export default function HostelStockEditor({ hostelId, hostelName, catalogue, onBack, onDirtyChange, onSaved, onGoToProducts }: Props) {
+/**
+ * Every product's stock in one stock group (the shelf shared by its hostels), edited together
+ * and saved in one atomic request.
+ */
+export default function HostelStockEditor({ stockGroupId, groupName, catalogue, onBack, onDirtyChange, onSaved, onGoToProducts }: Props) {
   const [stock, setStock] = useState<HostelStock | null>(null);
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState<string | null>(null);
@@ -81,21 +85,21 @@ export default function HostelStockEditor({ hostelId, hostelName, catalogue, onB
     setLoading(true);
     setLoadError(null);
     try {
-      const fresh = previewMode ? (catalogue ? previewStock(catalogue, hostelId) : null) : await api.getHostelStock(hostelId);
-      if (!fresh) throw new Error('This hostel no longer exists.');
+      const fresh = previewMode ? (catalogue ? previewStock(catalogue, stockGroupId) : null) : await api.getGroupStock(stockGroupId);
+      if (!fresh) throw new Error('This pool no longer exists.');
       setStock(fresh);
     } catch (e) {
-      setLoadError(e instanceof Error ? e.message : 'Could not load stock for this hostel.');
+      setLoadError(e instanceof Error ? e.message : 'Could not load this pool’s stock.');
     } finally {
       setLoading(false);
     }
-  }, [catalogue, hostelId]);
+  }, [catalogue, stockGroupId]);
 
   useEffect(() => {
     void load();
-    // Load once per hostel; later refreshes are explicit (after saving or a conflict).
+    // Load once per group; later refreshes are explicit (after saving or a conflict).
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [hostelId]);
+  }, [stockGroupId]);
 
   const rows = stock?.products ?? [];
   const draftFor = (row: HostelStockRow): Draft =>
@@ -167,7 +171,7 @@ export default function HostelStockEditor({ hostelId, hostelName, catalogue, onB
   };
 
   const back = () => {
-    if (dirty && !window.confirm(`Discard ${dirtyRows.length} unsaved ${dirtyRows.length === 1 ? 'change' : 'changes'} for ${stock?.hostelName ?? hostelName}?`)) return;
+    if (dirty && !window.confirm(`Discard ${dirtyRows.length} unsaved ${dirtyRows.length === 1 ? 'change' : 'changes'} for ${stock?.name ?? groupName}?`)) return;
     onBack();
   };
 
@@ -185,10 +189,10 @@ export default function HostelStockEditor({ hostelId, hostelName, catalogue, onB
     setSaving(true);
     setNotice(null);
     try {
-      const saved = await api.updateHostelStock(hostelId, entries);
+      const saved = await api.updateGroupStock(stockGroupId, entries);
       setStock(saved);
       setDrafts({});
-      setNotice({ tone: 'success', text: `Saved stock for ${entries.length} ${entries.length === 1 ? 'product' : 'products'} at ${saved.hostelName}.` });
+      setNotice({ tone: 'success', text: `Saved stock for ${entries.length} ${entries.length === 1 ? 'product' : 'products'} in ${saved.name}.` });
       onSaved();
     } catch (e) {
       const conflict = e instanceof ApiError && e.status === 409;
@@ -202,7 +206,7 @@ export default function HostelStockEditor({ hostelId, hostelName, catalogue, onB
       // Someone else (or a customer's checkout) changed stock: show the latest values but keep the edits.
       if (conflict) {
         try {
-          setStock(await api.getHostelStock(hostelId));
+          setStock(await api.getGroupStock(stockGroupId));
         } catch {
           /* the error notice already asks the admin to review and retry */
         }
@@ -212,26 +216,37 @@ export default function HostelStockEditor({ hostelId, hostelName, catalogue, onB
     }
   };
 
-  const title = stock?.hostelName ?? hostelName;
+  const title = stock?.name ?? groupName;
+  const served = stock?.hostels ?? [];
 
   return (
     <div className="hostel-stock">
       <div className="hostel-stock__head">
         <button type="button" className="btn btn--outline btn--sm hostel-stock__back" onClick={back}>
-          ← All hostels
+          ← All pools
         </button>
         <div className="hostel-stock__title">
           <p className="hostel-stock__crumbs muted small">Stock management / {title}</p>
           <h3>
             {title}{' '}
-            {stock && <span className={`hostel-badge${stock.hostelActive ? '' : ' hostel-badge--inactive'}`}>{stock.hostelActive ? 'Active' : 'Inactive'}</span>}
+            {stock && <span className={`hostel-badge${stock.active ? '' : ' hostel-badge--inactive'}`}>{stock.active ? 'Live' : 'Not live'}</span>}
           </h3>
+          {served.length > 0 && (
+            <p className="hostel-stock__served muted small">
+              Pool for {served.length} {served.length === 1 ? 'hostel' : 'hostels'}: {served.map((h) => h.name).join(', ')}
+            </p>
+          )}
         </div>
       </div>
 
-      {stock && !stock.hostelActive && (
+      {stock && served.length === 0 && (
         <Notice tone="warning">
-          {stock.hostelName} is inactive, so customers can’t choose it. You can still prepare its stock; it goes live when the hostel is activated.
+          No hostel sells from this pool any more. Add hostels to it in Pools &amp; hostels, or delete it there.
+        </Notice>
+      )}
+      {stock && served.length > 0 && !stock.active && (
+        <Notice tone="warning">
+          All hostels in this pool are inactive, so customers can’t buy from it. You can still prepare its stock; it goes live when a hostel is activated.
         </Notice>
       )}
 
@@ -256,7 +271,7 @@ export default function HostelStockEditor({ hostelId, hostelName, catalogue, onB
       {stock && rows.length > 0 && (
         <>
           <p className="muted small hostel-stock__help">
-            <strong>Quantity</strong> is stock available to sell now. Untick <strong>Available</strong> to hide a product at this hostel;
+            <strong>Quantity</strong> is stock available to sell now. Untick <strong>Available</strong> to hide a product at every hostel in this pool;
             keep it ticked with 0 to show it as out of stock. Units held for payments in progress are shown separately and return
             automatically if a payment isn’t completed.
           </p>
@@ -307,7 +322,7 @@ export default function HostelStockEditor({ hostelId, hostelName, catalogue, onB
               const draft = draftFor(row);
               const quantity = parseQuantity(draft.quantity);
               const status = statusOf(row);
-              const inputId = `stock-${hostelId}-${row.productId}`;
+              const inputId = `stock-${stockGroupId}-${row.productId}`;
               return (
                 <li key={row.productId} className={`hostel-stock__row${isDirty(row) ? ' hostel-stock__row--dirty' : ''}${status === 'unavailable' ? ' hostel-stock__row--off' : ''}`}>
                   <div className="hostel-stock__product">

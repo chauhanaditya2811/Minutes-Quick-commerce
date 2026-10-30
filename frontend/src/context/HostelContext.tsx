@@ -28,7 +28,8 @@ function loadSelection(): Hostel | null {
     const raw = localStorage.getItem(STORAGE_KEY);
     if (!raw) return null;
     const value = JSON.parse(raw) as Partial<Hostel>;
-    return typeof value.id === 'string' && typeof value.name === 'string' ? { id: value.id, name: value.name } : null;
+    if (typeof value.id !== 'string' || typeof value.name !== 'string') return null;
+    return { id: value.id, name: value.name, ...(typeof value.stockGroupId === 'string' ? { stockGroupId: value.stockGroupId } : {}) };
   } catch {
     return null;
   }
@@ -36,7 +37,7 @@ function loadSelection(): Hostel | null {
 
 function saveSelection(hostel: Hostel | null) {
   try {
-    if (hostel) localStorage.setItem(STORAGE_KEY, JSON.stringify({ id: hostel.id, name: hostel.name }));
+    if (hostel) localStorage.setItem(STORAGE_KEY, JSON.stringify({ id: hostel.id, name: hostel.name, stockGroupId: hostel.stockGroupId }));
     else localStorage.removeItem(STORAGE_KEY);
   } catch {
     /* storage unavailable: the selection still works for this session */
@@ -76,15 +77,15 @@ export function HostelProvider({ children }: { children: ReactNode }) {
     saveSelection(hostel);
   }, []);
 
-  // Drop a stored hostel that is no longer active, and keep its name current.
+  // Drop a stored hostel that is no longer active, and keep its name and stock group current.
   useEffect(() => {
     if (!hostelsLoaded || !selectedHostel) return;
     const current = hostels.find((h) => h.id === selectedHostel.id);
     if (!current) {
       applySelection(null);
       setSelectionNotice(`${selectedHostel.name} is no longer available. Please choose another hostel.`);
-    } else if (current.name !== selectedHostel.name) {
-      applySelection(current);
+    } else if (current.name !== selectedHostel.name || current.stockGroupId !== selectedHostel.stockGroupId) {
+      applySelection({ id: current.id, name: current.name, stockGroupId: current.stockGroupId });
     }
   }, [hostelsLoaded, hostels, selectedHostel, applySelection]);
 
@@ -97,7 +98,7 @@ export function HostelProvider({ children }: { children: ReactNode }) {
 
   const selectHostel = useCallback(
     (hostel: Hostel) => {
-      applySelection({ id: hostel.id, name: hostel.name });
+      applySelection({ id: hostel.id, name: hostel.name, stockGroupId: hostel.stockGroupId });
       setSelectionNotice(null);
       setPickerOpen(false);
     },

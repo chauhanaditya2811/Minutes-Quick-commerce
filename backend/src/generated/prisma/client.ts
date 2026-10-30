@@ -52,6 +52,11 @@ export type User = Prisma.UserModel
  */
 export type Hostel = Prisma.HostelModel
 /**
+ * Model StockGroup
+ * 
+ */
+export type StockGroup = Prisma.StockGroupModel
+/**
  * Model Product
  * 
  */
@@ -96,3 +101,18 @@ export type Setting = Prisma.SettingModel
  * 
  */
 export type CashfreeWebhookEvent = Prisma.CashfreeWebhookEventModel
+/**
+ * Model ProductRequest
+ * 
+ */
+export type ProductRequest = Prisma.ProductRequestModel
+/**
+ * Model ProductRequestVote
+ * 
+ */
+export type ProductRequestVote = Prisma.ProductRequestVoteModel
+/**
+ * Model Feedback
+ * 
+ */
+export type Feedback = Prisma.FeedbackModel

@@ -1,5 +1,5 @@
 import { useMemo } from 'react';
-import { useSearchParams } from 'react-router-dom';
+import { Link, useSearchParams } from 'react-router-dom';
 import { useProducts } from '../../hooks/useProducts';
 import { useStoreSettings } from '../../hooks/useStoreSettings';
 import { useHostel } from '../../context/HostelContext';
@@ -10,6 +10,7 @@ import Notice from '../../components/ui/Notice';
 import StoreClosedBanner from '../../components/StoreClosedBanner';
 import EmptyState from '../../components/ui/EmptyState';
 import ProductGridSkeleton from '../../components/skeletons/ProductGridSkeleton';
+import { ChatIcon } from '../../components/ui/Icons';
 
 export default function HomePage() {
   const [params] = useSearchParams();
@@ -58,6 +59,16 @@ export default function HomePage() {
         </EmptyState>
       )}
       {!loading && visible.length > 0 && <ProductGrid products={visible} storeOpen={settings?.storeOpen ?? false} />}
+      {!loading && !error && !q && products && (
+        <Link to="/feedback" className="request-cta">
+          <span className="request-cta__icon" aria-hidden="true"><ChatIcon width={20} height={20} /></span>
+          <span className="request-cta__text">
+            <strong>Didn’t find what you need?</strong>
+            <span>Request a product and we’ll try to stock it.</span>
+          </span>
+          <span className="request-cta__action">Request it <span aria-hidden="true">→</span></span>
+        </Link>
+      )}
     </div>
   );
 }

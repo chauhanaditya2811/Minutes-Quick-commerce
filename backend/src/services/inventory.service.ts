@@ -4,6 +4,9 @@ import { prisma } from "../config/database.js";
 // Reservations take units out of product_inventories.quantity when the customer starts paying,
 // so `quantity` always means stock available to sell now. Every state change below is
 // conditional on the current state, which makes each reservation consumed or restored exactly once.
+// Stock belongs to a stock group (one shelf shared by one or more hostels): an order delivers to
+// its hostel but takes units from that hostel's group, and each hold remembers the group so the
+// units go back to the same shelf.
 
 type Tx = Prisma.TransactionClient;
 
@@ -26,7 +29,7 @@ export interface OrderStockItem {
 export interface OrderStockTarget {
   id: string;
   userId: string | null; // null for guest orders
-  hostelId: string | null;
+  hostelId: string | null; // the delivery hostel; its stock group supplies the units
   items: OrderStockItem[];
 }
 
@@ -51,23 +54,30 @@ export const reservationExpiry = (now = new Date()) =>
 
 const byProductId = <T extends { productId: string }>(a: T, b: T) => a.productId.localeCompare(b.productId);
 
+/** The stock group a hostel sells from. */
+const stockGroupOf = async (tx: Tx, hostelId: string) => {
+  const hostel = await tx.hostel.findUnique({ where: { id: hostelId }, select: { stockGroupId: true } });
+  if (!hostel) throw new InventoryReservationError("This hostel is no longer available.", 409);
+  return hostel.stockGroupId;
+};
+
 // Atomic conditional decrement: Postgres re-checks `quantity >= n` after taking the row lock,
 // so two buyers can never both take the last unit.
-const takeAvailable = (tx: Tx, productId: string, hostelId: string, quantity: number) =>
+const takeAvailable = (tx: Tx, productId: string, stockGroupId: string, quantity: number) =>
   tx.$executeRaw`
     UPDATE "product_inventories"
     SET "quantity" = "quantity" - ${quantity}, "updatedAt" = NOW()
     WHERE "productId" = ${productId}
-      AND "hostelId" = ${hostelId}
+      AND "stockGroupId" = ${stockGroupId}
       AND "isAvailable" = true
       AND "quantity" >= ${quantity}`;
 
 // Takes up to `quantity` units regardless of availability, never below zero. Returns units taken.
-const takeUpTo = async (tx: Tx, productId: string, hostelId: string, quantity: number) => {
+const takeUpTo = async (tx: Tx, productId: string, stockGroupId: string, quantity: number) => {
   const rows = await tx.$queryRaw<{ before: number }[]>`
     WITH locked AS (
       SELECT "id", "quantity" FROM "product_inventories"
-      WHERE "productId" = ${productId} AND "hostelId" = ${hostelId}
+      WHERE "productId" = ${productId} AND "stockGroupId" = ${stockGroupId}
       FOR UPDATE
     )
     UPDATE "product_inventories" AS p
@@ -79,16 +89,20 @@ const takeUpTo = async (tx: Tx, productId: string, hostelId: string, quantity: n
   return Math.min(Number(before), quantity);
 };
 
-/** Holds stock at one hostel for an order. Throws (rolling back the caller's transaction) if any item is short. */
+/**
+ * Holds stock for an order from its hostel's stock group. Throws (rolling back the caller's
+ * transaction) if any item is short.
+ */
 export const reserveOrderStock = async (
   tx: Tx,
   input: { userId: string | null; orderId: string; hostelId: string; items: OrderStockItem[]; expiresAt: Date }
 ) => {
+  const stockGroupId = await stockGroupOf(tx, input.hostelId);
   for (const item of [...input.items].sort(byProductId)) {
     if (!Number.isInteger(item.quantity) || item.quantity <= 0) {
       throw new InventoryReservationError("Every quantity must be a positive whole number.", 400);
     }
-    const taken = await takeAvailable(tx, item.productId, input.hostelId, item.quantity);
+    const taken = await takeAvailable(tx, item.productId, stockGroupId, item.quantity);
     if (taken !== 1) {
       throw new InventoryReservationError(
         `${item.productName ?? "An item in your cart"} is no longer available in the quantity you selected.`
@@ -101,6 +115,7 @@ export const reserveOrderStock = async (
       userId: input.userId,
       orderId: input.orderId,
       hostelId: input.hostelId,
+      stockGroupId,
       productId: item.productId,
       quantity: item.quantity,
       expiresAt: input.expiresAt,
@@ -108,7 +123,8 @@ export const reserveOrderStock = async (
   });
 };
 
-type RestorableReservation = { id: string; productId: string; hostelId: string | null; quantity: number };
+type RestorableReservation = { id: string; productId: string; stockGroupId: string | null; quantity: number };
+const restorable = { id: true, productId: true, stockGroupId: true, quantity: true } as const;
 
 // Moves ACTIVE reservations to `status` and returns their units to stock, once each.
 const restoreReservations = async (
@@ -125,9 +141,9 @@ const restoreReservations = async (
       data: { status },
     });
     if (updated.count !== 1) continue;
-    if (reservation.hostelId) {
+    if (reservation.stockGroupId) {
       await tx.productInventory.updateMany({
-        where: { productId: reservation.productId, hostelId: reservation.hostelId },
+        where: { productId: reservation.productId, stockGroupId: reservation.stockGroupId },
         data: { quantity: { increment: reservation.quantity } },
       });
     }
@@ -140,7 +156,7 @@ const restoreReservations = async (
 export const releaseOrderReservations = async (tx: Tx, orderId: string) => {
   const reservations = await tx.inventoryReservation.findMany({
     where: { orderId, status: "ACTIVE", order: { orderStatus: "PENDING_PAYMENT" } },
-    select: { id: true, productId: true, hostelId: true, quantity: true },
+    select: restorable,
   });
   return restoreReservations(tx, reservations, "RELEASED");
 };
@@ -154,7 +170,7 @@ export const releaseUserPendingReservations = async (tx: Tx, userId: string, exc
       order: { orderStatus: "PENDING_PAYMENT" },
       ...(exceptOrderId ? { orderId: { not: exceptOrderId } } : {}),
     },
-    select: { id: true, productId: true, hostelId: true, quantity: true },
+    select: restorable,
   });
   return restoreReservations(tx, reservations, "RELEASED");
 };
@@ -191,7 +207,7 @@ export const extendOrClaimReservations = async (tx: Tx, order: OrderStockTarget)
 
 /**
  * Finalises stock for a paid order. Live holds become CONSUMED (their units were already taken).
- * Units whose hold expired or was released are taken again; if the hostel no longer has them,
+ * Units whose hold expired or was released are taken again; if the stock group no longer has them,
  * as much as possible is taken and `shortfall` is reported. Call only once per order.
  */
 export const consumeOrderReservations = async (tx: Tx, order: OrderStockTarget) => {
@@ -214,10 +230,12 @@ export const consumeOrderReservations = async (tx: Tx, order: OrderStockTarget) 
 
   let shortfall = false;
   const now = new Date();
+  let stockGroupId: string | null = null;
   for (const item of [...order.items].sort(byProductId)) {
     const needed = item.quantity - (covered.get(item.productId) ?? 0);
     if (needed <= 0) continue;
-    const taken = await takeUpTo(tx, item.productId, order.hostelId, needed);
+    stockGroupId ??= await stockGroupOf(tx, order.hostelId);
+    const taken = await takeUpTo(tx, item.productId, stockGroupId, needed);
     if (taken < needed) shortfall = true;
     if (taken > 0) {
       // Audit record of stock taken after the original hold had lapsed.
@@ -226,6 +244,7 @@ export const consumeOrderReservations = async (tx: Tx, order: OrderStockTarget) 
           userId: order.userId,
           orderId: order.id,
           hostelId: order.hostelId,
+          stockGroupId,
           productId: item.productId,
           quantity: taken,
           status: "CONSUMED",
@@ -242,7 +261,7 @@ export const expireReservations = async () => {
   const now = new Date();
   const overdue = await prisma.inventoryReservation.findMany({
     where: { status: "ACTIVE", expiresAt: { lte: now } },
-    select: { id: true, productId: true, hostelId: true, quantity: true },
+    select: restorable,
     orderBy: { expiresAt: "asc" },
     take: 500,
   });
@@ -252,19 +271,19 @@ export const expireReservations = async () => {
   const expiredCount = await prisma.$transaction(async (tx) => {
     const stillDue = await tx.inventoryReservation.findMany({
       where: { id: { in: overdue.map((r) => r.id) }, status: "ACTIVE", expiresAt: { lte: now } },
-      select: { id: true, productId: true, hostelId: true, quantity: true },
+      select: restorable,
     });
     return restoreReservations(tx, stillDue, "EXPIRED", now);
   });
   return { expiredCount };
 };
 
-/** Units currently held for unpaid orders, per product and hostel. */
+/** Units currently held for unpaid orders, keyed "productId:stockGroupId". */
 export const getActiveReservedQuantities = async (productIds?: string[]) => {
   const groups = await prisma.inventoryReservation.groupBy({
-    by: ["productId", "hostelId"],
-    where: { status: "ACTIVE", hostelId: { not: null }, ...(productIds ? { productId: { in: productIds } } : {}) },
+    by: ["productId", "stockGroupId"],
+    where: { status: "ACTIVE", stockGroupId: { not: null }, ...(productIds ? { productId: { in: productIds } } : {}) },
     _sum: { quantity: true },
   });
-  return new Map(groups.map((g) => [`${g.productId}:${g.hostelId}`, g._sum.quantity ?? 0]));
+  return new Map(groups.map((g) => [`${g.productId}:${g.stockGroupId}`, g._sum.quantity ?? 0]));
 };
