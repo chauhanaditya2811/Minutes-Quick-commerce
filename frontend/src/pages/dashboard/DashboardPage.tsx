@@ -4,6 +4,7 @@ import SettingsPanel from '../../components/admin/SettingsPanel';
 import OrdersShell from '../../components/admin/OrdersShell';
 import HostelManager from '../../components/admin/HostelManager';
 import StockManager from '../../components/admin/StockManager';
+import FeedbackManager from '../../components/admin/FeedbackManager';
 
 const TABS = [
   { id: 'products', label: 'Products' },
@@ -11,6 +12,7 @@ const TABS = [
   { id: 'settings', label: 'Store settings' },
   { id: 'orders', label: 'Orders' },
   { id: 'hostels', label: 'Hostels' },
+  { id: 'feedback', label: 'Feedback' },
 ] as const;
 
 type TabId = (typeof TABS)[number]['id'];
@@ -44,6 +46,7 @@ export default function DashboardPage() {
       {tab === 'settings' && <SettingsPanel />}
       {tab === 'orders' && <OrdersShell />}
       {tab === 'hostels' && <HostelManager />}
+      {tab === 'feedback' && <FeedbackManager />}
     </div>
   );
 }

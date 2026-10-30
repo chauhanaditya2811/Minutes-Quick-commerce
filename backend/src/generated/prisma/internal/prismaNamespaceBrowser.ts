@@ -61,7 +61,10 @@ export const ModelName = {
   PaymentAttempt: 'PaymentAttempt',
   InventoryReservation: 'InventoryReservation',
   Setting: 'Setting',
-  CashfreeWebhookEvent: 'CashfreeWebhookEvent'
+  CashfreeWebhookEvent: 'CashfreeWebhookEvent',
+  ProductRequest: 'ProductRequest',
+  ProductRequestVote: 'ProductRequestVote',
+  Feedback: 'Feedback'
 } as const
 
 export type ModelName = (typeof ModelName)[keyof typeof ModelName]
@@ -101,6 +104,7 @@ export const HostelScalarFieldEnum = {
   id: 'id',
   name: 'name',
   isActive: 'isActive',
+  requestsResetAt: 'requestsResetAt',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt'
 } as const
@@ -249,6 +253,46 @@ export const CashfreeWebhookEventScalarFieldEnum = {
 } as const
 
 export type CashfreeWebhookEventScalarFieldEnum = (typeof CashfreeWebhookEventScalarFieldEnum)[keyof typeof CashfreeWebhookEventScalarFieldEnum]
+
+
+export const ProductRequestScalarFieldEnum = {
+  id: 'id',
+  hostelId: 'hostelId',
+  name: 'name',
+  normalizedName: 'normalizedName',
+  status: 'status',
+  voteCount: 'voteCount',
+  addedAt: 'addedAt',
+  archivedAt: 'archivedAt',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type ProductRequestScalarFieldEnum = (typeof ProductRequestScalarFieldEnum)[keyof typeof ProductRequestScalarFieldEnum]
+
+
+export const ProductRequestVoteScalarFieldEnum = {
+  id: 'id',
+  requestId: 'requestId',
+  voterHash: 'voterHash',
+  createdAt: 'createdAt'
+} as const
+
+export type ProductRequestVoteScalarFieldEnum = (typeof ProductRequestVoteScalarFieldEnum)[keyof typeof ProductRequestVoteScalarFieldEnum]
+
+
+export const FeedbackScalarFieldEnum = {
+  id: 'id',
+  hostelId: 'hostelId',
+  message: 'message',
+  rating: 'rating',
+  contactPhone: 'contactPhone',
+  status: 'status',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type FeedbackScalarFieldEnum = (typeof FeedbackScalarFieldEnum)[keyof typeof FeedbackScalarFieldEnum]
 
 
 export const SortOrder = {

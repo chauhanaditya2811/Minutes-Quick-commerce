@@ -96,3 +96,18 @@ export type Setting = Prisma.SettingModel
  * 
  */
 export type CashfreeWebhookEvent = Prisma.CashfreeWebhookEventModel
+/**
+ * Model ProductRequest
+ * 
+ */
+export type ProductRequest = Prisma.ProductRequestModel
+/**
+ * Model ProductRequestVote
+ * 
+ */
+export type ProductRequestVote = Prisma.ProductRequestVoteModel
+/**
+ * Model Feedback
+ * 
+ */
+export type Feedback = Prisma.FeedbackModel

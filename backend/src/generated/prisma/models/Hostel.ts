@@ -28,6 +28,7 @@ export type HostelMinAggregateOutputType = {
   id: string | null
   name: string | null
   isActive: boolean | null
+  requestsResetAt: Date | null
   createdAt: Date | null
   updatedAt: Date | null
 }
@@ -36,6 +37,7 @@ export type HostelMaxAggregateOutputType = {
   id: string | null
   name: string | null
   isActive: boolean | null
+  requestsResetAt: Date | null
   createdAt: Date | null
   updatedAt: Date | null
 }
@@ -44,6 +46,7 @@ export type HostelCountAggregateOutputType = {
   id: number
   name: number
   isActive: number
+  requestsResetAt: number
   createdAt: number
   updatedAt: number
   _all: number
@@ -54,6 +57,7 @@ export type HostelMinAggregateInputType = {
   id?: true
   name?: true
   isActive?: true
+  requestsResetAt?: true
   createdAt?: true
   updatedAt?: true
 }
@@ -62,6 +66,7 @@ export type HostelMaxAggregateInputType = {
   id?: true
   name?: true
   isActive?: true
+  requestsResetAt?: true
   createdAt?: true
   updatedAt?: true
 }
@@ -70,6 +75,7 @@ export type HostelCountAggregateInputType = {
   id?: true
   name?: true
   isActive?: true
+  requestsResetAt?: true
   createdAt?: true
   updatedAt?: true
   _all?: true
@@ -151,6 +157,7 @@ export type HostelGroupByOutputType = {
   id: string
   name: string
   isActive: boolean
+  requestsResetAt: Date | null
   createdAt: Date
   updatedAt: Date
   _count: HostelCountAggregateOutputType | null
@@ -180,24 +187,30 @@ export type HostelWhereInput = {
   id?: Prisma.StringFilter<"Hostel"> | string
   name?: Prisma.StringFilter<"Hostel"> | string
   isActive?: Prisma.BoolFilter<"Hostel"> | boolean
+  requestsResetAt?: Prisma.DateTimeNullableFilter<"Hostel"> | Date | string | null
   createdAt?: Prisma.DateTimeFilter<"Hostel"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"Hostel"> | Date | string
   users?: Prisma.UserListRelationFilter
   inventories?: Prisma.ProductInventoryListRelationFilter
   orders?: Prisma.OrderListRelationFilter
   reservations?: Prisma.InventoryReservationListRelationFilter
+  productRequests?: Prisma.ProductRequestListRelationFilter
+  feedback?: Prisma.FeedbackListRelationFilter
 }
 
 export type HostelOrderByWithRelationInput = {
   id?: Prisma.SortOrder
   name?: Prisma.SortOrder
   isActive?: Prisma.SortOrder
+  requestsResetAt?: Prisma.SortOrderInput | Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
   users?: Prisma.UserOrderByRelationAggregateInput
   inventories?: Prisma.ProductInventoryOrderByRelationAggregateInput
   orders?: Prisma.OrderOrderByRelationAggregateInput
   reservations?: Prisma.InventoryReservationOrderByRelationAggregateInput
+  productRequests?: Prisma.ProductRequestOrderByRelationAggregateInput
+  feedback?: Prisma.FeedbackOrderByRelationAggregateInput
 }
 
 export type HostelWhereUniqueInput = Prisma.AtLeast<{
@@ -207,18 +220,22 @@ export type HostelWhereUniqueInput = Prisma.AtLeast<{
   OR?: Prisma.HostelWhereInput[]
   NOT?: Prisma.HostelWhereInput | Prisma.HostelWhereInput[]
   isActive?: Prisma.BoolFilter<"Hostel"> | boolean
+  requestsResetAt?: Prisma.DateTimeNullableFilter<"Hostel"> | Date | string | null
   createdAt?: Prisma.DateTimeFilter<"Hostel"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"Hostel"> | Date | string
   users?: Prisma.UserListRelationFilter
   inventories?: Prisma.ProductInventoryListRelationFilter
   orders?: Prisma.OrderListRelationFilter
   reservations?: Prisma.InventoryReservationListRelationFilter
+  productRequests?: Prisma.ProductRequestListRelationFilter
+  feedback?: Prisma.FeedbackListRelationFilter
 }, "id" | "name">
 
 export type HostelOrderByWithAggregationInput = {
   id?: Prisma.SortOrder
   name?: Prisma.SortOrder
   isActive?: Prisma.SortOrder
+  requestsResetAt?: Prisma.SortOrderInput | Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
   _count?: Prisma.HostelCountOrderByAggregateInput
@@ -233,6 +250,7 @@ export type HostelScalarWhereWithAggregatesInput = {
   id?: Prisma.StringWithAggregatesFilter<"Hostel"> | string
   name?: Prisma.StringWithAggregatesFilter<"Hostel"> | string
   isActive?: Prisma.BoolWithAggregatesFilter<"Hostel"> | boolean
+  requestsResetAt?: Prisma.DateTimeNullableWithAggregatesFilter<"Hostel"> | Date | string | null
   createdAt?: Prisma.DateTimeWithAggregatesFilter<"Hostel"> | Date | string
   updatedAt?: Prisma.DateTimeWithAggregatesFilter<"Hostel"> | Date | string
 }
@@ -241,54 +259,67 @@ export type HostelCreateInput = {
   id?: string
   name: string
   isActive?: boolean
+  requestsResetAt?: Date | string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   users?: Prisma.UserCreateNestedManyWithoutHostelInput
   inventories?: Prisma.ProductInventoryCreateNestedManyWithoutHostelInput
   orders?: Prisma.OrderCreateNestedManyWithoutHostelInput
   reservations?: Prisma.InventoryReservationCreateNestedManyWithoutHostelInput
+  productRequests?: Prisma.ProductRequestCreateNestedManyWithoutHostelInput
+  feedback?: Prisma.FeedbackCreateNestedManyWithoutHostelInput
 }
 
 export type HostelUncheckedCreateInput = {
   id?: string
   name: string
   isActive?: boolean
+  requestsResetAt?: Date | string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   users?: Prisma.UserUncheckedCreateNestedManyWithoutHostelInput
   inventories?: Prisma.ProductInventoryUncheckedCreateNestedManyWithoutHostelInput
   orders?: Prisma.OrderUncheckedCreateNestedManyWithoutHostelInput
   reservations?: Prisma.InventoryReservationUncheckedCreateNestedManyWithoutHostelInput
+  productRequests?: Prisma.ProductRequestUncheckedCreateNestedManyWithoutHostelInput
+  feedback?: Prisma.FeedbackUncheckedCreateNestedManyWithoutHostelInput
 }
 
 export type HostelUpdateInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   name?: Prisma.StringFieldUpdateOperationsInput | string
   isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  requestsResetAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   users?: Prisma.UserUpdateManyWithoutHostelNestedInput
   inventories?: Prisma.ProductInventoryUpdateManyWithoutHostelNestedInput
   orders?: Prisma.OrderUpdateManyWithoutHostelNestedInput
   reservations?: Prisma.InventoryReservationUpdateManyWithoutHostelNestedInput
+  productRequests?: Prisma.ProductRequestUpdateManyWithoutHostelNestedInput
+  feedback?: Prisma.FeedbackUpdateManyWithoutHostelNestedInput
 }
 
 export type HostelUncheckedUpdateInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   name?: Prisma.StringFieldUpdateOperationsInput | string
   isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  requestsResetAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   users?: Prisma.UserUncheckedUpdateManyWithoutHostelNestedInput
   inventories?: Prisma.ProductInventoryUncheckedUpdateManyWithoutHostelNestedInput
   orders?: Prisma.OrderUncheckedUpdateManyWithoutHostelNestedInput
   reservations?: Prisma.InventoryReservationUncheckedUpdateManyWithoutHostelNestedInput
+  productRequests?: Prisma.ProductRequestUncheckedUpdateManyWithoutHostelNestedInput
+  feedback?: Prisma.FeedbackUncheckedUpdateManyWithoutHostelNestedInput
 }
 
 export type HostelCreateManyInput = {
   id?: string
   name: string
   isActive?: boolean
+  requestsResetAt?: Date | string | null
   createdAt?: Date | string
   updatedAt?: Date | string
 }
@@ -297,6 +328,7 @@ export type HostelUpdateManyMutationInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   name?: Prisma.StringFieldUpdateOperationsInput | string
   isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  requestsResetAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -305,6 +337,7 @@ export type HostelUncheckedUpdateManyInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   name?: Prisma.StringFieldUpdateOperationsInput | string
   isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  requestsResetAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -318,6 +351,7 @@ export type HostelCountOrderByAggregateInput = {
   id?: Prisma.SortOrder
   name?: Prisma.SortOrder
   isActive?: Prisma.SortOrder
+  requestsResetAt?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
 }
@@ -326,6 +360,7 @@ export type HostelMaxOrderByAggregateInput = {
   id?: Prisma.SortOrder
   name?: Prisma.SortOrder
   isActive?: Prisma.SortOrder
+  requestsResetAt?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
 }
@@ -334,6 +369,7 @@ export type HostelMinOrderByAggregateInput = {
   id?: Prisma.SortOrder
   name?: Prisma.SortOrder
   isActive?: Prisma.SortOrder
+  requestsResetAt?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
 }
@@ -361,6 +397,10 @@ export type HostelUpdateOneWithoutUsersNestedInput = {
 
 export type BoolFieldUpdateOperationsInput = {
   set?: boolean
+}
+
+export type NullableDateTimeFieldUpdateOperationsInput = {
+  set?: Date | string | null
 }
 
 export type HostelCreateNestedOneWithoutInventoriesInput = {
@@ -409,26 +449,62 @@ export type HostelUpdateOneWithoutReservationsNestedInput = {
   update?: Prisma.XOR<Prisma.XOR<Prisma.HostelUpdateToOneWithWhereWithoutReservationsInput, Prisma.HostelUpdateWithoutReservationsInput>, Prisma.HostelUncheckedUpdateWithoutReservationsInput>
 }
 
+export type HostelCreateNestedOneWithoutProductRequestsInput = {
+  create?: Prisma.XOR<Prisma.HostelCreateWithoutProductRequestsInput, Prisma.HostelUncheckedCreateWithoutProductRequestsInput>
+  connectOrCreate?: Prisma.HostelCreateOrConnectWithoutProductRequestsInput
+  connect?: Prisma.HostelWhereUniqueInput
+}
+
+export type HostelUpdateOneRequiredWithoutProductRequestsNestedInput = {
+  create?: Prisma.XOR<Prisma.HostelCreateWithoutProductRequestsInput, Prisma.HostelUncheckedCreateWithoutProductRequestsInput>
+  connectOrCreate?: Prisma.HostelCreateOrConnectWithoutProductRequestsInput
+  upsert?: Prisma.HostelUpsertWithoutProductRequestsInput
+  connect?: Prisma.HostelWhereUniqueInput
+  update?: Prisma.XOR<Prisma.XOR<Prisma.HostelUpdateToOneWithWhereWithoutProductRequestsInput, Prisma.HostelUpdateWithoutProductRequestsInput>, Prisma.HostelUncheckedUpdateWithoutProductRequestsInput>
+}
+
+export type HostelCreateNestedOneWithoutFeedbackInput = {
+  create?: Prisma.XOR<Prisma.HostelCreateWithoutFeedbackInput, Prisma.HostelUncheckedCreateWithoutFeedbackInput>
+  connectOrCreate?: Prisma.HostelCreateOrConnectWithoutFeedbackInput
+  connect?: Prisma.HostelWhereUniqueInput
+}
+
+export type HostelUpdateOneWithoutFeedbackNestedInput = {
+  create?: Prisma.XOR<Prisma.HostelCreateWithoutFeedbackInput, Prisma.HostelUncheckedCreateWithoutFeedbackInput>
+  connectOrCreate?: Prisma.HostelCreateOrConnectWithoutFeedbackInput
+  upsert?: Prisma.HostelUpsertWithoutFeedbackInput
+  disconnect?: Prisma.HostelWhereInput | boolean
+  delete?: Prisma.HostelWhereInput | boolean
+  connect?: Prisma.HostelWhereUniqueInput
+  update?: Prisma.XOR<Prisma.XOR<Prisma.HostelUpdateToOneWithWhereWithoutFeedbackInput, Prisma.HostelUpdateWithoutFeedbackInput>, Prisma.HostelUncheckedUpdateWithoutFeedbackInput>
+}
+
 export type HostelCreateWithoutUsersInput = {
   id?: string
   name: string
   isActive?: boolean
+  requestsResetAt?: Date | string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   inventories?: Prisma.ProductInventoryCreateNestedManyWithoutHostelInput
   orders?: Prisma.OrderCreateNestedManyWithoutHostelInput
   reservations?: Prisma.InventoryReservationCreateNestedManyWithoutHostelInput
+  productRequests?: Prisma.ProductRequestCreateNestedManyWithoutHostelInput
+  feedback?: Prisma.FeedbackCreateNestedManyWithoutHostelInput
 }
 
 export type HostelUncheckedCreateWithoutUsersInput = {
   id?: string
   name: string
   isActive?: boolean
+  requestsResetAt?: Date | string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   inventories?: Prisma.ProductInventoryUncheckedCreateNestedManyWithoutHostelInput
   orders?: Prisma.OrderUncheckedCreateNestedManyWithoutHostelInput
   reservations?: Prisma.InventoryReservationUncheckedCreateNestedManyWithoutHostelInput
+  productRequests?: Prisma.ProductRequestUncheckedCreateNestedManyWithoutHostelInput
+  feedback?: Prisma.FeedbackUncheckedCreateNestedManyWithoutHostelInput
 }
 
 export type HostelCreateOrConnectWithoutUsersInput = {
@@ -451,44 +527,56 @@ export type HostelUpdateWithoutUsersInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   name?: Prisma.StringFieldUpdateOperationsInput | string
   isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  requestsResetAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   inventories?: Prisma.ProductInventoryUpdateManyWithoutHostelNestedInput
   orders?: Prisma.OrderUpdateManyWithoutHostelNestedInput
   reservations?: Prisma.InventoryReservationUpdateManyWithoutHostelNestedInput
+  productRequests?: Prisma.ProductRequestUpdateManyWithoutHostelNestedInput
+  feedback?: Prisma.FeedbackUpdateManyWithoutHostelNestedInput
 }
 
 export type HostelUncheckedUpdateWithoutUsersInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   name?: Prisma.StringFieldUpdateOperationsInput | string
   isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  requestsResetAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   inventories?: Prisma.ProductInventoryUncheckedUpdateManyWithoutHostelNestedInput
   orders?: Prisma.OrderUncheckedUpdateManyWithoutHostelNestedInput
   reservations?: Prisma.InventoryReservationUncheckedUpdateManyWithoutHostelNestedInput
+  productRequests?: Prisma.ProductRequestUncheckedUpdateManyWithoutHostelNestedInput
+  feedback?: Prisma.FeedbackUncheckedUpdateManyWithoutHostelNestedInput
 }
 
 export type HostelCreateWithoutInventoriesInput = {
   id?: string
   name: string
   isActive?: boolean
+  requestsResetAt?: Date | string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   users?: Prisma.UserCreateNestedManyWithoutHostelInput
   orders?: Prisma.OrderCreateNestedManyWithoutHostelInput
   reservations?: Prisma.InventoryReservationCreateNestedManyWithoutHostelInput
+  productRequests?: Prisma.ProductRequestCreateNestedManyWithoutHostelInput
+  feedback?: Prisma.FeedbackCreateNestedManyWithoutHostelInput
 }
 
 export type HostelUncheckedCreateWithoutInventoriesInput = {
   id?: string
   name: string
   isActive?: boolean
+  requestsResetAt?: Date | string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   users?: Prisma.UserUncheckedCreateNestedManyWithoutHostelInput
   orders?: Prisma.OrderUncheckedCreateNestedManyWithoutHostelInput
   reservations?: Prisma.InventoryReservationUncheckedCreateNestedManyWithoutHostelInput
+  productRequests?: Prisma.ProductRequestUncheckedCreateNestedManyWithoutHostelInput
+  feedback?: Prisma.FeedbackUncheckedCreateNestedManyWithoutHostelInput
 }
 
 export type HostelCreateOrConnectWithoutInventoriesInput = {
@@ -511,44 +599,56 @@ export type HostelUpdateWithoutInventoriesInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   name?: Prisma.StringFieldUpdateOperationsInput | string
   isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  requestsResetAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   users?: Prisma.UserUpdateManyWithoutHostelNestedInput
   orders?: Prisma.OrderUpdateManyWithoutHostelNestedInput
   reservations?: Prisma.InventoryReservationUpdateManyWithoutHostelNestedInput
+  productRequests?: Prisma.ProductRequestUpdateManyWithoutHostelNestedInput
+  feedback?: Prisma.FeedbackUpdateManyWithoutHostelNestedInput
 }
 
 export type HostelUncheckedUpdateWithoutInventoriesInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   name?: Prisma.StringFieldUpdateOperationsInput | string
   isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  requestsResetAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   users?: Prisma.UserUncheckedUpdateManyWithoutHostelNestedInput
   orders?: Prisma.OrderUncheckedUpdateManyWithoutHostelNestedInput
   reservations?: Prisma.InventoryReservationUncheckedUpdateManyWithoutHostelNestedInput
+  productRequests?: Prisma.ProductRequestUncheckedUpdateManyWithoutHostelNestedInput
+  feedback?: Prisma.FeedbackUncheckedUpdateManyWithoutHostelNestedInput
 }
 
 export type HostelCreateWithoutOrdersInput = {
   id?: string
   name: string
   isActive?: boolean
+  requestsResetAt?: Date | string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   users?: Prisma.UserCreateNestedManyWithoutHostelInput
   inventories?: Prisma.ProductInventoryCreateNestedManyWithoutHostelInput
   reservations?: Prisma.InventoryReservationCreateNestedManyWithoutHostelInput
+  productRequests?: Prisma.ProductRequestCreateNestedManyWithoutHostelInput
+  feedback?: Prisma.FeedbackCreateNestedManyWithoutHostelInput
 }
 
 export type HostelUncheckedCreateWithoutOrdersInput = {
   id?: string
   name: string
   isActive?: boolean
+  requestsResetAt?: Date | string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   users?: Prisma.UserUncheckedCreateNestedManyWithoutHostelInput
   inventories?: Prisma.ProductInventoryUncheckedCreateNestedManyWithoutHostelInput
   reservations?: Prisma.InventoryReservationUncheckedCreateNestedManyWithoutHostelInput
+  productRequests?: Prisma.ProductRequestUncheckedCreateNestedManyWithoutHostelInput
+  feedback?: Prisma.FeedbackUncheckedCreateNestedManyWithoutHostelInput
 }
 
 export type HostelCreateOrConnectWithoutOrdersInput = {
@@ -571,44 +671,56 @@ export type HostelUpdateWithoutOrdersInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   name?: Prisma.StringFieldUpdateOperationsInput | string
   isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  requestsResetAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   users?: Prisma.UserUpdateManyWithoutHostelNestedInput
   inventories?: Prisma.ProductInventoryUpdateManyWithoutHostelNestedInput
   reservations?: Prisma.InventoryReservationUpdateManyWithoutHostelNestedInput
+  productRequests?: Prisma.ProductRequestUpdateManyWithoutHostelNestedInput
+  feedback?: Prisma.FeedbackUpdateManyWithoutHostelNestedInput
 }
 
 export type HostelUncheckedUpdateWithoutOrdersInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   name?: Prisma.StringFieldUpdateOperationsInput | string
   isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  requestsResetAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   users?: Prisma.UserUncheckedUpdateManyWithoutHostelNestedInput
   inventories?: Prisma.ProductInventoryUncheckedUpdateManyWithoutHostelNestedInput
   reservations?: Prisma.InventoryReservationUncheckedUpdateManyWithoutHostelNestedInput
+  productRequests?: Prisma.ProductRequestUncheckedUpdateManyWithoutHostelNestedInput
+  feedback?: Prisma.FeedbackUncheckedUpdateManyWithoutHostelNestedInput
 }
 
 export type HostelCreateWithoutReservationsInput = {
   id?: string
   name: string
   isActive?: boolean
+  requestsResetAt?: Date | string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   users?: Prisma.UserCreateNestedManyWithoutHostelInput
   inventories?: Prisma.ProductInventoryCreateNestedManyWithoutHostelInput
   orders?: Prisma.OrderCreateNestedManyWithoutHostelInput
+  productRequests?: Prisma.ProductRequestCreateNestedManyWithoutHostelInput
+  feedback?: Prisma.FeedbackCreateNestedManyWithoutHostelInput
 }
 
 export type HostelUncheckedCreateWithoutReservationsInput = {
   id?: string
   name: string
   isActive?: boolean
+  requestsResetAt?: Date | string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   users?: Prisma.UserUncheckedCreateNestedManyWithoutHostelInput
   inventories?: Prisma.ProductInventoryUncheckedCreateNestedManyWithoutHostelInput
   orders?: Prisma.OrderUncheckedCreateNestedManyWithoutHostelInput
+  productRequests?: Prisma.ProductRequestUncheckedCreateNestedManyWithoutHostelInput
+  feedback?: Prisma.FeedbackUncheckedCreateNestedManyWithoutHostelInput
 }
 
 export type HostelCreateOrConnectWithoutReservationsInput = {
@@ -631,22 +743,172 @@ export type HostelUpdateWithoutReservationsInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   name?: Prisma.StringFieldUpdateOperationsInput | string
   isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  requestsResetAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   users?: Prisma.UserUpdateManyWithoutHostelNestedInput
   inventories?: Prisma.ProductInventoryUpdateManyWithoutHostelNestedInput
   orders?: Prisma.OrderUpdateManyWithoutHostelNestedInput
+  productRequests?: Prisma.ProductRequestUpdateManyWithoutHostelNestedInput
+  feedback?: Prisma.FeedbackUpdateManyWithoutHostelNestedInput
 }
 
 export type HostelUncheckedUpdateWithoutReservationsInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   name?: Prisma.StringFieldUpdateOperationsInput | string
   isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  requestsResetAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   users?: Prisma.UserUncheckedUpdateManyWithoutHostelNestedInput
   inventories?: Prisma.ProductInventoryUncheckedUpdateManyWithoutHostelNestedInput
   orders?: Prisma.OrderUncheckedUpdateManyWithoutHostelNestedInput
+  productRequests?: Prisma.ProductRequestUncheckedUpdateManyWithoutHostelNestedInput
+  feedback?: Prisma.FeedbackUncheckedUpdateManyWithoutHostelNestedInput
+}
+
+export type HostelCreateWithoutProductRequestsInput = {
+  id?: string
+  name: string
+  isActive?: boolean
+  requestsResetAt?: Date | string | null
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  users?: Prisma.UserCreateNestedManyWithoutHostelInput
+  inventories?: Prisma.ProductInventoryCreateNestedManyWithoutHostelInput
+  orders?: Prisma.OrderCreateNestedManyWithoutHostelInput
+  reservations?: Prisma.InventoryReservationCreateNestedManyWithoutHostelInput
+  feedback?: Prisma.FeedbackCreateNestedManyWithoutHostelInput
+}
+
+export type HostelUncheckedCreateWithoutProductRequestsInput = {
+  id?: string
+  name: string
+  isActive?: boolean
+  requestsResetAt?: Date | string | null
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  users?: Prisma.UserUncheckedCreateNestedManyWithoutHostelInput
+  inventories?: Prisma.ProductInventoryUncheckedCreateNestedManyWithoutHostelInput
+  orders?: Prisma.OrderUncheckedCreateNestedManyWithoutHostelInput
+  reservations?: Prisma.InventoryReservationUncheckedCreateNestedManyWithoutHostelInput
+  feedback?: Prisma.FeedbackUncheckedCreateNestedManyWithoutHostelInput
+}
+
+export type HostelCreateOrConnectWithoutProductRequestsInput = {
+  where: Prisma.HostelWhereUniqueInput
+  create: Prisma.XOR<Prisma.HostelCreateWithoutProductRequestsInput, Prisma.HostelUncheckedCreateWithoutProductRequestsInput>
+}
+
+export type HostelUpsertWithoutProductRequestsInput = {
+  update: Prisma.XOR<Prisma.HostelUpdateWithoutProductRequestsInput, Prisma.HostelUncheckedUpdateWithoutProductRequestsInput>
+  create: Prisma.XOR<Prisma.HostelCreateWithoutProductRequestsInput, Prisma.HostelUncheckedCreateWithoutProductRequestsInput>
+  where?: Prisma.HostelWhereInput
+}
+
+export type HostelUpdateToOneWithWhereWithoutProductRequestsInput = {
+  where?: Prisma.HostelWhereInput
+  data: Prisma.XOR<Prisma.HostelUpdateWithoutProductRequestsInput, Prisma.HostelUncheckedUpdateWithoutProductRequestsInput>
+}
+
+export type HostelUpdateWithoutProductRequestsInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  name?: Prisma.StringFieldUpdateOperationsInput | string
+  isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  requestsResetAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  users?: Prisma.UserUpdateManyWithoutHostelNestedInput
+  inventories?: Prisma.ProductInventoryUpdateManyWithoutHostelNestedInput
+  orders?: Prisma.OrderUpdateManyWithoutHostelNestedInput
+  reservations?: Prisma.InventoryReservationUpdateManyWithoutHostelNestedInput
+  feedback?: Prisma.FeedbackUpdateManyWithoutHostelNestedInput
+}
+
+export type HostelUncheckedUpdateWithoutProductRequestsInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  name?: Prisma.StringFieldUpdateOperationsInput | string
+  isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  requestsResetAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  users?: Prisma.UserUncheckedUpdateManyWithoutHostelNestedInput
+  inventories?: Prisma.ProductInventoryUncheckedUpdateManyWithoutHostelNestedInput
+  orders?: Prisma.OrderUncheckedUpdateManyWithoutHostelNestedInput
+  reservations?: Prisma.InventoryReservationUncheckedUpdateManyWithoutHostelNestedInput
+  feedback?: Prisma.FeedbackUncheckedUpdateManyWithoutHostelNestedInput
+}
+
+export type HostelCreateWithoutFeedbackInput = {
+  id?: string
+  name: string
+  isActive?: boolean
+  requestsResetAt?: Date | string | null
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  users?: Prisma.UserCreateNestedManyWithoutHostelInput
+  inventories?: Prisma.ProductInventoryCreateNestedManyWithoutHostelInput
+  orders?: Prisma.OrderCreateNestedManyWithoutHostelInput
+  reservations?: Prisma.InventoryReservationCreateNestedManyWithoutHostelInput
+  productRequests?: Prisma.ProductRequestCreateNestedManyWithoutHostelInput
+}
+
+export type HostelUncheckedCreateWithoutFeedbackInput = {
+  id?: string
+  name: string
+  isActive?: boolean
+  requestsResetAt?: Date | string | null
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  users?: Prisma.UserUncheckedCreateNestedManyWithoutHostelInput
+  inventories?: Prisma.ProductInventoryUncheckedCreateNestedManyWithoutHostelInput
+  orders?: Prisma.OrderUncheckedCreateNestedManyWithoutHostelInput
+  reservations?: Prisma.InventoryReservationUncheckedCreateNestedManyWithoutHostelInput
+  productRequests?: Prisma.ProductRequestUncheckedCreateNestedManyWithoutHostelInput
+}
+
+export type HostelCreateOrConnectWithoutFeedbackInput = {
+  where: Prisma.HostelWhereUniqueInput
+  create: Prisma.XOR<Prisma.HostelCreateWithoutFeedbackInput, Prisma.HostelUncheckedCreateWithoutFeedbackInput>
+}
+
+export type HostelUpsertWithoutFeedbackInput = {
+  update: Prisma.XOR<Prisma.HostelUpdateWithoutFeedbackInput, Prisma.HostelUncheckedUpdateWithoutFeedbackInput>
+  create: Prisma.XOR<Prisma.HostelCreateWithoutFeedbackInput, Prisma.HostelUncheckedCreateWithoutFeedbackInput>
+  where?: Prisma.HostelWhereInput
+}
+
+export type HostelUpdateToOneWithWhereWithoutFeedbackInput = {
+  where?: Prisma.HostelWhereInput
+  data: Prisma.XOR<Prisma.HostelUpdateWithoutFeedbackInput, Prisma.HostelUncheckedUpdateWithoutFeedbackInput>
+}
+
+export type HostelUpdateWithoutFeedbackInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  name?: Prisma.StringFieldUpdateOperationsInput | string
+  isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  requestsResetAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  users?: Prisma.UserUpdateManyWithoutHostelNestedInput
+  inventories?: Prisma.ProductInventoryUpdateManyWithoutHostelNestedInput
+  orders?: Prisma.OrderUpdateManyWithoutHostelNestedInput
+  reservations?: Prisma.InventoryReservationUpdateManyWithoutHostelNestedInput
+  productRequests?: Prisma.ProductRequestUpdateManyWithoutHostelNestedInput
+}
+
+export type HostelUncheckedUpdateWithoutFeedbackInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  name?: Prisma.StringFieldUpdateOperationsInput | string
+  isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  requestsResetAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  users?: Prisma.UserUncheckedUpdateManyWithoutHostelNestedInput
+  inventories?: Prisma.ProductInventoryUncheckedUpdateManyWithoutHostelNestedInput
+  orders?: Prisma.OrderUncheckedUpdateManyWithoutHostelNestedInput
+  reservations?: Prisma.InventoryReservationUncheckedUpdateManyWithoutHostelNestedInput
+  productRequests?: Prisma.ProductRequestUncheckedUpdateManyWithoutHostelNestedInput
 }
 
 
@@ -659,6 +921,8 @@ export type HostelCountOutputType = {
   inventories: number
   orders: number
   reservations: number
+  productRequests: number
+  feedback: number
 }
 
 export type HostelCountOutputTypeSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
@@ -666,6 +930,8 @@ export type HostelCountOutputTypeSelect<ExtArgs extends runtime.Types.Extensions
   inventories?: boolean | HostelCountOutputTypeCountInventoriesArgs
   orders?: boolean | HostelCountOutputTypeCountOrdersArgs
   reservations?: boolean | HostelCountOutputTypeCountReservationsArgs
+  productRequests?: boolean | HostelCountOutputTypeCountProductRequestsArgs
+  feedback?: boolean | HostelCountOutputTypeCountFeedbackArgs
 }
 
 /**
@@ -706,17 +972,34 @@ export type HostelCountOutputTypeCountReservationsArgs<ExtArgs extends runtime.T
   where?: Prisma.InventoryReservationWhereInput
 }
 
+/**
+ * HostelCountOutputType without action
+ */
+export type HostelCountOutputTypeCountProductRequestsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  where?: Prisma.ProductRequestWhereInput
+}
+
+/**
+ * HostelCountOutputType without action
+ */
+export type HostelCountOutputTypeCountFeedbackArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  where?: Prisma.FeedbackWhereInput
+}
+
 
 export type HostelSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   id?: boolean
   name?: boolean
   isActive?: boolean
+  requestsResetAt?: boolean
   createdAt?: boolean
   updatedAt?: boolean
   users?: boolean | Prisma.Hostel$usersArgs<ExtArgs>
   inventories?: boolean | Prisma.Hostel$inventoriesArgs<ExtArgs>
   orders?: boolean | Prisma.Hostel$ordersArgs<ExtArgs>
   reservations?: boolean | Prisma.Hostel$reservationsArgs<ExtArgs>
+  productRequests?: boolean | Prisma.Hostel$productRequestsArgs<ExtArgs>
+  feedback?: boolean | Prisma.Hostel$feedbackArgs<ExtArgs>
   _count?: boolean | Prisma.HostelCountOutputTypeDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["hostel"]>
 
@@ -724,6 +1007,7 @@ export type HostelSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Extens
   id?: boolean
   name?: boolean
   isActive?: boolean
+  requestsResetAt?: boolean
   createdAt?: boolean
   updatedAt?: boolean
 }, ExtArgs["result"]["hostel"]>
@@ -732,6 +1016,7 @@ export type HostelSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Extens
   id?: boolean
   name?: boolean
   isActive?: boolean
+  requestsResetAt?: boolean
   createdAt?: boolean
   updatedAt?: boolean
 }, ExtArgs["result"]["hostel"]>
@@ -740,16 +1025,19 @@ export type HostelSelectScalar = {
   id?: boolean
   name?: boolean
   isActive?: boolean
+  requestsResetAt?: boolean
   createdAt?: boolean
   updatedAt?: boolean
 }
 
-export type HostelOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "name" | "isActive" | "createdAt" | "updatedAt", ExtArgs["result"]["hostel"]>
+export type HostelOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "name" | "isActive" | "requestsResetAt" | "createdAt" | "updatedAt", ExtArgs["result"]["hostel"]>
 export type HostelInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   users?: boolean | Prisma.Hostel$usersArgs<ExtArgs>
   inventories?: boolean | Prisma.Hostel$inventoriesArgs<ExtArgs>
   orders?: boolean | Prisma.Hostel$ordersArgs<ExtArgs>
   reservations?: boolean | Prisma.Hostel$reservationsArgs<ExtArgs>
+  productRequests?: boolean | Prisma.Hostel$productRequestsArgs<ExtArgs>
+  feedback?: boolean | Prisma.Hostel$feedbackArgs<ExtArgs>
   _count?: boolean | Prisma.HostelCountOutputTypeDefaultArgs<ExtArgs>
 }
 export type HostelIncludeCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {}
@@ -762,11 +1050,14 @@ export type $HostelPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs
     inventories: Prisma.$ProductInventoryPayload<ExtArgs>[]
     orders: Prisma.$OrderPayload<ExtArgs>[]
     reservations: Prisma.$InventoryReservationPayload<ExtArgs>[]
+    productRequests: Prisma.$ProductRequestPayload<ExtArgs>[]
+    feedback: Prisma.$FeedbackPayload<ExtArgs>[]
   }
   scalars: runtime.Types.Extensions.GetPayloadResult<{
     id: string
     name: string
     isActive: boolean
+    requestsResetAt: Date | null
     createdAt: Date
     updatedAt: Date
   }, ExtArgs["result"]["hostel"]>
@@ -1167,6 +1458,8 @@ export interface Prisma__HostelClient<T, Null = never, ExtArgs extends runtime.T
   inventories<T extends Prisma.Hostel$inventoriesArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Hostel$inventoriesArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$ProductInventoryPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   orders<T extends Prisma.Hostel$ordersArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Hostel$ordersArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$OrderPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   reservations<T extends Prisma.Hostel$reservationsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Hostel$reservationsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$InventoryReservationPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+  productRequests<T extends Prisma.Hostel$productRequestsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Hostel$productRequestsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$ProductRequestPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+  feedback<T extends Prisma.Hostel$feedbackArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Hostel$feedbackArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$FeedbackPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   /**
    * Attaches callbacks for the resolution and/or rejection of the Promise.
    * @param onfulfilled The callback to execute when the Promise is resolved.
@@ -1199,6 +1492,7 @@ export interface HostelFieldRefs {
   readonly id: Prisma.FieldRef<"Hostel", 'String'>
   readonly name: Prisma.FieldRef<"Hostel", 'String'>
   readonly isActive: Prisma.FieldRef<"Hostel", 'Boolean'>
+  readonly requestsResetAt: Prisma.FieldRef<"Hostel", 'DateTime'>
   readonly createdAt: Prisma.FieldRef<"Hostel", 'DateTime'>
   readonly updatedAt: Prisma.FieldRef<"Hostel", 'DateTime'>
 }
@@ -1687,6 +1981,54 @@ export type Hostel$reservationsArgs<ExtArgs extends runtime.Types.Extensions.Int
   take?: number
   skip?: number
   distinct?: Prisma.InventoryReservationScalarFieldEnum | Prisma.InventoryReservationScalarFieldEnum[]
+}
+
+/**
+ * Hostel.productRequests
+ */
+export type Hostel$productRequestsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the ProductRequest
+   */
+  select?: Prisma.ProductRequestSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the ProductRequest
+   */
+  omit?: Prisma.ProductRequestOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.ProductRequestInclude<ExtArgs> | null
+  where?: Prisma.ProductRequestWhereInput
+  orderBy?: Prisma.ProductRequestOrderByWithRelationInput | Prisma.ProductRequestOrderByWithRelationInput[]
+  cursor?: Prisma.ProductRequestWhereUniqueInput
+  take?: number
+  skip?: number
+  distinct?: Prisma.ProductRequestScalarFieldEnum | Prisma.ProductRequestScalarFieldEnum[]
+}
+
+/**
+ * Hostel.feedback
+ */
+export type Hostel$feedbackArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the Feedback
+   */
+  select?: Prisma.FeedbackSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the Feedback
+   */
+  omit?: Prisma.FeedbackOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.FeedbackInclude<ExtArgs> | null
+  where?: Prisma.FeedbackWhereInput
+  orderBy?: Prisma.FeedbackOrderByWithRelationInput | Prisma.FeedbackOrderByWithRelationInput[]
+  cursor?: Prisma.FeedbackWhereUniqueInput
+  take?: number
+  skip?: number
+  distinct?: Prisma.FeedbackScalarFieldEnum | Prisma.FeedbackScalarFieldEnum[]
 }
 
 /**

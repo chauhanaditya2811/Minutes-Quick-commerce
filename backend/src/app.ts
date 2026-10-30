@@ -13,6 +13,8 @@ import cashfreeWebhookRoutes from "./routes/cashfree-webhook.routes.js";
 import hostelRoutes from "./routes/hostel.routes.js";
 import adminHostelRoutes from "./routes/admin-hostel.routes.js";
 import guestRoutes from "./routes/guest.routes.js";
+import feedbackRoutes from "./routes/feedback.routes.js";
+import adminFeedbackRoutes from "./routes/admin-feedback.routes.js";
 
 const app = express();
 
@@ -51,5 +53,9 @@ app.use("/api/orders", orderRoutes);
 
 // Public guest checkout (no sign-in); every guest order is gated by its own secret token.
 app.use("/api/guest", guestRoutes);
+
+// Product requests with upvotes, and private feedback (no sign-in needed).
+app.use("/api", feedbackRoutes);
+app.use("/api/admin/feedback", adminFeedbackRoutes);
 
 export default app;
