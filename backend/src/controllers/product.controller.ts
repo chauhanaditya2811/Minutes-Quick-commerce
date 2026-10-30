@@ -10,6 +10,8 @@ import {
   getHostelCatalog,
   getStockGroupInventory,
   getHostelProduct,
+  getPoolCatalog,
+  getPoolProduct,
   getProductInventory,
   updateStockGroupInventory,
   updateProductInventory,
@@ -79,9 +81,15 @@ export const createProductController = async (
   }
 };
 
-const getHostelIdQuery = (req: Request): string | null => {
-  const { hostelId } = req.query;
-  return typeof hostelId === "string" && hostelId.trim() ? hostelId.trim() : null;
+const queryText = (value: unknown): string | null =>
+  typeof value === "string" && value.trim() ? value.trim() : null;
+
+/** Customers shop per pool; older app versions still send the hostel instead. */
+const getShopQuery = (req: Request) => {
+  const poolId = queryText(req.query.poolId);
+  if (poolId) return { poolId } as const;
+  const hostelId = queryText(req.query.hostelId);
+  return hostelId ? ({ hostelId } as const) : null;
 };
 
 const sendInventoryError = (
@@ -98,20 +106,20 @@ const sendInventoryError = (
   res.status(500).json({ message: fallback });
 };
 
-// Returns the products available to customers at the selected hostel.
+// Returns the products available to customers in the selected pool (or a hostel's pool).
 export const getAllProducts = async (
   req: Request,
   res: Response
 ): Promise<void> => {
-  const hostelId = getHostelIdQuery(req);
+  const shop = getShopQuery(req);
 
-  if (!hostelId) {
-    res.status(400).json({ message: "Select a hostel first." });
+  if (!shop) {
+    res.status(400).json({ message: "Choose where you live first." });
     return;
   }
 
   try {
-    res.status(200).json(await getHostelCatalog(hostelId));
+    res.status(200).json("poolId" in shop ? await getPoolCatalog(shop.poolId) : await getHostelCatalog(shop.hostelId));
   } catch (error) {
     sendInventoryError(error, res, "Failed to get products.");
   }
@@ -123,7 +131,7 @@ export const getSingleProduct = async (
   res: Response
 ): Promise<void> => {
   const { id } = req.params;
-  const hostelId = getHostelIdQuery(req);
+  const shop = getShopQuery(req);
 
   if (typeof id !== "string" || !id.trim()) {
     res.status(400).json({
@@ -132,17 +140,17 @@ export const getSingleProduct = async (
     return;
   }
 
-  if (!hostelId) {
-    res.status(400).json({ message: "Select a hostel first." });
+  if (!shop) {
+    res.status(400).json({ message: "Choose where you live first." });
     return;
   }
 
   try {
-    const product = await getHostelProduct(hostelId, id);
+    const product = "poolId" in shop ? await getPoolProduct(shop.poolId, id) : await getHostelProduct(shop.hostelId, id);
 
     if (!product) {
       res.status(404).json({
-        message: "Product not found at this hostel.",
+        message: "Product not found here.",
       });
       return;
     }

@@ -1601,7 +1601,6 @@ export const HostelScalarFieldEnum = {
   id: 'id',
   name: 'name',
   isActive: 'isActive',
-  requestsResetAt: 'requestsResetAt',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt',
   stockGroupId: 'stockGroupId'
@@ -1613,6 +1612,7 @@ export type HostelScalarFieldEnum = (typeof HostelScalarFieldEnum)[keyof typeof 
 export const StockGroupScalarFieldEnum = {
   id: 'id',
   name: 'name',
+  requestsResetAt: 'requestsResetAt',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt'
 } as const
@@ -1766,7 +1766,7 @@ export type CashfreeWebhookEventScalarFieldEnum = (typeof CashfreeWebhookEventSc
 
 export const ProductRequestScalarFieldEnum = {
   id: 'id',
-  hostelId: 'hostelId',
+  stockGroupId: 'stockGroupId',
   name: 'name',
   normalizedName: 'normalizedName',
   status: 'status',

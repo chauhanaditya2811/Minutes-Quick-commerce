@@ -8,10 +8,12 @@ import { previewMode } from '../../services/config';
 import { openCashfree } from '../../services/cashfree';
 import {
   loadGuestDetails,
+  loadGuestHostel,
   loadPendingCheckout,
   newCheckoutToken,
   rememberGuestOrder,
   saveGuestDetails,
+  saveGuestHostel,
   savePendingCheckout,
   type PendingGuestCheckout,
 } from '../../services/guestCheckout';
@@ -21,11 +23,14 @@ import { formatINR } from '../../utils/format';
 import OrderSummaryPanel from './OrderSummary';
 import Field from '../ui/Field';
 import Notice from '../ui/Notice';
+import HostelSelect from './HostelSelect';
 
 type DetailsForm = Record<keyof GuestCustomerInput, string>;
 type Errors = Partial<Record<keyof GuestCustomerInput, string>>;
 
 const PHONE_PATTERN = /^[6-9]\d{9}$/;
+// Natural order, so "BH-2" comes before "BH-10".
+const byName = new Intl.Collator(undefined, { numeric: true, sensitivity: 'base' });
 
 // Mirrors the server's rules so mistakes show before a request; the server re-validates everything.
 function parseDetails(form: DetailsForm): { customer: GuestCustomerInput | null; errors: Errors } {
@@ -44,7 +49,7 @@ function parseDetails(form: DetailsForm): { customer: GuestCustomerInput | null;
 /** Checkout without an account: delivery details, a server-priced review, then Cashfree. */
 export default function GuestCheckout() {
   const { lines } = useCart();
-  const { selectedHostel, openPicker } = useHostel();
+  const { selectedPool: pool, openPicker } = useHostel();
   const { data: settings } = useStoreSettings();
   const navigate = useNavigate();
 
@@ -53,13 +58,19 @@ export default function GuestCheckout() {
     return { name: saved?.name ?? '', phone: saved?.phone ?? '', floor: saved?.floor ?? '', room: saved?.room ?? '' };
   });
   const [errors, setErrors] = useState<Errors>({});
+  // The exact hostel, chosen from the pool's hostels (filled in when the pool has only one).
+  const [hostelChoice, setHostelChoice] = useState(() => (pool ? loadGuestHostel(pool.id) : ''));
+  const [hostelError, setHostelError] = useState<string | null>(null);
   const [review, setReview] = useState<ValidateOrderResponse['checkout'] | null>(null);
   const [checking, setChecking] = useState(false);
   const [paying, setPaying] = useState(false);
   const payingRef = useRef(false); // blocks double submissions before React re-renders
   const [message, setMessage] = useState<{ tone: 'error' | 'warning'; text: string } | null>(null);
 
-  const hostelId = selectedHostel?.id ?? '';
+  const poolHostels = [...(pool?.hostels ?? [])].sort((a, b) => byName.compare(a.name, b.name));
+  const onlyHostel = poolHostels.length === 1 ? poolHostels[0] : null;
+  const hostelId = onlyHostel?.id ?? (poolHostels.some((h) => h.id === hostelChoice) ? hostelChoice : '');
+  const poolId = pool?.id ?? '';
   const items = lines.map((l) => ({ productId: l.product.id, quantity: l.quantity }));
   const itemsKey = JSON.stringify(items);
   const storeClosed = settings ? !settings.storeOpen : false;
@@ -79,12 +90,14 @@ export default function GuestCheckout() {
     e.preventDefault();
     const { customer, errors: found } = parseDetails(form);
     setErrors(found);
-    if (!customer) return;
+    setHostelError(hostelId ? null : 'Choose your hostel.');
+    if (!customer || !hostelId) return;
     saveGuestDetails(form);
+    saveGuestHostel(poolId, hostelId);
     setChecking(true);
     setMessage(null);
     try {
-      const response = await api.validateGuestOrder({ hostelId, items, customer });
+      const response = await api.validateGuestOrder({ hostelId, poolId, items, customer });
       setReview(response.checkout);
     } catch (err) {
       setMessage({ tone: 'error', text: err instanceof Error ? err.message : 'Could not check your order.' });
@@ -108,6 +121,7 @@ export default function GuestCheckout() {
         const token = newCheckoutToken();
         const order = await api.createGuestOrder({
           hostelId,
+          poolId,
           items,
           customer,
           checkoutToken: token,
@@ -198,13 +212,34 @@ export default function GuestCheckout() {
                 aria-invalid={!!errors.phone}
                 hint={errors.phone ? <span className="field__error">{errors.phone}</span> : 'We’ll call this number if we can’t find your room.'}
               />
-              <div className="field">
-                <span className="field__label">Hostel</span>
-                <div className="locked-hostel">
-                  <strong>{selectedHostel?.name}</strong>
-                  <button type="button" className="link-btn" onClick={openPicker}>Change</button>
+              {onlyHostel ? (
+                <div className="field">
+                  <span className="field__label">Hostel</span>
+                  <div className="locked-hostel">
+                    <strong>{onlyHostel.name}</strong>
+                    <button type="button" className="link-btn" onClick={openPicker}>Change</button>
+                  </div>
                 </div>
-              </div>
+              ) : (
+                <HostelSelect
+                  label="Your hostel"
+                  hostels={poolHostels}
+                  value={hostelId}
+                  onChange={(id) => {
+                    setHostelChoice(id);
+                    setHostelError(null);
+                    setReview(null);
+                  }}
+                  invalid={!!hostelError}
+                  hint={
+                    hostelError ? (
+                      <span className="field__error">{hostelError}</span>
+                    ) : (
+                      <>Hostels in {pool?.name}. Not here? <button type="button" className="link-btn" onClick={openPicker}>Change where you live</button></>
+                    )
+                  }
+                />
+              )}
               <div className="form__row">
                 <Field label="Block/Floor" autoCapitalize="characters" autoComplete="off" maxLength={BLOCK_FLOOR_MAX_LENGTH} placeholder="e.g. A/2" value={form.floor} onChange={set('floor')} aria-invalid={!!errors.floor} hint={errors.floor && <span className="field__error">{errors.floor}</span>} />
                 <Field label="Room" placeholder="e.g. 214" maxLength={20} value={form.room} onChange={set('room')} aria-invalid={!!errors.room} hint={errors.room && <span className="field__error">{errors.room}</span>} />

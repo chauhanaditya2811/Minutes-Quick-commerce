@@ -73,8 +73,8 @@ const guestOwner = (req: Request) => {
 // Server-priced summary of a guest cart; stores nothing.
 export const validateGuestCheckoutController = async (req: Request, res: Response): Promise<void> => {
   try {
-    const { hostelId, items, customer } = body(req);
-    const checkout = await validateGuestCheckout({ hostelId, items, customer });
+    const { hostelId, items, customer, poolId } = body(req);
+    const checkout = await validateGuestCheckout({ hostelId, items, customer, poolId });
     res.status(200).json({ message: "Checkout validated successfully.", checkout });
   } catch (error) {
     sendGuestError(error, res, "Unable to process checkout.");
@@ -84,8 +84,8 @@ export const validateGuestCheckoutController = async (req: Request, res: Respons
 // Creates (or, for a repeated submission, returns) the guest's pending order and holds its stock.
 export const createGuestOrderController = async (req: Request, res: Response): Promise<void> => {
   try {
-    const { hostelId, items, customer, checkoutToken, replacesOrder } = body(req);
-    const order = await createGuestOrder({ hostelId, items, customer, checkoutToken, replacesOrder });
+    const { hostelId, items, customer, checkoutToken, replacesOrder, poolId } = body(req);
+    const order = await createGuestOrder({ hostelId, items, customer, checkoutToken, replacesOrder, poolId });
     res.status(201).json({ message: "Order created. Payment is pending.", order: toGuestOrderResponse(order) });
   } catch (error) {
     sendGuestError(error, res, "Unable to process checkout.");

@@ -9,7 +9,9 @@ export interface Product {
   stock: number; // stock at the selected hostel: 0 = out of stock
   isDeleted: boolean;
   hostelId?: string;
-  /** One of this hostel's top sellers over the last 30 days (catalogue list only). */
+  /** The pool whose stock this is (catalogue by pool). */
+  poolId?: string;
+  /** One of this pool's top sellers over the last 30 days (catalogue list only). */
   popular?: boolean;
 }
 

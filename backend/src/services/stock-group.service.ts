@@ -36,6 +36,21 @@ const withHostels = {
   hostels: { select: { id: true, name: true, isActive: true }, orderBy: { name: "asc" } },
 } as const;
 
+/**
+ * What customers choose from first: every pool that serves at least one active hostel, with
+ * those active hostels (for the "Your hostel" dropdown at checkout).
+ */
+export const listPublicPools = async () =>
+  prisma.stockGroup.findMany({
+    where: { hostels: { some: { isActive: true } } },
+    orderBy: { name: "asc" },
+    select: {
+      id: true,
+      name: true,
+      hostels: { where: { isActive: true }, select: { id: true, name: true }, orderBy: { name: "asc" } },
+    },
+  });
+
 /** Every stock group with the hostels it serves, by name. */
 export const listStockGroups = () =>
   prisma.stockGroup.findMany({ orderBy: { name: "asc" }, include: withHostels });

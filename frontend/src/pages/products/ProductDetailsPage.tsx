@@ -13,8 +13,8 @@ import ProductDetailsSkeleton from '../../components/skeletons/ProductDetailsSke
 
 export default function ProductDetailsPage() {
   const { id } = useParams();
-  const { selectedHostel } = useHostel();
-  const { data: product, loading, error } = useProduct(id, selectedHostel?.id);
+  const { selectedPool } = useHostel();
+  const { data: product, loading, error } = useProduct(id, selectedPool?.id);
   const { data: settings, error: settingsError, reload: reloadSettings } = useStoreSettings();
   const { quantityOf, addItem, setQuantity } = useCart();
 
@@ -24,8 +24,8 @@ export default function ProductDetailsPage() {
   if (error) return <Notice tone="error">{error}</Notice>;
   if (!product) {
     return (
-      <EmptyState title={`Not available at ${selectedHostel?.name}`}>
-        <p>This product isn’t stocked at your hostel right now, or it has been removed.</p>
+      <EmptyState title={`Not available at ${selectedPool?.name}`}>
+        <p>This product isn’t stocked here right now, or it has been removed.</p>
         <Link to="/" className="btn btn--yellow">Back to shop</Link>
       </EmptyState>
     );

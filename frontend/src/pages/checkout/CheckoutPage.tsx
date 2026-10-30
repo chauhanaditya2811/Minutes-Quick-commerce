@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { useCart } from '../../context/CartContext';
@@ -36,8 +36,8 @@ export default function CheckoutPage() {
 
 function SignedInCheckout() {
   const { lines, subtotal, clearCart } = useCart();
-  const { profile, firebaseUser, profileError } = useAuth();
-  const { selectedHostel } = useHostel();
+  const { profile, firebaseUser, profileError, saveProfile } = useAuth();
+  const { selectedPool } = useHostel();
   const { data: settings, loading: settingsLoading, error: settingsError, reload: reloadSettings } = useStoreSettings();
   const navigate = useNavigate();
 
@@ -51,9 +51,47 @@ function SignedInCheckout() {
 
   const complete = isProfileComplete(profile);
   const live = apiConfigured && !!firebaseUser;
-  const hostelId = selectedHostel?.id ?? '';
-  // Orders are fulfilled from the delivery hostel's stock, so both must be the same hostel.
-  const hostelMatches = !!profile?.hostelId && profile.hostelId === hostelId;
+  // The cart holds the pool's stock, so the saved delivery hostel must be one of its hostels.
+  const hostelId = profile?.hostelId ?? '';
+  const poolId = selectedPool?.id ?? '';
+  const hostelMatches = !!hostelId && !!selectedPool?.hostels.some((h) => h.id === hostelId);
+  // A pool with one hostel leaves nothing to choose: the customer picked it on the first
+  // screen, so their saved address moves there (keeping name, phone, block/floor and room).
+  const onlyHostel = selectedPool?.hostels.length === 1 ? selectedPool.hostels[0] : null;
+  const [moving, setMoving] = useState(false);
+  const [moveError, setMoveError] = useState<string | null>(null);
+  const [movedFrom, setMovedFrom] = useState<string | null>(null);
+  const deliverToOnlyHostel = async () => {
+    if (!profile || !onlyHostel) return;
+    const previous = profile.hostel;
+    setMoving(true);
+    setMoveError(null);
+    try {
+      // Same name, phone, block/floor and room; only the hostel changes.
+      await saveProfile({
+        name: profile.name ?? '',
+        phone: profile.phone ?? '',
+        hostelId: onlyHostel.id,
+        floor: profile.floor ?? '',
+        room: profile.room ?? '',
+      });
+      setMovedFrom(previous ?? 'your previous hostel');
+    } catch (e) {
+      setMoveError(e instanceof Error ? e.message : 'Could not update your delivery details.');
+    } finally {
+      setMoving(false);
+    }
+  };
+  // Do it automatically, once per pool and saved hostel; on failure the button below retries.
+  const autoMoved = useRef<string | null>(null);
+  useEffect(() => {
+    if (!live || !complete || hostelMatches || !onlyHostel || !profile) return;
+    const key = `${onlyHostel.id}:${profile.hostelId ?? ''}`;
+    if (autoMoved.current === key) return;
+    autoMoved.current = key;
+    void deliverToOnlyHostel();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [live, complete, hostelMatches, onlyHostel?.id, profile?.hostelId]);
   const items = lines.map((l) => ({ productId: l.product.id, quantity: l.quantity }));
   const itemsKey = JSON.stringify(items);
   const storeOpen = settings?.storeOpen ?? false;
@@ -70,7 +108,7 @@ function SignedInCheckout() {
     let cancelled = false;
     setValidating(true);
     api
-      .validateOrder({ hostelId, items })
+      .validateOrder({ hostelId, poolId, items })
       .then((r) => !cancelled && setValidated(r))
       .catch((e: unknown) => !cancelled && setValidationError(e instanceof Error ? e.message : 'Could not validate your order.'))
       .finally(() => !cancelled && setValidating(false));
@@ -78,7 +116,7 @@ function SignedInCheckout() {
       cancelled = true;
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [live, complete, hostelMatches, hostelId, itemsKey, storeOpen, revalidate]);
+  }, [live, complete, hostelMatches, hostelId, poolId, itemsKey, storeOpen, revalidate]);
 
   if (lines.length === 0) {
     return (
@@ -94,7 +132,7 @@ function SignedInCheckout() {
     setPayMessage(null);
     try {
       // Reuse the order if an earlier payment attempt was dismissed, so retries don't create duplicates.
-      const order = pendingOrder ?? (await api.createOrder({ hostelId, items }));
+      const order = pendingOrder ?? (await api.createOrder({ hostelId, poolId, items }));
       setPendingOrder(order);
       let init;
       try {
@@ -146,7 +184,7 @@ function SignedInCheckout() {
           <h2 id="details-h">Delivery details</h2>
           <p className="muted">Where should we bring your order? Please fill out all the fields.</p>
           {profileError && <Notice tone="error">Could not load your saved delivery details: {profileError}</Notice>}
-          <DeliveryDetailsForm submitLabel={complete ? 'Update details' : 'Save details'} lockedHostel={selectedHostel} />
+          <DeliveryDetailsForm submitLabel={complete ? 'Update details' : 'Save details'} pool={selectedPool} />
         </section>
 
         <div className="checkout__side">
@@ -159,9 +197,29 @@ function SignedInCheckout() {
             {settingsError && <Notice tone="error">{settingsError} <button type="button" className="link-btn" onClick={reloadSettings}>Try again</button></Notice>}
             {settings && !settings.storeOpen && <Notice tone="warning">The store is closed right now.</Notice>}
             {live && !complete && <Notice tone="warning">Save your delivery details to continue.</Notice>}
-            {live && complete && !hostelMatches && selectedHostel && (
-              <Notice tone="warning">You’re shopping at {selectedHostel.name}. Save your delivery details for {selectedHostel.name} to continue.</Notice>
+            {movedFrom && hostelMatches && onlyHostel && (
+              <Notice tone="info">
+                Delivering to <strong>{onlyHostel.name}</strong>. We’ve updated your saved hostel (it was {movedFrom}). Check your
+                block/floor and room under Delivery details.
+              </Notice>
             )}
+            {live && complete && !hostelMatches && !moving && selectedPool && selectedPool.hostels.length > 0 && (
+              <Notice tone="warning">
+                Your saved delivery address is at <strong>{profile?.hostel ?? 'another hostel'}</strong>, but you’re shopping for{' '}
+                <strong>{selectedPool.name}</strong>.{' '}
+                {onlyHostel ? (
+                  <>
+                    <button type="button" className="link-btn" disabled={moving} onClick={() => void deliverToOnlyHostel()}>
+                      {moving ? 'Updating…' : `Deliver to ${onlyHostel.name} instead`}
+                    </button>{' '}
+                    (your block/floor and room stay the same; change them above if they’re different there).
+                  </>
+                ) : (
+                  <>Choose your hostel under Delivery details above and save to continue.</>
+                )}
+              </Notice>
+            )}
+            {moveError && <Notice tone="error">{moveError}</Notice>}
             {validating && <p className="muted">Checking your order…</p>}
             {validationError && <Notice tone="error">{validationError}</Notice>}
             {payMessage && <Notice tone="error">{payMessage}</Notice>}

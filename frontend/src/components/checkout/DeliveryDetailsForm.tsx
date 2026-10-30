@@ -1,24 +1,36 @@
-import { useEffect, useState, type FormEvent } from 'react';
+import { useEffect, useMemo, useState, type FormEvent } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import { previewMode } from '../../services/config';
 import Field from '../ui/Field';
 import { BLOCK_FLOOR_MAX_LENGTH, BLOCK_FLOOR_MESSAGE, parseBlockFloor } from '../../utils/blockFloor';
 import Notice from '../ui/Notice';
-import SelectField from '../ui/SelectField';
-import type { Hostel } from '../../services/api';
+import HostelSelect from './HostelSelect';
+import type { Pool } from '../../services/api';
 import { useHostel } from '../../context/HostelContext';
 
 interface Props {
   submitLabel: string;
   onSaved?: () => void;
-  /** Checkout passes the store hostel: delivery must go to the hostel whose stock is in the cart. */
-  lockedHostel?: Hostel | null;
+  /**
+   * Checkout passes the pool being shopped in: the delivery hostel must be one of its hostels,
+   * since the cart holds that pool's stock. The Account page passes nothing (any hostel).
+   */
+  pool?: Pool | null;
 }
 
+// Natural order, so "BH-2" comes before "BH-10".
+const byName = new Intl.Collator(undefined, { numeric: true, sensitivity: 'base' });
+
 /** Shared by the Account page and Checkout. Saves via PUT /api/users/me. */
-export default function DeliveryDetailsForm({ submitLabel, onSaved, lockedHostel }: Props) {
+export default function DeliveryDetailsForm({ submitLabel, onSaved, pool }: Props) {
   const { profile, firebaseUser, saveProfile } = useAuth();
-  const { hostels, hostelsLoading, hostelsError, openPicker } = useHostel();
+  const { pools, poolsLoading: hostelsLoading, poolsError: hostelsError, openPicker } = useHostel();
+  // At checkout: the pool's hostels. On the Account page: every open hostel.
+  const hostels = useMemo(
+    () => [...(pool ? pool.hostels : pools.flatMap((p) => p.hostels))].sort((a, b) => byName.compare(a.name, b.name)),
+    [pool, pools],
+  );
+  const onlyHostel = pool && pool.hostels.length === 1 ? pool.hostels[0] : null;
   const [form, setForm] = useState({ name: '', phone: '', hostelId: '', floor: '', room: '' });
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -36,9 +48,15 @@ export default function DeliveryDetailsForm({ submitLabel, onSaved, lockedHostel
     }
   }, [profile]);
 
+  // At checkout, keep the saved hostel only if it's in this pool; a pool with one hostel fills it in.
   useEffect(() => {
-    if (lockedHostel) setForm((f) => ({ ...f, hostelId: lockedHostel.id }));
-  }, [lockedHostel, profile]);
+    if (!pool) return;
+    setForm((f) => {
+      const inPool = pool.hostels.some((h) => h.id === f.hostelId);
+      const hostelId = onlyHostel ? onlyHostel.id : inPool ? f.hostelId : '';
+      return hostelId === f.hostelId ? f : { ...f, hostelId };
+    });
+  }, [pool, onlyHostel, profile]);
 
   const set = (k: keyof typeof form) => (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     setSaved(false);
@@ -55,6 +73,10 @@ export default function DeliveryDetailsForm({ submitLabel, onSaved, lockedHostel
         setError(BLOCK_FLOOR_MESSAGE);
         return;
       }
+      if (!onlyHostel && !form.hostelId) {
+        setError('Choose your hostel.');
+        return;
+      }
       const phone = form.phone.trim();
       if (!/^[6-9]\d{9}$/.test(phone)) {
         setError('Phone must be exactly 10 digits and start with 6-9.');
@@ -63,7 +85,7 @@ export default function DeliveryDetailsForm({ submitLabel, onSaved, lockedHostel
       await saveProfile({
         name: form.name.trim(),
         phone,
-        hostelId: lockedHostel?.id ?? form.hostelId,
+        hostelId: onlyHostel?.id ?? form.hostelId,
         floor,
         room: form.room.trim(),
       });
@@ -78,7 +100,7 @@ export default function DeliveryDetailsForm({ submitLabel, onSaved, lockedHostel
 
   const disabled = previewMode && !firebaseUser;
   const selectedHostelMissing = Boolean(
-    !lockedHostel && profile?.hostelId && !hostelsLoading && !hostelsError && !hostels.some((hostel) => hostel.id === profile.hostelId),
+    !pool && profile?.hostelId && !hostelsLoading && !hostelsError && !hostels.some((hostel) => hostel.id === profile.hostelId),
   );
   const hostelSelectionChanged = form.hostelId !== (profile?.hostelId ?? '');
 
@@ -88,20 +110,27 @@ export default function DeliveryDetailsForm({ submitLabel, onSaved, lockedHostel
       <Field label="Full name" value={form.name} onChange={set('name')} required autoComplete="name" />
       <Field label="Email address" value={profile?.email ?? firebaseUser?.email ?? ''} readOnly disabled hint="Email comes from your sign-in and can't be changed here." />
       <Field label="Phone number" value={form.phone} onChange={set('phone')} required type="tel" inputMode="tel" autoComplete="tel" placeholder="10-digit mobile number" />
-      {lockedHostel ? (
+      {onlyHostel ? (
         <div className="field">
           <span className="field__label">Hostel</span>
           <div className="locked-hostel">
-            <strong>{lockedHostel.name}</strong>
+            <strong>{onlyHostel.name}</strong>
             <button type="button" className="link-btn" onClick={openPicker}>Change</button>
           </div>
-          <p className="field__hint">Your order is delivered to the hostel you’re shopping at.</p>
+          <p className="field__hint">Your order is delivered to the hostel you’re shopping for.</p>
         </div>
-      ) : hostelsLoading ? <p className="field__hint">Loading available hostels…</p> : hostelsError ? <Notice tone="error">{hostelsError}</Notice> : hostels.length === 0 ? <Notice tone="warning">No hostels are available yet. Please contact the store administrator.</Notice> : (
-        <SelectField label="Hostel" value={form.hostelId} onChange={set('hostelId')} required disabled={disabled}>
-          <option value="">Select your hostel</option>
-          {hostels.map((hostel) => <option key={hostel.id} value={hostel.id}>{hostel.name}</option>)}
-        </SelectField>
+      ) : hostelsLoading && !pool ? <p className="field__hint">Loading available hostels…</p> : hostelsError && !pool ? <Notice tone="error">{hostelsError}</Notice> : hostels.length === 0 ? <Notice tone="warning">No hostels are available yet. Please contact the store administrator.</Notice> : (
+        <HostelSelect
+          label={pool ? 'Your hostel' : 'Hostel'}
+          hostels={hostels}
+          value={form.hostelId}
+          onChange={(hostelId) => {
+            setSaved(false);
+            setForm((f) => ({ ...f, hostelId }));
+          }}
+          disabled={disabled}
+          hint={pool && <>Hostels in {pool.name}. Not here? <button type="button" className="link-btn" onClick={openPicker}>Change where you live</button></>}
+        />
       )}
       {selectedHostelMissing && (
         <Notice tone="warning">
@@ -116,7 +145,7 @@ export default function DeliveryDetailsForm({ submitLabel, onSaved, lockedHostel
       </div>
       {error && <Notice tone="error">{error}</Notice>}
       {saved && <Notice tone="success">Details saved.</Notice>}
-      <button type="submit" className="btn btn--blue" disabled={saving || disabled || (!lockedHostel && (hostelsLoading || Boolean(hostelsError) || hostels.length === 0))}>
+      <button type="submit" className="btn btn--blue" disabled={saving || disabled || (!pool && (hostelsLoading || Boolean(hostelsError) || hostels.length === 0))}>
         {saving ? 'Saving…' : hostelSelectionChanged ? 'Save updated details' : submitLabel}
       </button>
     </form>

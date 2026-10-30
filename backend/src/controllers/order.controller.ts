@@ -15,6 +15,7 @@ const getCheckoutInput = (body: unknown): CheckoutInput =>
     ? {
         hostelId: "hostelId" in body ? body.hostelId : undefined,
         items: "items" in body ? body.items : undefined,
+        poolId: "poolId" in body ? body.poolId : undefined,
       }
     : { hostelId: undefined, items: undefined };
 
