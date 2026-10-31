@@ -8,6 +8,7 @@ import ProductGrid from '../../components/products/ProductGrid';
 //import Loading from '../../components/Loading';
 import Notice from '../../components/ui/Notice';
 import StoreClosedBanner from '../../components/StoreClosedBanner';
+import NotServingToday from '../../components/NotServingToday';
 import EmptyState from '../../components/ui/EmptyState';
 import ProductGridSkeleton from '../../components/skeletons/ProductGridSkeleton';
 import { ChatIcon } from '../../components/ui/Icons';
@@ -15,7 +16,7 @@ import { ChatIcon } from '../../components/ui/Icons';
 export default function HomePage() {
   const [params] = useSearchParams();
   const q = (params.get('q') ?? '').trim().toLowerCase();
-  const { selectedPool, openPicker } = useHostel();
+  const { selectedPool, pools, openPicker } = useHostel();
   const { data: products, loading, error, reload } = useProducts(selectedPool?.id);
   const { data: settings, loading: settingsLoading, error: settingsError, reload: reloadSettings } = useStoreSettings();
 
@@ -27,13 +28,18 @@ export default function HomePage() {
     [products, q],
   );
 
+  // Nothing in stock at the selected pool: show one clear service-status card.
+  const soldOut = Boolean(selectedPool) && !loading && !error && products !== null && products.every((p) => p.stock <= 0);
+  const storeOpen = settings?.storeOpen ?? true;
+
   return (
     <div className="page">
       <div className="page__head">
         <h1>Available at {selectedPool?.name}</h1>
         {settings && (
           <p className="muted">
-            {settings.storeOpen ? 'Open now' : 'Closed'} · Delivery {formatINR(settings.deliveryFee)} · Minimum order {formatINR(settings.minimumOrder)}
+            {!settings.storeOpen ? 'Closed' : soldOut ? 'Not serving today' : 'Open now'}
+            {settings.minimumOrder > 0 && ` · Minimum order ${formatINR(settings.minimumOrder)}`}
           </p>
         )}
         {settingsLoading && <p className="muted">Loading store information…</p>}
@@ -52,14 +58,17 @@ export default function HomePage() {
           {error} <button type="button" className="link-btn" onClick={reload}>Try again</button>
         </Notice>
       )}
-      {!loading && !error && visible.length === 0 && (
+      {soldOut && storeOpen && (
+        <NotServingToday placeName={selectedPool?.name ?? 'your hostel'} onChangePlace={pools.length > 1 ? openPicker : undefined} />
+      )}
+      {!loading && !error && !soldOut && visible.length === 0 && (
         <EmptyState title={q ? `No results for "${params.get('q')}"` : `No products available at ${selectedPool?.name} yet`}>
           <p>{q ? 'Try a different word.' : 'Check back soon, or try another hostel.'}</p>
           {!q && <button type="button" className="btn btn--yellow" onClick={openPicker}>Change hostel</button>}
         </EmptyState>
       )}
-      {!loading && visible.length > 0 && <ProductGrid products={visible} storeOpen={settings?.storeOpen ?? false} />}
-      {!loading && !error && !q && products && (
+      {!loading && !soldOut && visible.length > 0 && <ProductGrid products={visible} storeOpen={settings?.storeOpen ?? false} />}
+      {!loading && !error && !q && !soldOut && products && (
         <Link to="/feedback" className="request-cta">
           <span className="request-cta__icon" aria-hidden="true"><ChatIcon width={20} height={20} /></span>
           <span className="request-cta__text">

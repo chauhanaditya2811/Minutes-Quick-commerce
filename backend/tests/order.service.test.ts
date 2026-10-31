@@ -1,5 +1,5 @@
 
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 const mocks = vi.hoisted(() => ({
   userFindUnique: vi.fn(),
@@ -165,6 +165,66 @@ describe("checkout validation service", () => {
     );
   });
 
+  describe("convenience and late-night fees", () => {
+    const tiered = {
+      ...settings,
+      feeTiers: [
+        { minSubtotal: 0, fee: 10 },
+        { minSubtotal: 60, fee: 15 },
+        { minSubtotal: 100, fee: 20 },
+        { minSubtotal: 200, fee: 25 },
+      ],
+      lateNightFeeEnabled: true,
+      lateNightFee: 5,
+      lateNightStart: "01:00",
+      lateNightEnd: "06:00",
+    };
+    /** India time on a fixed day (UTC+5:30). */
+    const india = (h: number, m = 0) => new Date(Date.UTC(2026, 10, 6, h, m) - 330 * 60_000);
+
+    beforeEach(() => {
+      mocks.settingFindUnique.mockResolvedValue(tiered);
+      vi.useFakeTimers({ toFake: ["Date"] });
+    });
+    afterEach(() => {
+      vi.useRealTimers();
+    });
+
+    it.each([
+      [4, 120, 20],
+      [7, 210, 25],
+    ])("charges the fee of the range the item total reaches (%i items = ₹%i → ₹%i)", async (quantity, subtotal, fee) => {
+      vi.setSystemTime(india(21));
+      const result = await validateCheckout("firebase-user-1", checkoutFor([{ productId: "product-1", quantity }]));
+      expect(result).toMatchObject({ subtotal, deliveryFee: fee, lateNightFee: 0, total: subtotal + fee });
+    });
+
+    it("adds the late-night fee for an order priced during late-night hours (India time)", async () => {
+      vi.setSystemTime(india(2, 30));
+      const result = await validateCheckout("firebase-user-1", checkoutFor([{ productId: "product-1", quantity: 4 }]));
+      expect(result).toMatchObject({ subtotal: 120, deliveryFee: 20, lateNightFee: 5, total: 145 });
+    });
+
+    it("leaves the late-night fee off at 00:59 and when it is switched off", async () => {
+      vi.setSystemTime(india(0, 59));
+      expect(await validateCheckout("firebase-user-1", checkoutFor([{ productId: "product-1", quantity: 4 }])))
+        .toMatchObject({ lateNightFee: 0, total: 140 });
+
+      vi.setSystemTime(india(2, 30));
+      mocks.settingFindUnique.mockResolvedValue({ ...tiered, lateNightFeeEnabled: false });
+      expect(await validateCheckout("firebase-user-1", checkoutFor([{ productId: "product-1", quantity: 4 }])))
+        .toMatchObject({ lateNightFee: 0, total: 140 });
+    });
+
+    it("saves both fees on the order it creates", async () => {
+      vi.setSystemTime(india(2, 30));
+      await createOrder("firebase-user-1", checkoutFor([{ productId: "product-1", quantity: 4 }]));
+      expect(mocks.orderCreate).toHaveBeenCalledWith(
+        expect.objectContaining({ data: expect.objectContaining({ subtotal: 120, deliveryFee: 20, lateNightFee: 5, total: 145 }) })
+      );
+    });
+  });
+
   it("rejects an empty cart", async () => {
     await expect(
       validateCheckout("firebase-user-1", checkoutFor([]))
@@ -245,13 +305,13 @@ describe("checkout validation service", () => {
     );
   });
 
-  it("enforces the minimum product subtotal before delivery fees", async () => {
+  it("enforces the minimum product subtotal before fees", async () => {
     await expect(
       validateCheckout("firebase-user-1", checkoutFor([
         { productId: "product-1", quantity: 3 },
       ]))
     ).rejects.toThrow(
-      "Your order must be at least ₹100 before delivery fees."
+      "Your order must be at least ₹100 before fees."
     );
   });
 
@@ -400,6 +460,7 @@ describe("checkout validation service", () => {
         paymentStatus: true,
         subtotal: true,
         deliveryFee: true,
+        lateNightFee: true,
         total: true,
         items: {
           select: {

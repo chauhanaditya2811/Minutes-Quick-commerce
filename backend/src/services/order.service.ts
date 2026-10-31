@@ -1,6 +1,7 @@
 import { createHash, randomUUID } from "node:crypto";
 import type { Prisma } from "../generated/prisma/client.js";
 import { prisma } from "../config/database.js";
+import { feesFor, readFeeSettings } from "./fees.js";
 import { BLOCK_FLOOR_MESSAGE, parseBlockFloor } from "../utils/blockFloor.js";
 import {
   InventoryReservationError,
@@ -182,9 +183,6 @@ const loadStoreSettings = async (client: CheckoutClient) => {
   }
 
   if (
-    !Number.isSafeInteger(settings.deliveryFee) ||
-    settings.deliveryFee < 0 ||
-    settings.deliveryFee > MAX_ORDER_AMOUNT ||
     !Number.isSafeInteger(settings.minimumOrder) ||
     settings.minimumOrder < 0 ||
     settings.minimumOrder > MAX_ORDER_AMOUNT
@@ -192,7 +190,7 @@ const loadStoreSettings = async (client: CheckoutClient) => {
     throw new CheckoutError("Store settings are invalid.", 503);
   }
 
-  return settings;
+  return { minimumOrder: settings.minimumOrder, fees: readFeeSettings(settings) };
 };
 
 // Prices a cart from the current stock of the hostel's stock group and the database prices.
@@ -201,7 +199,8 @@ const priceCartAtHostel = async (
   client: CheckoutClient,
   hostel: { id: string; name: string; stockGroupId: string },
   items: CheckoutItemInput[],
-  settings: { deliveryFee: number; minimumOrder: number }
+  settings: Awaited<ReturnType<typeof loadStoreSettings>>,
+  now = new Date()
 ) => {
   const inventories = await client.productInventory.findMany({
     where: {
@@ -277,7 +276,9 @@ const priceCartAtHostel = async (
   });
 
   const subtotal = orderItems.reduce((sum, item) => sum + item.subtotal, 0);
-  const total = subtotal + settings.deliveryFee;
+  // Fees come only from the admin's rules, the item total and the time the order is priced.
+  const { convenienceFee, lateNightFee } = feesFor(subtotal, settings.fees, now);
+  const total = subtotal + convenienceFee + lateNightFee;
 
   if (
     !Number.isSafeInteger(subtotal) ||
@@ -290,12 +291,12 @@ const priceCartAtHostel = async (
 
   if (subtotal < settings.minimumOrder) {
     throw new CheckoutError(
-      `Your order must be at least ₹${settings.minimumOrder} before delivery fees.`,
+      `Your order must be at least ₹${settings.minimumOrder} before fees.`,
       409
     );
   }
 
-  return { items: orderItems, subtotal, deliveryFee: settings.deliveryFee, total };
+  return { items: orderItems, subtotal, deliveryFee: convenienceFee, lateNightFee, total };
 };
 
 const validateCheckoutWithClient = async (
@@ -434,6 +435,7 @@ const createPendingOrder = async (
       hostelId: checkout.hostelId,
       subtotal: checkout.subtotal,
       deliveryFee: checkout.deliveryFee,
+      lateNightFee: checkout.lateNightFee,
       total: checkout.total,
       paymentStatus: "PENDING",
       orderStatus: "PENDING_PAYMENT",
@@ -564,6 +566,7 @@ const orderDetailSelection = {
   paymentStatus: true,
   subtotal: true,
   deliveryFee: true,
+  lateNightFee: true,
   total: true,
   createdAt: true,
   confirmedAt: true,
@@ -626,6 +629,7 @@ export const getCustomerOrders = (firebaseUid: string) =>
       paymentStatus: true,
       subtotal: true,
       deliveryFee: true,
+  lateNightFee: true,
       total: true,
       items: {
         select: {
@@ -654,6 +658,7 @@ const adminOrderSelection = {
   inventoryShortfall: true,
   subtotal: true,
   deliveryFee: true,
+  lateNightFee: true,
   total: true,
   paymentStatus: true,
   orderStatus: true,

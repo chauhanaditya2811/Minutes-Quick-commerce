@@ -1,6 +1,7 @@
 import type { ReactNode } from 'react';
 import { Link } from 'react-router-dom';
 import { useStoreSettings } from '../../hooks/useStoreSettings';
+import { describeFeeRules } from '../../utils/fees';
 
 const SUPPORT_EMAIL = 'caditya2811@gmail.com';
 
@@ -33,10 +34,25 @@ export function ContactPage() {
 }
 
 export function DeliveryPolicyPage() {
+  const { data: settings } = useStoreSettings();
   return (
     <PolicyPage title="Delivery Policy">
       <p>Minutes currently serves eligible university hostel addresses supported by the application.</p>
-      <p>Orders can be placed only while the store is open. Product availability, delivery fees, and minimum order requirements are shown from the current store settings and checkout information.</p>
+      <p>Orders can be placed only while the store is open. Product availability and minimum order requirements are shown from the current store settings and checkout information.</p>
+      <h2>Convenience fee</h2>
+      <p>
+        Items are sold at their printed price (MRP). A small convenience fee is added to each order to cover running the store, based on the
+        item total. An extra late-night fee may apply to orders placed during late-night hours. Your order&apos;s exact fees are shown in the cart
+        and at checkout before you pay, and are fixed once the order is placed.
+      </p>
+      {settings && (
+        <>
+          <p>Current fees:</p>
+          <ul>
+            {describeFeeRules(settings).map((line) => <li key={line}>{line}</li>)}
+          </ul>
+        </>
+      )}
       <p>Delivery estimates can vary with order volume, product availability, and fulfilment conditions. A five-minute delivery label, when displayed, is an estimate rather than an unconditional guarantee.</p>
       <p>If your order is delayed, incomplete, or undelivered, please contact <SupportEmail />.</p>
     </PolicyPage>
@@ -58,7 +74,7 @@ export function TermsPage() {
   return (
     <PolicyPage title="Terms & Conditions">
       <p>Minutes is currently a beta application intended for a limited university-hostel audience.</p>
-      <p>Customers must provide accurate contact and delivery details. Product availability, prices, delivery fees, and minimum-order requirements are based on the information shown in the app and validated by the backend.</p>
+      <p>Customers must provide accurate contact and delivery details. Product availability, prices, convenience fees, and minimum-order requirements are based on the information shown in the app and validated by the backend.</p>
       <p>Orders are subject to store availability and successful payment verification. Returning from Cashfree Checkout alone does not mean that an order has been confirmed.</p>
       <p>Please contact <SupportEmail /> if an order or payment problem occurs. Do not misuse the application or attempt to access another customer&apos;s account or orders.</p>
     </PolicyPage>

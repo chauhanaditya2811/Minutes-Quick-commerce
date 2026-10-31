@@ -221,7 +221,8 @@ export default function GuestOrderPage() {
         </ul>
         <dl className="totals">
           <div><dt>Items</dt><dd>{formatINR(order.subtotal)}</dd></div>
-          <div><dt>Delivery</dt><dd>{formatINR(order.deliveryFee)}</dd></div>
+          <div><dt>Convenience fee</dt><dd>{order.deliveryFee === 0 ? 'Free' : formatINR(order.deliveryFee)}</dd></div>
+          {(order.lateNightFee ?? 0) > 0 && <div><dt>Late-night fee</dt><dd>{formatINR(order.lateNightFee!)}</dd></div>}
           <div className="totals__final"><dt>{paid ? 'Total paid' : 'Total'}</dt><dd>{formatINR(order.total)}</dd></div>
         </dl>
 

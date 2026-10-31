@@ -9,13 +9,20 @@ import { apiConfigured, previewMode } from '../../services/config';
 import { openCashfree } from '../../services/cashfree';
 import { isProfileComplete } from '../../types/user';
 import type { OrderSummary, ValidateOrderResponse } from '../../types/order';
+import type { StoreSettings } from '../../types/product';
 import { formatINR } from '../../utils/format';
+import { estimateFees } from '../../utils/fees';
 import DeliveryDetailsForm from '../../components/checkout/DeliveryDetailsForm';
 import GuestCheckout from '../../components/checkout/GuestCheckout';
 import Loading from '../../components/Loading';
 import OrderSummaryPanel from '../../components/checkout/OrderSummary';
 import EmptyState from '../../components/ui/EmptyState';
 import Notice from '../../components/ui/Notice';
+
+const estimatedTotal = (subtotal: number, settings: StoreSettings) => {
+  const fees = estimateFees(subtotal, settings);
+  return subtotal + fees.convenienceFee + fees.lateNightFee;
+};
 
 /** Signed-in customers keep their saved-details checkout; everyone else can check out as a guest. */
 export default function CheckoutPage() {
@@ -188,7 +195,7 @@ function SignedInCheckout() {
         </section>
 
         <div className="checkout__side">
-          <OrderSummaryPanel deliveryFee={settings?.deliveryFee ?? null} validated={validated?.checkout ?? null} />
+          <OrderSummaryPanel settings={settings} validated={validated?.checkout ?? null} />
 
           <section className="panel" aria-labelledby="pay-h">
             <h2 id="pay-h">Pay securely with Cashfree</h2>
@@ -224,7 +231,7 @@ function SignedInCheckout() {
             {validationError && <Notice tone="error">{validationError}</Notice>}
             {payMessage && <Notice tone="error">{payMessage}</Notice>}
             {!validated && live && complete && hostelMatches && !validating && !validationError && settings?.storeOpen && (
-              <p className="muted small">Estimated {formatINR(subtotal + settings.deliveryFee)}</p>
+              <p className="muted small">Estimated {formatINR(estimatedTotal(subtotal, settings))}</p>
             )}
             <button type="button" className="btn btn--indigo btn--block btn--lg" disabled={!canPay} onClick={() => void pay()}>
               {paying ? 'Processing…' : validated ? `Pay ${formatINR(validated.checkout.total)}` : 'Pay now'}

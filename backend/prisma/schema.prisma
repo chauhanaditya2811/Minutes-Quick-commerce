@@ -127,9 +127,12 @@ model Order {
   hostelId String?
   hostel   Hostel? @relation(fields: [hostelId], references: [id], onDelete: Restrict)
 
-  subtotal    Int
-  deliveryFee Int
-  total       Int
+  subtotal     Int
+  // The convenience fee for the order's value range (column keeps its original name).
+  deliveryFee  Int
+  // Extra fee when the order was placed during late-night hours; 0 otherwise.
+  lateNightFee Int @default(0)
+  total        Int
 
   paymentStatus      PaymentStatus
   orderStatus        OrderStatus
@@ -269,12 +272,20 @@ model InventoryReservation {
 model Setting {
   id String @id @default(cuid())
 
-  storeOpen    Boolean @default(true)
-  deliveryFee  Int     @default(0)
-  minimumOrder Int     @default(0)
-  supportEmail String?
+  storeOpen           Boolean @default(true)
+  // Legacy flat fee, kept equal to the first range's fee for older app versions.
+  deliveryFee         Int     @default(0)
+  minimumOrder        Int     @default(0)
+  // Convenience fee per order-value range: [{ minSubtotal, fee }], first range starts at 0.
+  feeTiers            Json    @default("[{\"minSubtotal\":0,\"fee\":0}]")
+  // Optional extra fee for orders placed during set hours (India time, may cross midnight).
+  lateNightFeeEnabled Boolean @default(false)
+  lateNightFee        Int     @default(0)
+  lateNightStart      String  @default("01:00")
+  lateNightEnd        String  @default("06:00")
+  supportEmail        String?
   // Store phone in E.164 form (e.g. +919876543210), used for the customer "Call Store" button.
-  storePhone   String?
+  storePhone          String?
 
   updatedAt DateTime @updatedAt
 

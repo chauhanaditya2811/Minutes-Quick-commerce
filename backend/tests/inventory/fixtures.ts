@@ -19,8 +19,9 @@ export const createInventoryFixture = async () => {
 
   await prisma.setting.upsert({
     where: { id: "store-settings" },
-    create: { id: "store-settings", storeOpen: true, deliveryFee: 5, minimumOrder: 0 },
-    update: { storeOpen: true, minimumOrder: 0 },
+    create: { id: "store-settings", storeOpen: true, deliveryFee: 5, minimumOrder: 0, feeTiers: [{ minSubtotal: 0, fee: 5 }] },
+    // Tests expect a flat ₹5 fee and no late-night fee, whatever the test database was left with.
+    update: { storeOpen: true, minimumOrder: 0, deliveryFee: 5, feeTiers: [{ minSubtotal: 0, fee: 5 }], lateNightFeeEnabled: false },
   });
 
   // Each hostel gets its own stock group, as in production; tests can then share one.
