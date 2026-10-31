@@ -1232,3 +1232,8 @@
 .fee-rules__body ul { margin: 0; padding-left: 18px; }
 .fee-rules__body .fee-rules__why { margin: 8px 0 0; }
 .fee-hint { color: var(--muted); font-weight: 400; font-size: 0.78rem; }
+
+/* Sold out at the selected pool: same card as "store closed", in a calmer blue. */
+.not-serving { background: linear-gradient(180deg, #eef4ff 0%, #fff 70%); border-color: #c7d7fe; }
+.not-serving__subtitle { color: #1e40af; }
+.not-serving__switch { display: block; margin: 12px auto 0; font-weight: 600; }
