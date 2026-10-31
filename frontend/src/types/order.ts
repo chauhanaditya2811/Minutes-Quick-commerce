@@ -39,7 +39,10 @@ export interface ValidateOrderResponse {
     };
     items: CheckoutItem[];
     subtotal: number;
+    /** The convenience fee (field name kept from when it was a delivery fee). */
     deliveryFee: number;
+    /** Extra fee for an order placed during late-night hours (0 or missing otherwise). */
+    lateNightFee?: number;
     total: number;
   };
 }
@@ -50,7 +53,10 @@ export interface OrderSummary {
   status: OrderStatus;
   paymentStatus?: PaymentStatus;
   subtotal?: number;
+  /** The convenience fee (field name kept from when it was a delivery fee). */
   deliveryFee?: number;
+  /** Extra fee for an order placed during late-night hours (0 or missing otherwise). */
+  lateNightFee?: number;
   total: number;
   createdAt?: string;
   items?: { productId?: string; name: string; quantity: number; price: number }[];
@@ -63,7 +69,10 @@ export interface CustomerOrder {
   orderStatus: OrderStatus;
   paymentStatus: PaymentStatus;
   subtotal: number;
+  /** The convenience fee (field name kept from when it was a delivery fee). */
   deliveryFee: number;
+  /** Extra fee for an order placed during late-night hours (0 or missing otherwise). */
+  lateNightFee?: number;
   total: number;
   items: {
     productName: string;
@@ -87,7 +96,10 @@ export interface AdminOrder {
   customerFloor: string;
   customerRoom: string;
   subtotal: number;
+  /** The convenience fee (field name kept from when it was a delivery fee). */
   deliveryFee: number;
+  /** Extra fee for an order placed during late-night hours (0 or missing otherwise). */
+  lateNightFee?: number;
   total: number;
   paymentStatus: PaymentStatus;
   orderStatus: OrderStatus;
@@ -167,7 +179,10 @@ export interface GuestPlacedOrder {
   orderStatus: OrderStatus;
   paymentStatus: PaymentStatus;
   subtotal: number;
+  /** The convenience fee (field name kept from when it was a delivery fee). */
   deliveryFee: number;
+  /** Extra fee for an order placed during late-night hours (0 or missing otherwise). */
+  lateNightFee?: number;
   total: number;
   createdAt: string;
   holdExpiresAt: string | null;
@@ -184,7 +199,10 @@ export interface GuestOrder {
   orderStatus: OrderStatus;
   paymentStatus: PaymentStatus;
   subtotal: number;
+  /** The convenience fee (field name kept from when it was a delivery fee). */
   deliveryFee: number;
+  /** Extra fee for an order placed during late-night hours (0 or missing otherwise). */
+  lateNightFee?: number;
   total: number;
   createdAt: string;
   /** When payment was verified; the 10-minute delivery countdown runs from here. */

@@ -275,7 +275,7 @@ export default function GuestCheckout() {
         </section>
 
         <div className="checkout__side">
-          <OrderSummaryPanel deliveryFee={settings?.deliveryFee ?? null} validated={review} />
+          <OrderSummaryPanel settings={settings} validated={review} />
         </div>
       </div>
     </div>

@@ -54,6 +54,15 @@ export const mockSettings: StoreSettings = {
   storeOpen: true,
   deliveryFee: 10,
   minimumOrder: 49,
+  feeTiers: [
+    { minSubtotal: 0, fee: 10 },
+    { minSubtotal: 60, fee: 15 },
+    { minSubtotal: 100, fee: 20 },
+  ],
+  lateNightFeeEnabled: true,
+  lateNightFee: 5,
+  lateNightStart: '01:00',
+  lateNightEnd: '06:00',
   supportEmail: 'support@example.com',
   storePhone: '+919876543210',
 };

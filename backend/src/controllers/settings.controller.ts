@@ -3,6 +3,7 @@ import {
   getOrCreateStoreSettings,
   updateStoreSettings,
 } from "../services/settings.service.js";
+import { FeeRuleError, MAX_FEE, parseFeeTiers, parseTime } from "../services/fees.js";
 
 const MAX_POSTGRES_INTEGER = 2_147_483_647;
 
@@ -74,23 +75,47 @@ export const updateAdminSettingsController = async (
       return;
     }
 
-    const { storeOpen, deliveryFee, minimumOrder, supportEmail, storePhone } = req.body;
+    const { storeOpen, minimumOrder, supportEmail, storePhone, feeTiers, lateNight } = req.body;
 
-    // Require all four fields to avoid accidental partial updates.
+    // Require the core fields to avoid accidental partial updates. (A deliveryFee sent by older
+    // admin pages is ignored: fees are set as price ranges.)
     if (
       typeof storeOpen !== "boolean" ||
-      !Number.isSafeInteger(deliveryFee) ||
-      deliveryFee < 0 ||
-      deliveryFee > MAX_POSTGRES_INTEGER ||
       !Number.isSafeInteger(minimumOrder) ||
       minimumOrder < 0 ||
       minimumOrder > MAX_POSTGRES_INTEGER
     ) {
       res.status(400).json({
-        message:
-          "Provide a boolean storeOpen and non-negative whole-number deliveryFee and minimumOrder.",
+        message: "Provide a boolean storeOpen and a non-negative whole-number minimumOrder.",
       });
       return;
+    }
+
+    // Fee rules are optional so older admin pages that omit them never change them.
+    let parsedTiers;
+    let parsedLateNight;
+    try {
+      parsedTiers = feeTiers === undefined ? undefined : parseFeeTiers(feeTiers);
+      if (lateNight !== undefined) {
+        const night = typeof lateNight === "object" && lateNight !== null ? lateNight : {};
+        if (typeof night.enabled !== "boolean") throw new FeeRuleError("Turn the late-night fee on or off.");
+        if (!Number.isSafeInteger(night.fee) || night.fee < 0 || night.fee > MAX_FEE) {
+          throw new FeeRuleError(`The late-night fee must be a whole number of rupees from 0 to ${MAX_FEE}.`);
+        }
+        if (parseTime(night.start) === null || parseTime(night.end) === null) {
+          throw new FeeRuleError("Late-night hours must be times like 01:00 and 06:00.");
+        }
+        if (night.enabled && night.start === night.end) {
+          throw new FeeRuleError("Late-night hours must start and end at different times.");
+        }
+        parsedLateNight = { enabled: night.enabled, fee: night.fee, start: night.start, end: night.end };
+      }
+    } catch (error) {
+      if (error instanceof FeeRuleError) {
+        res.status(400).json({ message: error.message });
+        return;
+      }
+      throw error;
     }
 
     // Accept either a valid email address or null/empty string to clear it.
@@ -129,10 +154,11 @@ export const updateAdminSettingsController = async (
 
     const settings = await updateStoreSettings({
       storeOpen,
-      deliveryFee,
       minimumOrder,
       supportEmail: normalizedSupportEmail,
       ...(normalizedStorePhone === undefined ? {} : { storePhone: normalizedStorePhone }),
+      ...(parsedTiers ? { feeTiers: parsedTiers } : {}),
+      ...(parsedLateNight ? { lateNight: parsedLateNight } : {}),
     });
 
     res.status(200).json(settings);

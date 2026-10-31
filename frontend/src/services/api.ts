@@ -7,6 +7,7 @@ import type {
   ProductInput,
   StockGroup,
   StoreSettings,
+  StoreSettingsUpdate,
 } from '../types/product';
 import type { UpdateProfileInput, UserProfile } from '../types/user';
 import type {
@@ -300,7 +301,7 @@ export const api = {
   deactivateHostel: (id: string) => request<AdminHostel>(`/api/admin/hostels/${encodeURIComponent(id)}/deactivate`, { method: 'PATCH', auth: true }),
   permanentlyDeleteHostel: (id: string) =>
     request<void>(`/api/admin/hostels/${encodeURIComponent(id)}/permanent`, { method: 'DELETE', auth: true }),
-  updateAdminSettings: (body: StoreSettings) =>
+  updateAdminSettings: (body: StoreSettingsUpdate) =>
     request<StoreSettings>('/api/admin/settings', { method: 'PUT', body, auth: true }),
   getAdminProducts: () => request<AdminProduct[]>('/api/admin/products', { auth: true }),
   getGroupStock: (stockGroupId: string) =>

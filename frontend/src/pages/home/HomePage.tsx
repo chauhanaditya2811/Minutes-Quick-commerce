@@ -33,7 +33,8 @@ export default function HomePage() {
         <h1>Available at {selectedPool?.name}</h1>
         {settings && (
           <p className="muted">
-            {settings.storeOpen ? 'Open now' : 'Closed'} · Delivery {formatINR(settings.deliveryFee)} · Minimum order {formatINR(settings.minimumOrder)}
+            {settings.storeOpen ? 'Open now' : 'Closed'}
+            {settings.minimumOrder > 0 && ` · Minimum order ${formatINR(settings.minimumOrder)}`}
           </p>
         )}
         {settingsLoading && <p className="muted">Loading store information…</p>}

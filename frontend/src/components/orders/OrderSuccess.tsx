@@ -95,7 +95,8 @@ export default function OrderSuccess({ order, serverOffsetMs, children }: Props)
           </ul>
           <dl className="order-success__totals">
             <div><dt>Item total</dt><dd>{formatINR(order.subtotal)}</dd></div>
-            <div><dt>Delivery</dt><dd>{order.deliveryFee === 0 ? 'Free' : formatINR(order.deliveryFee)}</dd></div>
+            <div><dt>Convenience fee</dt><dd>{order.deliveryFee === 0 ? 'Free' : formatINR(order.deliveryFee)}</dd></div>
+            {(order.lateNightFee ?? 0) > 0 && <div><dt>Late-night fee</dt><dd>{formatINR(order.lateNightFee!)}</dd></div>}
             <div className="order-success__total"><dt>Total paid</dt><dd>{formatINR(order.total)}</dd></div>
           </dl>
         </section>

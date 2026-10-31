@@ -3,6 +3,8 @@ import { useCart } from '../../context/CartContext';
 import { useHostel } from '../../context/HostelContext';
 import { useStoreSettings } from '../../hooks/useStoreSettings';
 import { formatINR } from '../../utils/format';
+import { estimateFees } from '../../utils/fees';
+import FeeRules from '../../components/checkout/FeeRules';
 import CartItemRow from '../../components/cart/CartItemRow';
 import EmptyState from '../../components/ui/EmptyState';
 import Notice from '../../components/ui/Notice';
@@ -23,6 +25,7 @@ export default function CartPage() {
   }
 
   const belowMinimum = settings ? subtotal < settings.minimumOrder : false;
+  const fees = settings ? estimateFees(subtotal, settings) : null;
   const closed = settings ? !settings.storeOpen : false;
 
   return (
@@ -41,9 +44,24 @@ export default function CartPage() {
         </ul>
         <div className="cart-foot">
           <div className="cart-foot__row"><span>Subtotal</span><strong>{formatINR(subtotal)}</strong></div>
-          <p className="muted small">
-            {settings ? `Delivery fee ${formatINR(settings.deliveryFee)} is added at checkout.` : 'Delivery is calculated at checkout.'}
-          </p>
+          {fees ? (
+            <>
+              <div className="cart-foot__row cart-foot__row--fee">
+                <span>Convenience fee</span>
+                <span>{fees.convenienceFee === 0 ? 'Free' : formatINR(fees.convenienceFee)}</span>
+              </div>
+              {fees.lateNightFee > 0 && (
+                <div className="cart-foot__row cart-foot__row--fee">
+                  <span>Late-night fee</span>
+                  <span>{formatINR(fees.lateNightFee)}</span>
+                </div>
+              )}
+              <div className="cart-foot__row"><span>Estimated total</span><strong>{formatINR(subtotal + fees.convenienceFee + fees.lateNightFee)}</strong></div>
+              <FeeRules settings={settings} />
+            </>
+          ) : (
+            <p className="muted small">Fees are shown at checkout.</p>
+          )}
           {closed && <Notice tone="warning">The store is closed right now.</Notice>}
           {belowMinimum && settings && (
             <Notice tone="warning">Add {formatINR(settings.minimumOrder - subtotal)} more to reach the {formatINR(settings.minimumOrder)} minimum order.</Notice>

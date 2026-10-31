@@ -29,12 +29,14 @@ export type AggregateOrder = {
 export type OrderAvgAggregateOutputType = {
   subtotal: number | null
   deliveryFee: number | null
+  lateNightFee: number | null
   total: number | null
 }
 
 export type OrderSumAggregateOutputType = {
   subtotal: number | null
   deliveryFee: number | null
+  lateNightFee: number | null
   total: number | null
 }
 
@@ -46,6 +48,7 @@ export type OrderMinAggregateOutputType = {
   hostelId: string | null
   subtotal: number | null
   deliveryFee: number | null
+  lateNightFee: number | null
   total: number | null
   paymentStatus: $Enums.PaymentStatus | null
   orderStatus: $Enums.OrderStatus | null
@@ -71,6 +74,7 @@ export type OrderMaxAggregateOutputType = {
   hostelId: string | null
   subtotal: number | null
   deliveryFee: number | null
+  lateNightFee: number | null
   total: number | null
   paymentStatus: $Enums.PaymentStatus | null
   orderStatus: $Enums.OrderStatus | null
@@ -96,6 +100,7 @@ export type OrderCountAggregateOutputType = {
   hostelId: number
   subtotal: number
   deliveryFee: number
+  lateNightFee: number
   total: number
   paymentStatus: number
   orderStatus: number
@@ -118,12 +123,14 @@ export type OrderCountAggregateOutputType = {
 export type OrderAvgAggregateInputType = {
   subtotal?: true
   deliveryFee?: true
+  lateNightFee?: true
   total?: true
 }
 
 export type OrderSumAggregateInputType = {
   subtotal?: true
   deliveryFee?: true
+  lateNightFee?: true
   total?: true
 }
 
@@ -135,6 +142,7 @@ export type OrderMinAggregateInputType = {
   hostelId?: true
   subtotal?: true
   deliveryFee?: true
+  lateNightFee?: true
   total?: true
   paymentStatus?: true
   orderStatus?: true
@@ -160,6 +168,7 @@ export type OrderMaxAggregateInputType = {
   hostelId?: true
   subtotal?: true
   deliveryFee?: true
+  lateNightFee?: true
   total?: true
   paymentStatus?: true
   orderStatus?: true
@@ -185,6 +194,7 @@ export type OrderCountAggregateInputType = {
   hostelId?: true
   subtotal?: true
   deliveryFee?: true
+  lateNightFee?: true
   total?: true
   paymentStatus?: true
   orderStatus?: true
@@ -297,6 +307,7 @@ export type OrderGroupByOutputType = {
   hostelId: string | null
   subtotal: number
   deliveryFee: number
+  lateNightFee: number
   total: number
   paymentStatus: $Enums.PaymentStatus
   orderStatus: $Enums.OrderStatus
@@ -345,6 +356,7 @@ export type OrderWhereInput = {
   hostelId?: Prisma.StringNullableFilter<"Order"> | string | null
   subtotal?: Prisma.IntFilter<"Order"> | number
   deliveryFee?: Prisma.IntFilter<"Order"> | number
+  lateNightFee?: Prisma.IntFilter<"Order"> | number
   total?: Prisma.IntFilter<"Order"> | number
   paymentStatus?: Prisma.EnumPaymentStatusFilter<"Order"> | $Enums.PaymentStatus
   orderStatus?: Prisma.EnumOrderStatusFilter<"Order"> | $Enums.OrderStatus
@@ -376,6 +388,7 @@ export type OrderOrderByWithRelationInput = {
   hostelId?: Prisma.SortOrderInput | Prisma.SortOrder
   subtotal?: Prisma.SortOrder
   deliveryFee?: Prisma.SortOrder
+  lateNightFee?: Prisma.SortOrder
   total?: Prisma.SortOrder
   paymentStatus?: Prisma.SortOrder
   orderStatus?: Prisma.SortOrder
@@ -410,6 +423,7 @@ export type OrderWhereUniqueInput = Prisma.AtLeast<{
   hostelId?: Prisma.StringNullableFilter<"Order"> | string | null
   subtotal?: Prisma.IntFilter<"Order"> | number
   deliveryFee?: Prisma.IntFilter<"Order"> | number
+  lateNightFee?: Prisma.IntFilter<"Order"> | number
   total?: Prisma.IntFilter<"Order"> | number
   paymentStatus?: Prisma.EnumPaymentStatusFilter<"Order"> | $Enums.PaymentStatus
   orderStatus?: Prisma.EnumOrderStatusFilter<"Order"> | $Enums.OrderStatus
@@ -441,6 +455,7 @@ export type OrderOrderByWithAggregationInput = {
   hostelId?: Prisma.SortOrderInput | Prisma.SortOrder
   subtotal?: Prisma.SortOrder
   deliveryFee?: Prisma.SortOrder
+  lateNightFee?: Prisma.SortOrder
   total?: Prisma.SortOrder
   paymentStatus?: Prisma.SortOrder
   orderStatus?: Prisma.SortOrder
@@ -474,6 +489,7 @@ export type OrderScalarWhereWithAggregatesInput = {
   hostelId?: Prisma.StringNullableWithAggregatesFilter<"Order"> | string | null
   subtotal?: Prisma.IntWithAggregatesFilter<"Order"> | number
   deliveryFee?: Prisma.IntWithAggregatesFilter<"Order"> | number
+  lateNightFee?: Prisma.IntWithAggregatesFilter<"Order"> | number
   total?: Prisma.IntWithAggregatesFilter<"Order"> | number
   paymentStatus?: Prisma.EnumPaymentStatusWithAggregatesFilter<"Order"> | $Enums.PaymentStatus
   orderStatus?: Prisma.EnumOrderStatusWithAggregatesFilter<"Order"> | $Enums.OrderStatus
@@ -497,6 +513,7 @@ export type OrderCreateInput = {
   guestAccessTokenHash?: string | null
   subtotal: number
   deliveryFee: number
+  lateNightFee?: number
   total: number
   paymentStatus: $Enums.PaymentStatus
   orderStatus: $Enums.OrderStatus
@@ -528,6 +545,7 @@ export type OrderUncheckedCreateInput = {
   hostelId?: string | null
   subtotal: number
   deliveryFee: number
+  lateNightFee?: number
   total: number
   paymentStatus: $Enums.PaymentStatus
   orderStatus: $Enums.OrderStatus
@@ -555,6 +573,7 @@ export type OrderUpdateInput = {
   guestAccessTokenHash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   subtotal?: Prisma.IntFieldUpdateOperationsInput | number
   deliveryFee?: Prisma.IntFieldUpdateOperationsInput | number
+  lateNightFee?: Prisma.IntFieldUpdateOperationsInput | number
   total?: Prisma.IntFieldUpdateOperationsInput | number
   paymentStatus?: Prisma.EnumPaymentStatusFieldUpdateOperationsInput | $Enums.PaymentStatus
   orderStatus?: Prisma.EnumOrderStatusFieldUpdateOperationsInput | $Enums.OrderStatus
@@ -586,6 +605,7 @@ export type OrderUncheckedUpdateInput = {
   hostelId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   subtotal?: Prisma.IntFieldUpdateOperationsInput | number
   deliveryFee?: Prisma.IntFieldUpdateOperationsInput | number
+  lateNightFee?: Prisma.IntFieldUpdateOperationsInput | number
   total?: Prisma.IntFieldUpdateOperationsInput | number
   paymentStatus?: Prisma.EnumPaymentStatusFieldUpdateOperationsInput | $Enums.PaymentStatus
   orderStatus?: Prisma.EnumOrderStatusFieldUpdateOperationsInput | $Enums.OrderStatus
@@ -615,6 +635,7 @@ export type OrderCreateManyInput = {
   hostelId?: string | null
   subtotal: number
   deliveryFee: number
+  lateNightFee?: number
   total: number
   paymentStatus: $Enums.PaymentStatus
   orderStatus: $Enums.OrderStatus
@@ -638,6 +659,7 @@ export type OrderUpdateManyMutationInput = {
   guestAccessTokenHash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   subtotal?: Prisma.IntFieldUpdateOperationsInput | number
   deliveryFee?: Prisma.IntFieldUpdateOperationsInput | number
+  lateNightFee?: Prisma.IntFieldUpdateOperationsInput | number
   total?: Prisma.IntFieldUpdateOperationsInput | number
   paymentStatus?: Prisma.EnumPaymentStatusFieldUpdateOperationsInput | $Enums.PaymentStatus
   orderStatus?: Prisma.EnumOrderStatusFieldUpdateOperationsInput | $Enums.OrderStatus
@@ -663,6 +685,7 @@ export type OrderUncheckedUpdateManyInput = {
   hostelId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   subtotal?: Prisma.IntFieldUpdateOperationsInput | number
   deliveryFee?: Prisma.IntFieldUpdateOperationsInput | number
+  lateNightFee?: Prisma.IntFieldUpdateOperationsInput | number
   total?: Prisma.IntFieldUpdateOperationsInput | number
   paymentStatus?: Prisma.EnumPaymentStatusFieldUpdateOperationsInput | $Enums.PaymentStatus
   orderStatus?: Prisma.EnumOrderStatusFieldUpdateOperationsInput | $Enums.OrderStatus
@@ -698,6 +721,7 @@ export type OrderCountOrderByAggregateInput = {
   hostelId?: Prisma.SortOrder
   subtotal?: Prisma.SortOrder
   deliveryFee?: Prisma.SortOrder
+  lateNightFee?: Prisma.SortOrder
   total?: Prisma.SortOrder
   paymentStatus?: Prisma.SortOrder
   orderStatus?: Prisma.SortOrder
@@ -718,6 +742,7 @@ export type OrderCountOrderByAggregateInput = {
 export type OrderAvgOrderByAggregateInput = {
   subtotal?: Prisma.SortOrder
   deliveryFee?: Prisma.SortOrder
+  lateNightFee?: Prisma.SortOrder
   total?: Prisma.SortOrder
 }
 
@@ -729,6 +754,7 @@ export type OrderMaxOrderByAggregateInput = {
   hostelId?: Prisma.SortOrder
   subtotal?: Prisma.SortOrder
   deliveryFee?: Prisma.SortOrder
+  lateNightFee?: Prisma.SortOrder
   total?: Prisma.SortOrder
   paymentStatus?: Prisma.SortOrder
   orderStatus?: Prisma.SortOrder
@@ -754,6 +780,7 @@ export type OrderMinOrderByAggregateInput = {
   hostelId?: Prisma.SortOrder
   subtotal?: Prisma.SortOrder
   deliveryFee?: Prisma.SortOrder
+  lateNightFee?: Prisma.SortOrder
   total?: Prisma.SortOrder
   paymentStatus?: Prisma.SortOrder
   orderStatus?: Prisma.SortOrder
@@ -774,6 +801,7 @@ export type OrderMinOrderByAggregateInput = {
 export type OrderSumOrderByAggregateInput = {
   subtotal?: Prisma.SortOrder
   deliveryFee?: Prisma.SortOrder
+  lateNightFee?: Prisma.SortOrder
   total?: Prisma.SortOrder
 }
 
@@ -945,6 +973,7 @@ export type OrderCreateWithoutUserInput = {
   guestAccessTokenHash?: string | null
   subtotal: number
   deliveryFee: number
+  lateNightFee?: number
   total: number
   paymentStatus: $Enums.PaymentStatus
   orderStatus: $Enums.OrderStatus
@@ -974,6 +1003,7 @@ export type OrderUncheckedCreateWithoutUserInput = {
   hostelId?: string | null
   subtotal: number
   deliveryFee: number
+  lateNightFee?: number
   total: number
   paymentStatus: $Enums.PaymentStatus
   orderStatus: $Enums.OrderStatus
@@ -1032,6 +1062,7 @@ export type OrderScalarWhereInput = {
   hostelId?: Prisma.StringNullableFilter<"Order"> | string | null
   subtotal?: Prisma.IntFilter<"Order"> | number
   deliveryFee?: Prisma.IntFilter<"Order"> | number
+  lateNightFee?: Prisma.IntFilter<"Order"> | number
   total?: Prisma.IntFilter<"Order"> | number
   paymentStatus?: Prisma.EnumPaymentStatusFilter<"Order"> | $Enums.PaymentStatus
   orderStatus?: Prisma.EnumOrderStatusFilter<"Order"> | $Enums.OrderStatus
@@ -1055,6 +1086,7 @@ export type OrderCreateWithoutHostelInput = {
   guestAccessTokenHash?: string | null
   subtotal: number
   deliveryFee: number
+  lateNightFee?: number
   total: number
   paymentStatus: $Enums.PaymentStatus
   orderStatus: $Enums.OrderStatus
@@ -1084,6 +1116,7 @@ export type OrderUncheckedCreateWithoutHostelInput = {
   guestAccessTokenHash?: string | null
   subtotal: number
   deliveryFee: number
+  lateNightFee?: number
   total: number
   paymentStatus: $Enums.PaymentStatus
   orderStatus: $Enums.OrderStatus
@@ -1137,6 +1170,7 @@ export type OrderCreateWithoutItemsInput = {
   guestAccessTokenHash?: string | null
   subtotal: number
   deliveryFee: number
+  lateNightFee?: number
   total: number
   paymentStatus: $Enums.PaymentStatus
   orderStatus: $Enums.OrderStatus
@@ -1167,6 +1201,7 @@ export type OrderUncheckedCreateWithoutItemsInput = {
   hostelId?: string | null
   subtotal: number
   deliveryFee: number
+  lateNightFee?: number
   total: number
   paymentStatus: $Enums.PaymentStatus
   orderStatus: $Enums.OrderStatus
@@ -1209,6 +1244,7 @@ export type OrderUpdateWithoutItemsInput = {
   guestAccessTokenHash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   subtotal?: Prisma.IntFieldUpdateOperationsInput | number
   deliveryFee?: Prisma.IntFieldUpdateOperationsInput | number
+  lateNightFee?: Prisma.IntFieldUpdateOperationsInput | number
   total?: Prisma.IntFieldUpdateOperationsInput | number
   paymentStatus?: Prisma.EnumPaymentStatusFieldUpdateOperationsInput | $Enums.PaymentStatus
   orderStatus?: Prisma.EnumOrderStatusFieldUpdateOperationsInput | $Enums.OrderStatus
@@ -1239,6 +1275,7 @@ export type OrderUncheckedUpdateWithoutItemsInput = {
   hostelId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   subtotal?: Prisma.IntFieldUpdateOperationsInput | number
   deliveryFee?: Prisma.IntFieldUpdateOperationsInput | number
+  lateNightFee?: Prisma.IntFieldUpdateOperationsInput | number
   total?: Prisma.IntFieldUpdateOperationsInput | number
   paymentStatus?: Prisma.EnumPaymentStatusFieldUpdateOperationsInput | $Enums.PaymentStatus
   orderStatus?: Prisma.EnumOrderStatusFieldUpdateOperationsInput | $Enums.OrderStatus
@@ -1265,6 +1302,7 @@ export type OrderCreateWithoutPaymentInput = {
   guestAccessTokenHash?: string | null
   subtotal: number
   deliveryFee: number
+  lateNightFee?: number
   total: number
   paymentStatus: $Enums.PaymentStatus
   orderStatus: $Enums.OrderStatus
@@ -1295,6 +1333,7 @@ export type OrderUncheckedCreateWithoutPaymentInput = {
   hostelId?: string | null
   subtotal: number
   deliveryFee: number
+  lateNightFee?: number
   total: number
   paymentStatus: $Enums.PaymentStatus
   orderStatus: $Enums.OrderStatus
@@ -1337,6 +1376,7 @@ export type OrderUpdateWithoutPaymentInput = {
   guestAccessTokenHash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   subtotal?: Prisma.IntFieldUpdateOperationsInput | number
   deliveryFee?: Prisma.IntFieldUpdateOperationsInput | number
+  lateNightFee?: Prisma.IntFieldUpdateOperationsInput | number
   total?: Prisma.IntFieldUpdateOperationsInput | number
   paymentStatus?: Prisma.EnumPaymentStatusFieldUpdateOperationsInput | $Enums.PaymentStatus
   orderStatus?: Prisma.EnumOrderStatusFieldUpdateOperationsInput | $Enums.OrderStatus
@@ -1367,6 +1407,7 @@ export type OrderUncheckedUpdateWithoutPaymentInput = {
   hostelId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   subtotal?: Prisma.IntFieldUpdateOperationsInput | number
   deliveryFee?: Prisma.IntFieldUpdateOperationsInput | number
+  lateNightFee?: Prisma.IntFieldUpdateOperationsInput | number
   total?: Prisma.IntFieldUpdateOperationsInput | number
   paymentStatus?: Prisma.EnumPaymentStatusFieldUpdateOperationsInput | $Enums.PaymentStatus
   orderStatus?: Prisma.EnumOrderStatusFieldUpdateOperationsInput | $Enums.OrderStatus
@@ -1393,6 +1434,7 @@ export type OrderCreateWithoutPaymentAttemptsInput = {
   guestAccessTokenHash?: string | null
   subtotal: number
   deliveryFee: number
+  lateNightFee?: number
   total: number
   paymentStatus: $Enums.PaymentStatus
   orderStatus: $Enums.OrderStatus
@@ -1423,6 +1465,7 @@ export type OrderUncheckedCreateWithoutPaymentAttemptsInput = {
   hostelId?: string | null
   subtotal: number
   deliveryFee: number
+  lateNightFee?: number
   total: number
   paymentStatus: $Enums.PaymentStatus
   orderStatus: $Enums.OrderStatus
@@ -1465,6 +1508,7 @@ export type OrderUpdateWithoutPaymentAttemptsInput = {
   guestAccessTokenHash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   subtotal?: Prisma.IntFieldUpdateOperationsInput | number
   deliveryFee?: Prisma.IntFieldUpdateOperationsInput | number
+  lateNightFee?: Prisma.IntFieldUpdateOperationsInput | number
   total?: Prisma.IntFieldUpdateOperationsInput | number
   paymentStatus?: Prisma.EnumPaymentStatusFieldUpdateOperationsInput | $Enums.PaymentStatus
   orderStatus?: Prisma.EnumOrderStatusFieldUpdateOperationsInput | $Enums.OrderStatus
@@ -1495,6 +1539,7 @@ export type OrderUncheckedUpdateWithoutPaymentAttemptsInput = {
   hostelId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   subtotal?: Prisma.IntFieldUpdateOperationsInput | number
   deliveryFee?: Prisma.IntFieldUpdateOperationsInput | number
+  lateNightFee?: Prisma.IntFieldUpdateOperationsInput | number
   total?: Prisma.IntFieldUpdateOperationsInput | number
   paymentStatus?: Prisma.EnumPaymentStatusFieldUpdateOperationsInput | $Enums.PaymentStatus
   orderStatus?: Prisma.EnumOrderStatusFieldUpdateOperationsInput | $Enums.OrderStatus
@@ -1521,6 +1566,7 @@ export type OrderCreateWithoutReservationsInput = {
   guestAccessTokenHash?: string | null
   subtotal: number
   deliveryFee: number
+  lateNightFee?: number
   total: number
   paymentStatus: $Enums.PaymentStatus
   orderStatus: $Enums.OrderStatus
@@ -1551,6 +1597,7 @@ export type OrderUncheckedCreateWithoutReservationsInput = {
   hostelId?: string | null
   subtotal: number
   deliveryFee: number
+  lateNightFee?: number
   total: number
   paymentStatus: $Enums.PaymentStatus
   orderStatus: $Enums.OrderStatus
@@ -1593,6 +1640,7 @@ export type OrderUpdateWithoutReservationsInput = {
   guestAccessTokenHash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   subtotal?: Prisma.IntFieldUpdateOperationsInput | number
   deliveryFee?: Prisma.IntFieldUpdateOperationsInput | number
+  lateNightFee?: Prisma.IntFieldUpdateOperationsInput | number
   total?: Prisma.IntFieldUpdateOperationsInput | number
   paymentStatus?: Prisma.EnumPaymentStatusFieldUpdateOperationsInput | $Enums.PaymentStatus
   orderStatus?: Prisma.EnumOrderStatusFieldUpdateOperationsInput | $Enums.OrderStatus
@@ -1623,6 +1671,7 @@ export type OrderUncheckedUpdateWithoutReservationsInput = {
   hostelId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   subtotal?: Prisma.IntFieldUpdateOperationsInput | number
   deliveryFee?: Prisma.IntFieldUpdateOperationsInput | number
+  lateNightFee?: Prisma.IntFieldUpdateOperationsInput | number
   total?: Prisma.IntFieldUpdateOperationsInput | number
   paymentStatus?: Prisma.EnumPaymentStatusFieldUpdateOperationsInput | $Enums.PaymentStatus
   orderStatus?: Prisma.EnumOrderStatusFieldUpdateOperationsInput | $Enums.OrderStatus
@@ -1650,6 +1699,7 @@ export type OrderCreateManyUserInput = {
   hostelId?: string | null
   subtotal: number
   deliveryFee: number
+  lateNightFee?: number
   total: number
   paymentStatus: $Enums.PaymentStatus
   orderStatus: $Enums.OrderStatus
@@ -1673,6 +1723,7 @@ export type OrderUpdateWithoutUserInput = {
   guestAccessTokenHash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   subtotal?: Prisma.IntFieldUpdateOperationsInput | number
   deliveryFee?: Prisma.IntFieldUpdateOperationsInput | number
+  lateNightFee?: Prisma.IntFieldUpdateOperationsInput | number
   total?: Prisma.IntFieldUpdateOperationsInput | number
   paymentStatus?: Prisma.EnumPaymentStatusFieldUpdateOperationsInput | $Enums.PaymentStatus
   orderStatus?: Prisma.EnumOrderStatusFieldUpdateOperationsInput | $Enums.OrderStatus
@@ -1702,6 +1753,7 @@ export type OrderUncheckedUpdateWithoutUserInput = {
   hostelId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   subtotal?: Prisma.IntFieldUpdateOperationsInput | number
   deliveryFee?: Prisma.IntFieldUpdateOperationsInput | number
+  lateNightFee?: Prisma.IntFieldUpdateOperationsInput | number
   total?: Prisma.IntFieldUpdateOperationsInput | number
   paymentStatus?: Prisma.EnumPaymentStatusFieldUpdateOperationsInput | $Enums.PaymentStatus
   orderStatus?: Prisma.EnumOrderStatusFieldUpdateOperationsInput | $Enums.OrderStatus
@@ -1730,6 +1782,7 @@ export type OrderUncheckedUpdateManyWithoutUserInput = {
   hostelId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   subtotal?: Prisma.IntFieldUpdateOperationsInput | number
   deliveryFee?: Prisma.IntFieldUpdateOperationsInput | number
+  lateNightFee?: Prisma.IntFieldUpdateOperationsInput | number
   total?: Prisma.IntFieldUpdateOperationsInput | number
   paymentStatus?: Prisma.EnumPaymentStatusFieldUpdateOperationsInput | $Enums.PaymentStatus
   orderStatus?: Prisma.EnumOrderStatusFieldUpdateOperationsInput | $Enums.OrderStatus
@@ -1754,6 +1807,7 @@ export type OrderCreateManyHostelInput = {
   guestAccessTokenHash?: string | null
   subtotal: number
   deliveryFee: number
+  lateNightFee?: number
   total: number
   paymentStatus: $Enums.PaymentStatus
   orderStatus: $Enums.OrderStatus
@@ -1777,6 +1831,7 @@ export type OrderUpdateWithoutHostelInput = {
   guestAccessTokenHash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   subtotal?: Prisma.IntFieldUpdateOperationsInput | number
   deliveryFee?: Prisma.IntFieldUpdateOperationsInput | number
+  lateNightFee?: Prisma.IntFieldUpdateOperationsInput | number
   total?: Prisma.IntFieldUpdateOperationsInput | number
   paymentStatus?: Prisma.EnumPaymentStatusFieldUpdateOperationsInput | $Enums.PaymentStatus
   orderStatus?: Prisma.EnumOrderStatusFieldUpdateOperationsInput | $Enums.OrderStatus
@@ -1806,6 +1861,7 @@ export type OrderUncheckedUpdateWithoutHostelInput = {
   guestAccessTokenHash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   subtotal?: Prisma.IntFieldUpdateOperationsInput | number
   deliveryFee?: Prisma.IntFieldUpdateOperationsInput | number
+  lateNightFee?: Prisma.IntFieldUpdateOperationsInput | number
   total?: Prisma.IntFieldUpdateOperationsInput | number
   paymentStatus?: Prisma.EnumPaymentStatusFieldUpdateOperationsInput | $Enums.PaymentStatus
   orderStatus?: Prisma.EnumOrderStatusFieldUpdateOperationsInput | $Enums.OrderStatus
@@ -1834,6 +1890,7 @@ export type OrderUncheckedUpdateManyWithoutHostelInput = {
   guestAccessTokenHash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   subtotal?: Prisma.IntFieldUpdateOperationsInput | number
   deliveryFee?: Prisma.IntFieldUpdateOperationsInput | number
+  lateNightFee?: Prisma.IntFieldUpdateOperationsInput | number
   total?: Prisma.IntFieldUpdateOperationsInput | number
   paymentStatus?: Prisma.EnumPaymentStatusFieldUpdateOperationsInput | $Enums.PaymentStatus
   orderStatus?: Prisma.EnumOrderStatusFieldUpdateOperationsInput | $Enums.OrderStatus
@@ -1908,6 +1965,7 @@ export type OrderSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = 
   hostelId?: boolean
   subtotal?: boolean
   deliveryFee?: boolean
+  lateNightFee?: boolean
   total?: boolean
   paymentStatus?: boolean
   orderStatus?: boolean
@@ -1940,6 +1998,7 @@ export type OrderSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Extensi
   hostelId?: boolean
   subtotal?: boolean
   deliveryFee?: boolean
+  lateNightFee?: boolean
   total?: boolean
   paymentStatus?: boolean
   orderStatus?: boolean
@@ -1967,6 +2026,7 @@ export type OrderSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensi
   hostelId?: boolean
   subtotal?: boolean
   deliveryFee?: boolean
+  lateNightFee?: boolean
   total?: boolean
   paymentStatus?: boolean
   orderStatus?: boolean
@@ -1994,6 +2054,7 @@ export type OrderSelectScalar = {
   hostelId?: boolean
   subtotal?: boolean
   deliveryFee?: boolean
+  lateNightFee?: boolean
   total?: boolean
   paymentStatus?: boolean
   orderStatus?: boolean
@@ -2011,7 +2072,7 @@ export type OrderSelectScalar = {
   deliveredAt?: boolean
 }
 
-export type OrderOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "orderNumber" | "userId" | "guestAccessTokenHash" | "hostelId" | "subtotal" | "deliveryFee" | "total" | "paymentStatus" | "orderStatus" | "isFiveMinute" | "inventoryShortfall" | "customerName" | "customerEmail" | "customerImage" | "customerPhone" | "customerHostel" | "customerFloor" | "customerRoom" | "createdAt" | "confirmedAt" | "deliveredAt", ExtArgs["result"]["order"]>
+export type OrderOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "orderNumber" | "userId" | "guestAccessTokenHash" | "hostelId" | "subtotal" | "deliveryFee" | "lateNightFee" | "total" | "paymentStatus" | "orderStatus" | "isFiveMinute" | "inventoryShortfall" | "customerName" | "customerEmail" | "customerImage" | "customerPhone" | "customerHostel" | "customerFloor" | "customerRoom" | "createdAt" | "confirmedAt" | "deliveredAt", ExtArgs["result"]["order"]>
 export type OrderInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   user?: boolean | Prisma.Order$userArgs<ExtArgs>
   hostel?: boolean | Prisma.Order$hostelArgs<ExtArgs>
@@ -2048,6 +2109,7 @@ export type $OrderPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs 
     hostelId: string | null
     subtotal: number
     deliveryFee: number
+    lateNightFee: number
     total: number
     paymentStatus: $Enums.PaymentStatus
     orderStatus: $Enums.OrderStatus
@@ -2499,6 +2561,7 @@ export interface OrderFieldRefs {
   readonly hostelId: Prisma.FieldRef<"Order", 'String'>
   readonly subtotal: Prisma.FieldRef<"Order", 'Int'>
   readonly deliveryFee: Prisma.FieldRef<"Order", 'Int'>
+  readonly lateNightFee: Prisma.FieldRef<"Order", 'Int'>
   readonly total: Prisma.FieldRef<"Order", 'Int'>
   readonly paymentStatus: Prisma.FieldRef<"Order", 'PaymentStatus'>
   readonly orderStatus: Prisma.FieldRef<"Order", 'OrderStatus'>
