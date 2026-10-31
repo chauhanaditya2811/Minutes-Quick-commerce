@@ -45,7 +45,7 @@ export default function OrdersPageSkeleton() {
               </ul>
 
               <dl className="totals">
-                {['Items', 'Delivery', 'Total'].map((label) => (
+                {['Items', 'Convenience fee', 'Total'].map((label) => (
                   <div key={label}>
                     <dt><Skeleton width={65} height={14} /></dt>
                     <dd><Skeleton width={55} height={14} /></dd>

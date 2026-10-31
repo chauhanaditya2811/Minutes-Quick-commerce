@@ -39,7 +39,7 @@ describe("Telegram order message", () => {
         "• 1 × Blue Lays — ₹20",
         "• 1 × Kurkure — ₹10",
         "",
-        "💰 Items ₹30 + Delivery ₹10 = <b>₹40</b>",
+        "💰 Items ₹30 + Convenience fee ₹10 = <b>₹40</b>",
         "",
         "<code>#8F426F07</code> · Guest · placed 9:42 PM",
       ].join("\n")
@@ -56,7 +56,7 @@ describe("Telegram order message", () => {
     });
     expect(message).toContain("<b>🛒 3 items</b>");
     expect(message).toContain("• 3 × KitKat Bar — ₹30");
-    expect(message).toContain("Items ₹30 + Free delivery = <b>₹30</b>");
+    expect(message).toContain("Items ₹30 + No convenience fee = <b>₹30</b>");
     expect(message).toContain("· Account ·");
     expect(message).not.toContain("kirti@example.test");
   });

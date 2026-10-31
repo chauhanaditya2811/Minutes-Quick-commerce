@@ -155,6 +155,7 @@
 .cart-row__total { font-weight: 600; margin: 0; }
 .cart-foot { padding-top: 16px; }
 .cart-foot__row { display: flex; justify-content: space-between; font-size: 1.05rem; margin-bottom: 4px; }
+.cart-foot__row--fee { font-size: 0.92rem; color: var(--muted); }
 .cart-foot .btn { margin-top: 12px; }
 .cart-foot__alt { text-align: center; margin: 14px 0 0; color: var(--muted); font-size: 0.9rem; }
 
@@ -1204,3 +1205,30 @@
 .hostel-select--empty .hostel-select__value { color: #8b8f97; }
 .hostel-select__value { flex: 1; min-width: 0; overflow-wrap: anywhere; }
 .hostel-select__list .hostel-option { width: 100%; font: inherit; color: var(--ink); text-align: left; }
+
+/* ---------- Admin: convenience fee editor ---------- */
+.fee-editor { display: flex; flex-direction: column; gap: 10px; padding: 16px; border: 1px solid var(--line); border-radius: 12px; background: var(--field); }
+.fee-editor h3 { margin: 0; font-size: 1rem; }
+.fee-editor p { margin: 0; }
+.fee-editor__head { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.fee-editor__ranges { display: grid; gap: 8px; margin: 0; padding: 0; list-style: none; }
+.fee-editor__add { align-self: flex-start; margin-top: 0; }
+.fee-range { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 8px; padding: 10px 12px; border: 1px solid var(--line); border-radius: 8px; background: #fff; }
+.fee-range--off { opacity: 0.55; }
+.fee-range__text { color: var(--ink); font-size: 0.9rem; }
+.fee-range__to { min-width: 84px; color: var(--muted); }
+.fee-range__input { width: 72px; min-height: 36px; padding: 6px 8px; border: 1px solid var(--line); border-radius: var(--radius); background: var(--field); font: inherit; font-variant-numeric: tabular-nums; text-align: right; }
+.fee-range__input:disabled { color: var(--muted); }
+.fee-range__time { min-height: 36px; padding: 6px 8px; border: 1px solid var(--line); border-radius: var(--radius); background: var(--field); font: inherit; }
+.fee-range__remove { margin-left: auto; min-width: 52px; text-align: right; }
+.fee-preview { display: flex; flex-wrap: wrap; gap: 4px 10px; margin: 0; padding: 10px 12px; border-radius: 8px; background: #eef2ff; color: #3730a3; font-size: 0.85rem; font-variant-numeric: tabular-nums; }
+.fee-preview__label { font-weight: 700; }
+
+/* ---------- Fees in cart and checkout ---------- */
+.fee-rules { margin-top: 4px; }
+.fee-rules__toggle { font-size: 0.82rem; }
+.fee-rules__body { margin-top: 6px; padding: 10px 12px; border-radius: 8px; background: var(--tint); color: var(--muted); font-size: 0.82rem; }
+.fee-rules__body p { margin: 0 0 4px; }
+.fee-rules__body ul { margin: 0; padding-left: 18px; }
+.fee-rules__body .fee-rules__why { margin: 8px 0 0; }
+.fee-hint { color: var(--muted); font-weight: 400; font-size: 0.78rem; }

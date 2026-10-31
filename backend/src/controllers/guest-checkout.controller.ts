@@ -42,6 +42,7 @@ const toGuestOrderResponse = (
   paymentStatus: order.paymentStatus,
   subtotal: order.subtotal,
   deliveryFee: order.deliveryFee,
+  lateNightFee: order.lateNightFee,
   total: order.total,
   createdAt: order.createdAt,
   holdExpiresAt: order.holdExpiresAt,

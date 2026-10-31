@@ -39,7 +39,9 @@ export interface OrderMessageInput {
   orderNumber: string;
   total: number;
   subtotal: number;
+  /** The convenience fee (column name kept from when it was a delivery fee). */
   deliveryFee: number;
+  lateNightFee?: number;
   customerName: string;
   customerPhone: string;
   customerEmail: string | null;
@@ -61,7 +63,10 @@ export const formatOrderMessage = (order: OrderMessageInput, now = new Date()): 
   const items = order.items
     .map((item) => `• ${item.quantity} × ${escapeHtml(capitalise(item.productName))} — ${formatINR(item.subtotal)}`)
     .join("\n");
-  const delivery = order.deliveryFee === 0 ? "Free delivery" : `Delivery ${formatINR(order.deliveryFee)}`;
+  const fees = [
+    order.deliveryFee === 0 ? "No convenience fee" : `Convenience fee ${formatINR(order.deliveryFee)}`,
+    ...(order.lateNightFee ? [`Late-night ${formatINR(order.lateNightFee)}`] : []),
+  ].join(" + ");
 
   return [
     `<b>🛵 NEW ORDER · ${formatINR(order.total)} PAID</b>`,
@@ -74,7 +79,7 @@ export const formatOrderMessage = (order: OrderMessageInput, now = new Date()): 
     `<b>🛒 ${units} ${units === 1 ? "item" : "items"}</b>`,
     items || "No items",
     "",
-    `💰 Items ${formatINR(order.subtotal)} + ${delivery} = <b>${formatINR(order.total)}</b>`,
+    `💰 Items ${formatINR(order.subtotal)} + ${fees} = <b>${formatINR(order.total)}</b>`,
     "",
     `<code>#${escapeHtml(shortOrderCode(order.orderNumber))}</code> · ${order.customerEmail ? "Account" : "Guest"} · placed ${formatTime(order.createdAt)}`,
   ].join("\n");

@@ -16,13 +16,39 @@ export interface Product {
 }
 
 /** Mirrors GET /api/settings and GET /api/admin/settings. */
+/** Orders from `minSubtotal` (item total, ₹) upwards pay `fee`, until the next range starts. */
+export interface FeeTier {
+  minSubtotal: number;
+  fee: number;
+}
+
 export interface StoreSettings {
   storeOpen: boolean;
+  /** Older single fee; equals the first range's fee. */
   deliveryFee: number;
   minimumOrder: number;
   supportEmail: string | null;
   /** E.164 store phone (e.g. +919876543210) for the "Call Store" button; null if not set. */
   storePhone: string | null;
+  /** Convenience fee per order-value range (first range starts at ₹0). */
+  feeTiers?: FeeTier[];
+  lateNightFeeEnabled?: boolean;
+  lateNightFee?: number;
+  /** "HH:MM", India time; the window may cross midnight. */
+  lateNightStart?: string;
+  lateNightEnd?: string;
+  /** Whether the late-night fee applies right now (server time). */
+  lateNightActive?: boolean;
+}
+
+/** Body for PUT /api/admin/settings. */
+export interface StoreSettingsUpdate {
+  storeOpen: boolean;
+  minimumOrder: number;
+  supportEmail: string | null;
+  storePhone: string | null;
+  feeTiers: FeeTier[];
+  lateNight: { enabled: boolean; fee: number; start: string; end: string };
 }
 
 /** Body for POST/PUT /api/admin/products. Stock is managed per hostel. */

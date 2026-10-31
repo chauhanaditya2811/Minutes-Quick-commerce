@@ -29,11 +29,13 @@ export type AggregateSetting = {
 export type SettingAvgAggregateOutputType = {
   deliveryFee: number | null
   minimumOrder: number | null
+  lateNightFee: number | null
 }
 
 export type SettingSumAggregateOutputType = {
   deliveryFee: number | null
   minimumOrder: number | null
+  lateNightFee: number | null
 }
 
 export type SettingMinAggregateOutputType = {
@@ -41,6 +43,10 @@ export type SettingMinAggregateOutputType = {
   storeOpen: boolean | null
   deliveryFee: number | null
   minimumOrder: number | null
+  lateNightFeeEnabled: boolean | null
+  lateNightFee: number | null
+  lateNightStart: string | null
+  lateNightEnd: string | null
   supportEmail: string | null
   storePhone: string | null
   updatedAt: Date | null
@@ -51,6 +57,10 @@ export type SettingMaxAggregateOutputType = {
   storeOpen: boolean | null
   deliveryFee: number | null
   minimumOrder: number | null
+  lateNightFeeEnabled: boolean | null
+  lateNightFee: number | null
+  lateNightStart: string | null
+  lateNightEnd: string | null
   supportEmail: string | null
   storePhone: string | null
   updatedAt: Date | null
@@ -61,6 +71,11 @@ export type SettingCountAggregateOutputType = {
   storeOpen: number
   deliveryFee: number
   minimumOrder: number
+  feeTiers: number
+  lateNightFeeEnabled: number
+  lateNightFee: number
+  lateNightStart: number
+  lateNightEnd: number
   supportEmail: number
   storePhone: number
   updatedAt: number
@@ -71,11 +86,13 @@ export type SettingCountAggregateOutputType = {
 export type SettingAvgAggregateInputType = {
   deliveryFee?: true
   minimumOrder?: true
+  lateNightFee?: true
 }
 
 export type SettingSumAggregateInputType = {
   deliveryFee?: true
   minimumOrder?: true
+  lateNightFee?: true
 }
 
 export type SettingMinAggregateInputType = {
@@ -83,6 +100,10 @@ export type SettingMinAggregateInputType = {
   storeOpen?: true
   deliveryFee?: true
   minimumOrder?: true
+  lateNightFeeEnabled?: true
+  lateNightFee?: true
+  lateNightStart?: true
+  lateNightEnd?: true
   supportEmail?: true
   storePhone?: true
   updatedAt?: true
@@ -93,6 +114,10 @@ export type SettingMaxAggregateInputType = {
   storeOpen?: true
   deliveryFee?: true
   minimumOrder?: true
+  lateNightFeeEnabled?: true
+  lateNightFee?: true
+  lateNightStart?: true
+  lateNightEnd?: true
   supportEmail?: true
   storePhone?: true
   updatedAt?: true
@@ -103,6 +128,11 @@ export type SettingCountAggregateInputType = {
   storeOpen?: true
   deliveryFee?: true
   minimumOrder?: true
+  feeTiers?: true
+  lateNightFeeEnabled?: true
+  lateNightFee?: true
+  lateNightStart?: true
+  lateNightEnd?: true
   supportEmail?: true
   storePhone?: true
   updatedAt?: true
@@ -200,6 +230,11 @@ export type SettingGroupByOutputType = {
   storeOpen: boolean
   deliveryFee: number
   minimumOrder: number
+  feeTiers: runtime.JsonValue
+  lateNightFeeEnabled: boolean
+  lateNightFee: number
+  lateNightStart: string
+  lateNightEnd: string
   supportEmail: string | null
   storePhone: string | null
   updatedAt: Date
@@ -233,6 +268,11 @@ export type SettingWhereInput = {
   storeOpen?: Prisma.BoolFilter<"Setting"> | boolean
   deliveryFee?: Prisma.IntFilter<"Setting"> | number
   minimumOrder?: Prisma.IntFilter<"Setting"> | number
+  feeTiers?: Prisma.JsonFilter<"Setting">
+  lateNightFeeEnabled?: Prisma.BoolFilter<"Setting"> | boolean
+  lateNightFee?: Prisma.IntFilter<"Setting"> | number
+  lateNightStart?: Prisma.StringFilter<"Setting"> | string
+  lateNightEnd?: Prisma.StringFilter<"Setting"> | string
   supportEmail?: Prisma.StringNullableFilter<"Setting"> | string | null
   storePhone?: Prisma.StringNullableFilter<"Setting"> | string | null
   updatedAt?: Prisma.DateTimeFilter<"Setting"> | Date | string
@@ -243,6 +283,11 @@ export type SettingOrderByWithRelationInput = {
   storeOpen?: Prisma.SortOrder
   deliveryFee?: Prisma.SortOrder
   minimumOrder?: Prisma.SortOrder
+  feeTiers?: Prisma.SortOrder
+  lateNightFeeEnabled?: Prisma.SortOrder
+  lateNightFee?: Prisma.SortOrder
+  lateNightStart?: Prisma.SortOrder
+  lateNightEnd?: Prisma.SortOrder
   supportEmail?: Prisma.SortOrderInput | Prisma.SortOrder
   storePhone?: Prisma.SortOrderInput | Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
@@ -256,6 +301,11 @@ export type SettingWhereUniqueInput = Prisma.AtLeast<{
   storeOpen?: Prisma.BoolFilter<"Setting"> | boolean
   deliveryFee?: Prisma.IntFilter<"Setting"> | number
   minimumOrder?: Prisma.IntFilter<"Setting"> | number
+  feeTiers?: Prisma.JsonFilter<"Setting">
+  lateNightFeeEnabled?: Prisma.BoolFilter<"Setting"> | boolean
+  lateNightFee?: Prisma.IntFilter<"Setting"> | number
+  lateNightStart?: Prisma.StringFilter<"Setting"> | string
+  lateNightEnd?: Prisma.StringFilter<"Setting"> | string
   supportEmail?: Prisma.StringNullableFilter<"Setting"> | string | null
   storePhone?: Prisma.StringNullableFilter<"Setting"> | string | null
   updatedAt?: Prisma.DateTimeFilter<"Setting"> | Date | string
@@ -266,6 +316,11 @@ export type SettingOrderByWithAggregationInput = {
   storeOpen?: Prisma.SortOrder
   deliveryFee?: Prisma.SortOrder
   minimumOrder?: Prisma.SortOrder
+  feeTiers?: Prisma.SortOrder
+  lateNightFeeEnabled?: Prisma.SortOrder
+  lateNightFee?: Prisma.SortOrder
+  lateNightStart?: Prisma.SortOrder
+  lateNightEnd?: Prisma.SortOrder
   supportEmail?: Prisma.SortOrderInput | Prisma.SortOrder
   storePhone?: Prisma.SortOrderInput | Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
@@ -284,6 +339,11 @@ export type SettingScalarWhereWithAggregatesInput = {
   storeOpen?: Prisma.BoolWithAggregatesFilter<"Setting"> | boolean
   deliveryFee?: Prisma.IntWithAggregatesFilter<"Setting"> | number
   minimumOrder?: Prisma.IntWithAggregatesFilter<"Setting"> | number
+  feeTiers?: Prisma.JsonWithAggregatesFilter<"Setting">
+  lateNightFeeEnabled?: Prisma.BoolWithAggregatesFilter<"Setting"> | boolean
+  lateNightFee?: Prisma.IntWithAggregatesFilter<"Setting"> | number
+  lateNightStart?: Prisma.StringWithAggregatesFilter<"Setting"> | string
+  lateNightEnd?: Prisma.StringWithAggregatesFilter<"Setting"> | string
   supportEmail?: Prisma.StringNullableWithAggregatesFilter<"Setting"> | string | null
   storePhone?: Prisma.StringNullableWithAggregatesFilter<"Setting"> | string | null
   updatedAt?: Prisma.DateTimeWithAggregatesFilter<"Setting"> | Date | string
@@ -294,6 +354,11 @@ export type SettingCreateInput = {
   storeOpen?: boolean
   deliveryFee?: number
   minimumOrder?: number
+  feeTiers?: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  lateNightFeeEnabled?: boolean
+  lateNightFee?: number
+  lateNightStart?: string
+  lateNightEnd?: string
   supportEmail?: string | null
   storePhone?: string | null
   updatedAt?: Date | string
@@ -304,6 +369,11 @@ export type SettingUncheckedCreateInput = {
   storeOpen?: boolean
   deliveryFee?: number
   minimumOrder?: number
+  feeTiers?: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  lateNightFeeEnabled?: boolean
+  lateNightFee?: number
+  lateNightStart?: string
+  lateNightEnd?: string
   supportEmail?: string | null
   storePhone?: string | null
   updatedAt?: Date | string
@@ -314,6 +384,11 @@ export type SettingUpdateInput = {
   storeOpen?: Prisma.BoolFieldUpdateOperationsInput | boolean
   deliveryFee?: Prisma.IntFieldUpdateOperationsInput | number
   minimumOrder?: Prisma.IntFieldUpdateOperationsInput | number
+  feeTiers?: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  lateNightFeeEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  lateNightFee?: Prisma.IntFieldUpdateOperationsInput | number
+  lateNightStart?: Prisma.StringFieldUpdateOperationsInput | string
+  lateNightEnd?: Prisma.StringFieldUpdateOperationsInput | string
   supportEmail?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   storePhone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -324,6 +399,11 @@ export type SettingUncheckedUpdateInput = {
   storeOpen?: Prisma.BoolFieldUpdateOperationsInput | boolean
   deliveryFee?: Prisma.IntFieldUpdateOperationsInput | number
   minimumOrder?: Prisma.IntFieldUpdateOperationsInput | number
+  feeTiers?: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  lateNightFeeEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  lateNightFee?: Prisma.IntFieldUpdateOperationsInput | number
+  lateNightStart?: Prisma.StringFieldUpdateOperationsInput | string
+  lateNightEnd?: Prisma.StringFieldUpdateOperationsInput | string
   supportEmail?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   storePhone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -334,6 +414,11 @@ export type SettingCreateManyInput = {
   storeOpen?: boolean
   deliveryFee?: number
   minimumOrder?: number
+  feeTiers?: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  lateNightFeeEnabled?: boolean
+  lateNightFee?: number
+  lateNightStart?: string
+  lateNightEnd?: string
   supportEmail?: string | null
   storePhone?: string | null
   updatedAt?: Date | string
@@ -344,6 +429,11 @@ export type SettingUpdateManyMutationInput = {
   storeOpen?: Prisma.BoolFieldUpdateOperationsInput | boolean
   deliveryFee?: Prisma.IntFieldUpdateOperationsInput | number
   minimumOrder?: Prisma.IntFieldUpdateOperationsInput | number
+  feeTiers?: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  lateNightFeeEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  lateNightFee?: Prisma.IntFieldUpdateOperationsInput | number
+  lateNightStart?: Prisma.StringFieldUpdateOperationsInput | string
+  lateNightEnd?: Prisma.StringFieldUpdateOperationsInput | string
   supportEmail?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   storePhone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -354,6 +444,11 @@ export type SettingUncheckedUpdateManyInput = {
   storeOpen?: Prisma.BoolFieldUpdateOperationsInput | boolean
   deliveryFee?: Prisma.IntFieldUpdateOperationsInput | number
   minimumOrder?: Prisma.IntFieldUpdateOperationsInput | number
+  feeTiers?: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  lateNightFeeEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  lateNightFee?: Prisma.IntFieldUpdateOperationsInput | number
+  lateNightStart?: Prisma.StringFieldUpdateOperationsInput | string
+  lateNightEnd?: Prisma.StringFieldUpdateOperationsInput | string
   supportEmail?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   storePhone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -364,6 +459,11 @@ export type SettingCountOrderByAggregateInput = {
   storeOpen?: Prisma.SortOrder
   deliveryFee?: Prisma.SortOrder
   minimumOrder?: Prisma.SortOrder
+  feeTiers?: Prisma.SortOrder
+  lateNightFeeEnabled?: Prisma.SortOrder
+  lateNightFee?: Prisma.SortOrder
+  lateNightStart?: Prisma.SortOrder
+  lateNightEnd?: Prisma.SortOrder
   supportEmail?: Prisma.SortOrder
   storePhone?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
@@ -372,6 +472,7 @@ export type SettingCountOrderByAggregateInput = {
 export type SettingAvgOrderByAggregateInput = {
   deliveryFee?: Prisma.SortOrder
   minimumOrder?: Prisma.SortOrder
+  lateNightFee?: Prisma.SortOrder
 }
 
 export type SettingMaxOrderByAggregateInput = {
@@ -379,6 +480,10 @@ export type SettingMaxOrderByAggregateInput = {
   storeOpen?: Prisma.SortOrder
   deliveryFee?: Prisma.SortOrder
   minimumOrder?: Prisma.SortOrder
+  lateNightFeeEnabled?: Prisma.SortOrder
+  lateNightFee?: Prisma.SortOrder
+  lateNightStart?: Prisma.SortOrder
+  lateNightEnd?: Prisma.SortOrder
   supportEmail?: Prisma.SortOrder
   storePhone?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
@@ -389,6 +494,10 @@ export type SettingMinOrderByAggregateInput = {
   storeOpen?: Prisma.SortOrder
   deliveryFee?: Prisma.SortOrder
   minimumOrder?: Prisma.SortOrder
+  lateNightFeeEnabled?: Prisma.SortOrder
+  lateNightFee?: Prisma.SortOrder
+  lateNightStart?: Prisma.SortOrder
+  lateNightEnd?: Prisma.SortOrder
   supportEmail?: Prisma.SortOrder
   storePhone?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
@@ -397,6 +506,7 @@ export type SettingMinOrderByAggregateInput = {
 export type SettingSumOrderByAggregateInput = {
   deliveryFee?: Prisma.SortOrder
   minimumOrder?: Prisma.SortOrder
+  lateNightFee?: Prisma.SortOrder
 }
 
 
@@ -406,6 +516,11 @@ export type SettingSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs 
   storeOpen?: boolean
   deliveryFee?: boolean
   minimumOrder?: boolean
+  feeTiers?: boolean
+  lateNightFeeEnabled?: boolean
+  lateNightFee?: boolean
+  lateNightStart?: boolean
+  lateNightEnd?: boolean
   supportEmail?: boolean
   storePhone?: boolean
   updatedAt?: boolean
@@ -416,6 +531,11 @@ export type SettingSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Exten
   storeOpen?: boolean
   deliveryFee?: boolean
   minimumOrder?: boolean
+  feeTiers?: boolean
+  lateNightFeeEnabled?: boolean
+  lateNightFee?: boolean
+  lateNightStart?: boolean
+  lateNightEnd?: boolean
   supportEmail?: boolean
   storePhone?: boolean
   updatedAt?: boolean
@@ -426,6 +546,11 @@ export type SettingSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Exten
   storeOpen?: boolean
   deliveryFee?: boolean
   minimumOrder?: boolean
+  feeTiers?: boolean
+  lateNightFeeEnabled?: boolean
+  lateNightFee?: boolean
+  lateNightStart?: boolean
+  lateNightEnd?: boolean
   supportEmail?: boolean
   storePhone?: boolean
   updatedAt?: boolean
@@ -436,12 +561,17 @@ export type SettingSelectScalar = {
   storeOpen?: boolean
   deliveryFee?: boolean
   minimumOrder?: boolean
+  feeTiers?: boolean
+  lateNightFeeEnabled?: boolean
+  lateNightFee?: boolean
+  lateNightStart?: boolean
+  lateNightEnd?: boolean
   supportEmail?: boolean
   storePhone?: boolean
   updatedAt?: boolean
 }
 
-export type SettingOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "storeOpen" | "deliveryFee" | "minimumOrder" | "supportEmail" | "storePhone" | "updatedAt", ExtArgs["result"]["setting"]>
+export type SettingOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "storeOpen" | "deliveryFee" | "minimumOrder" | "feeTiers" | "lateNightFeeEnabled" | "lateNightFee" | "lateNightStart" | "lateNightEnd" | "supportEmail" | "storePhone" | "updatedAt", ExtArgs["result"]["setting"]>
 
 export type $SettingPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   name: "Setting"
@@ -451,6 +581,11 @@ export type $SettingPayload<ExtArgs extends runtime.Types.Extensions.InternalArg
     storeOpen: boolean
     deliveryFee: number
     minimumOrder: number
+    feeTiers: runtime.JsonValue
+    lateNightFeeEnabled: boolean
+    lateNightFee: number
+    lateNightStart: string
+    lateNightEnd: string
     supportEmail: string | null
     storePhone: string | null
     updatedAt: Date
@@ -881,6 +1016,11 @@ export interface SettingFieldRefs {
   readonly storeOpen: Prisma.FieldRef<"Setting", 'Boolean'>
   readonly deliveryFee: Prisma.FieldRef<"Setting", 'Int'>
   readonly minimumOrder: Prisma.FieldRef<"Setting", 'Int'>
+  readonly feeTiers: Prisma.FieldRef<"Setting", 'Json'>
+  readonly lateNightFeeEnabled: Prisma.FieldRef<"Setting", 'Boolean'>
+  readonly lateNightFee: Prisma.FieldRef<"Setting", 'Int'>
+  readonly lateNightStart: Prisma.FieldRef<"Setting", 'String'>
+  readonly lateNightEnd: Prisma.FieldRef<"Setting", 'String'>
   readonly supportEmail: Prisma.FieldRef<"Setting", 'String'>
   readonly storePhone: Prisma.FieldRef<"Setting", 'String'>
   readonly updatedAt: Prisma.FieldRef<"Setting", 'DateTime'>
